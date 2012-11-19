@@ -1,1 +1,4 @@
-
+Debug/
+ipch/
+Client.sdf
+Client.suo
