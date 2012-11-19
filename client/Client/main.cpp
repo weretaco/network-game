@@ -9,11 +9,26 @@
 
 #include <iostream>
 
+#include <boost/lambda/lambda.hpp>
+
+#include "../../common/message.h"
+
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std;
 
 void error(const char *);
+
+int boost_main()
+{
+    using namespace boost::lambda;
+    typedef istream_iterator<int> in;
+
+    for_each(in(cin), in(), cout << (_1 * 3) << " " );
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
    int sock, n;
@@ -71,6 +86,18 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/*
+int sendMessage(short type, string contents, int sock, struct sockaddr_in *dest)
+{
+	NETWORK_MSG msg;
+
+	msg.type = type;
+	strcpy(msg.buffer, contents.c_str());
+
+	return sendto(sock, (char*)&msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(dest));
+}
+*/
 
 void error(const char *msg)
 {
