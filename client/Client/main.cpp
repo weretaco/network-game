@@ -1,12 +1,15 @@
-/* UDP client in the internet domain */
+#include "../../common/compiler.h"
+
 #include <sys/types.h>
 
-#include <winsock2.h>
-#include <WS2tcpip.h>
+#ifdef WINDOWS
+	#include <winsock2.h>
+	#include <WS2tcpip.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 
 #include <iostream>
 
@@ -14,21 +17,13 @@
 
 #include "../../common/message.h"
 
-#pragma comment(lib, "ws2_32.lib")
+#ifdef WINDOWS
+	#pragma comment(lib, "ws2_32.lib")
+#endif
 
 using namespace std;
 
 void error(const char *);
-
-int boost_main()
-{
-    using namespace boost::lambda;
-    typedef istream_iterator<int> in;
-
-    for_each(in(cin), in(), cout << (_1 * 3) << " " );
-
-	return 0;
-}
 
 int main(int argc, char *argv[])
 {
@@ -36,6 +31,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server, from;
 	struct hostent *hp;
 	char buffer[256];
+	NETWORK_MSG msgTo, msgFrom;
 
 	if (argc != 3) {
 		cout << "Usage: server port" << endl;
@@ -67,22 +63,19 @@ int main(int argc, char *argv[])
 	memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
 	server.sin_port = htons(atoi(argv[2]));
 	cout << "Please enter the message: ";
-	memset(buffer, 0, 256);
-	fgets(buffer,255,stdin);
+	cin.getline(msgTo.buffer, 256);
+	socklen_t socklen = sizeof(server);
 
-	socklen_t fromlen = sizeof(server);
-
-	n=sendto(sock,buffer, strlen(buffer), 0, (const struct sockaddr *)&server, fromlen);
+	n=sendMessage(&msgTo, sock, &server);
 	if (n < 0)
-		error("Sendto");
+		error("sendMessage");
 
-	n = recvfrom(sock, buffer, 256, 0, (struct sockaddr *)&from, &fromlen);
+	n = receiveMessage(&msgFrom, sock, &from);
 	if (n < 0)
-		error("recvfrom");
+		error("receiveMessage");
 	
-	buffer[n] = '\0';
 	cout << "Got an ack: " << endl;
-	cout << buffer << endl;
+	cout << msgFrom.buffer << endl;
 
 	closesocket(sock);
 
@@ -91,18 +84,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-/*
-int sendMessage(short type, string contents, int sock, struct sockaddr_in *dest)
-{
-	NETWORK_MSG msg;
-
-	msg.type = type;
-	strcpy(msg.buffer, contents.c_str());
-
-	return sendto(sock, (char*)&msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(dest));
-}
-*/
-
+// need to make a function like this that works on windows
 void error(const char *msg)
 {
     perror(msg);
