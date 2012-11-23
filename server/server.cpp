@@ -57,17 +57,19 @@ int main(int argc, char *argv[])
    if (bind(sock,(struct sockaddr *)&server,length)<0) 
       error("binding");
    fromlen = sizeof(struct sockaddr_in);
-   while (1) {
+   while (true) {
       n = receiveMessage(&clientMsg, sock, &from);
       if (n < 0)
          error("recieveMessage");
       cout << "msg: " << clientMsg.buffer << endl;
 
-      if (strcmp(clientMsg.buffer, "Hello"))
+      if (strcmp(clientMsg.buffer, "Hello") == 0)
       {
          strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
       }else {
          int guess = atoi(clientMsg.buffer);
+
+         cout << "guess: " << guess << endl;
 
          if (guess < 1 || guess > 1000) {
             strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
