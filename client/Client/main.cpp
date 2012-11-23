@@ -63,15 +63,25 @@ int main(int argc, char *argv[])
 	memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
 	server.sin_port = htons(atoi(argv[2]));
 
+	strcpy(msgTo.buffer, "Hello");
+	n=sendMessage(&msgTo, sock, &server);
+	if (n < 0)
+		error("sendMessage");
+
+	n = receiveMessage(&msgFrom, sock, &from);
+	if (n < 0)
+		error("receiveMessage");
+	
+	cout << msgFrom.buffer << endl;
+
 	while(true) {
-		cout << "Please enter the message: ";
+		cout << "Please enter a message (or q to quit): ";
 		cin.getline(msgTo.buffer, 256);
 		
-		if (strcmp(msgTo.buffer, "quit") == 0) {
+		if (strcmp(msgTo.buffer, "q") == 0) {
 			break;
 		}
 
-		socklen_t socklen = sizeof(server);
 		n=sendMessage(&msgTo, sock, &server);
 		if (n < 0)
 			error("sendMessage");
@@ -83,11 +93,12 @@ int main(int argc, char *argv[])
 		cout << msgFrom.buffer << endl;
 	}
 
-	cout << "Thank you for playing!" << endl;
-
 	closesocket(sock);
 
 	WSACleanup();
+
+	cout << "Thank you for playing!" << endl;
+	getchar();
 
 	return 0;
 }
