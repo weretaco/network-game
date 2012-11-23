@@ -1,3 +1,5 @@
+#include "../common/compiler.h"
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,6 +15,7 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "../common/message.h"
 
 using namespace std;
 
@@ -28,7 +31,12 @@ int main(int argc, char *argv[])
    socklen_t fromlen;
    struct sockaddr_in server;
    struct sockaddr_in from;
-   char buf[1024];
+   NETWORK_MSG clientMsg, serverMsg;
+
+   srand(time(NULL));
+   int num = (rand() % 1000) + 1;
+
+   cout << "num: " << num << endl;
 
    SSL_load_error_strings();
    ERR_load_BIO_strings();
@@ -47,16 +55,37 @@ int main(int argc, char *argv[])
    server.sin_addr.s_addr=INADDR_ANY;
    server.sin_port=htons(atoi(argv[1]));
    if (bind(sock,(struct sockaddr *)&server,length)<0) 
-       error("binding");
+      error("binding");
    fromlen = sizeof(struct sockaddr_in);
    while (1) {
-       n = recvfrom(sock,buf,1024,0,(struct sockaddr *)&from,&fromlen);
-       if (n < 0) error("recvfrom");
-       write(1,"Received a datagram: ",21);
-       write(1,buf,n);
-       n = sendto(sock,"Got your message\n",17,
-                  0,(struct sockaddr *)&from,fromlen);
-       if (n  < 0) error("sendto");
+      n = receiveMessage(&clientMsg, sock, &from);
+      if (n < 0)
+         error("recieveMessage");
+      cout << "msg: " << clientMsg.buffer << endl;
+
+      if (strcmp(clientMsg.buffer, "Hello"))
+      {
+         strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+      }else {
+         int guess = atoi(clientMsg.buffer);
+
+         if (guess < 1 || guess > 1000) {
+            strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
+         }else if(guess > num)
+            strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
+         else if(guess < num)
+            strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
+         else if(guess == num) {
+            strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
+            num = (rand() % 1000) + 1;
+         }	
+      }
+
+      cout << "msg: " << serverMsg.buffer << endl;
+
+      n = sendMessage(&serverMsg, sock, &from);
+      if (n  < 0)
+         error("sendMessage");
    }
    return 0;
 }
