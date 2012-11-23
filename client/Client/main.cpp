@@ -62,20 +62,28 @@ int main(int argc, char *argv[])
 
 	memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
 	server.sin_port = htons(atoi(argv[2]));
-	cout << "Please enter the message: ";
-	cin.getline(msgTo.buffer, 256);
-	socklen_t socklen = sizeof(server);
 
-	n=sendMessage(&msgTo, sock, &server);
-	if (n < 0)
-		error("sendMessage");
+	while(true) {
+		cout << "Please enter the message: ";
+		cin.getline(msgTo.buffer, 256);
+		
+		if (strcmp(msgTo.buffer, "quit") == 0) {
+			break;
+		}
 
-	n = receiveMessage(&msgFrom, sock, &from);
-	if (n < 0)
-		error("receiveMessage");
+		socklen_t socklen = sizeof(server);
+		n=sendMessage(&msgTo, sock, &server);
+		if (n < 0)
+			error("sendMessage");
+
+		n = receiveMessage(&msgFrom, sock, &from);
+		if (n < 0)
+			error("receiveMessage");
 	
-	cout << "Got an ack: " << endl;
-	cout << msgFrom.buffer << endl;
+		cout << msgFrom.buffer << endl;
+	}
+
+	cout << "Thank you for playing!" << endl;
 
 	closesocket(sock);
 

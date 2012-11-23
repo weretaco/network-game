@@ -4,6 +4,7 @@
 
 #if defined WINDOWS
 	#include <winsock2.h>
+	#include <WS2tcpip.h>
 #elif defined LINUX
 	#include <sys/socket.h>
 	#include <netinet/in.h>
