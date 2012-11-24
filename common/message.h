@@ -5,8 +5,8 @@
 
 typedef struct
 {
-	short type;
-	char buffer[256];
+   short type;
+   char buffer[256];
 } NETWORK_MSG;
 
 int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
