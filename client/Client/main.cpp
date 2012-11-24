@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -53,7 +54,11 @@ int main(int argc, char **argv)
    bool key[4] = { false, false, false, false };
    bool redraw = true;
    bool doexit = false;
- 
+
+   vector<string> vctChat;
+   string strPrompt;
+   string strEnteredInput;
+
    if(!al_init()) {
       fprintf(stderr, "failed to initialize allegro!\n");
       return -1;
@@ -120,102 +125,7 @@ int main(int argc, char **argv)
    al_clear_to_color(al_map_rgb(0,0,0));
  
    al_flip_display();
- 
-   al_start_timer(timer);
- 
-   while(!doexit)
-   {
-      ALLEGRO_EVENT ev;
-      al_wait_for_event(event_queue, &ev);
- 
-      if(ev.type == ALLEGRO_EVENT_TIMER) {
-         if(key[KEY_UP] && bouncer_y >= 4.0) {
-            bouncer_y -= 4.0;
-         }
- 
-         if(key[KEY_DOWN] && bouncer_y <= SCREEN_H - BOUNCER_SIZE - 4.0) {
-            bouncer_y += 4.0;
-         }
- 
-         if(key[KEY_LEFT] && bouncer_x >= 4.0) {
-            bouncer_x -= 4.0;
-         }
- 
-         if(key[KEY_RIGHT] && bouncer_x <= SCREEN_W - BOUNCER_SIZE - 4.0) {
-            bouncer_x += 4.0;
-         }
- 
-         redraw = true;
-      }
-      else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-         break;
-      }
-      else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-         switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = true;
-               break;
- 
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = true;
-               break;
- 
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = true;
-               break;
- 
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = true;
-               break;
-         }
-      }
-      else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
-         switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = false;
-               break;
- 
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = false;
-               break;
- 
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = false;
-               break;
- 
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = false;
-               break;
- 
-            case ALLEGRO_KEY_ESCAPE:
-               doexit = true;
-               break;
-         }
-      }
- 
-      if(redraw && al_is_event_queue_empty(event_queue)) {
-         redraw = false;
- 
-         al_clear_to_color(al_map_rgb(0,0,0));
- 
-         al_draw_bitmap(bouncer, bouncer_x, bouncer_y, 0);
-         al_draw_text(font, al_map_rgb(255,255,255), 10, 10, ALLEGRO_ALIGN_LEFT, "Your Text Here!");
-         
-         al_flip_display();
-      }
-   }
-   
-   al_destroy_event_queue(event_queue);
-   al_destroy_bitmap(bouncer);
-   al_destroy_display(display);
-   al_destroy_timer(timer);
- 
-   return 0;
-}
 
-/*
-int main(int argc, char *argv[])
-{
    int sock, n;
    struct sockaddr_in server, from;
    struct hostent *hp;
@@ -250,41 +160,146 @@ int main(int argc, char *argv[])
    if (n < 0)
       error("receiveMessage");
 	
-   cout << msgFrom.buffer << endl;
+   vctChat.push_back(string(msgFrom.buffer));
 
-   while(true) {
-      cout << "Please enter a message (or q to quit): ";
-      cin.getline(msgTo.buffer, 256);
-		
-      if (strcmp(msgTo.buffer, "q") == 0) {
-         break;
+   al_start_timer(timer);
+ 
+   while(!doexit)
+   {
+      ALLEGRO_EVENT ev;
+      al_wait_for_event(event_queue, &ev);
+ 
+      if(ev.type == ALLEGRO_EVENT_TIMER) {
+         if(key[KEY_UP] && bouncer_y >= 4.0) {
+            bouncer_y -= 4.0;
+         }
+ 
+         if(key[KEY_DOWN] && bouncer_y <= SCREEN_H - BOUNCER_SIZE - 4.0) {
+            bouncer_y += 4.0;
+         }
+ 
+         if(key[KEY_LEFT] && bouncer_x >= 4.0) {
+            bouncer_x -= 4.0;
+         }
+ 
+         if(key[KEY_RIGHT] && bouncer_x <= SCREEN_W - BOUNCER_SIZE - 4.0) {
+            bouncer_x += 4.0;
+         }
+ 
+         redraw = true;
       }
+      else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+         doexit = true;
+      }
+      else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
+         switch(ev.keyboard.keycode) {
+            case ALLEGRO_KEY_UP:
+               key[KEY_UP] = true;
+               break;
+ 
+            case ALLEGRO_KEY_DOWN:
+               key[KEY_DOWN] = true;
+               break;
+ 
+            case ALLEGRO_KEY_LEFT: 
+               key[KEY_LEFT] = true;
+               break;
+ 
+            case ALLEGRO_KEY_RIGHT:
+               key[KEY_RIGHT] = true;
+               break;
 
-      n=sendMessage(&msgTo, sock, &server);
-      if (n < 0)
-         error("sendMessage");
+			case ALLEGRO_KEY_ENTER:
+			   strEnteredInput = strPrompt;
+			   strPrompt.clear();
 
-      n = receiveMessage(&msgFrom, sock, &from);
-      if (n < 0)
-         error("receiveMessage");
+			   if (strEnteredInput.compare("q") == 0) {
+			      doexit = true;
+		       }
+			   else
+			   {
+                  strcpy(msgTo.buffer, strEnteredInput.c_str());
+		          n=sendMessage(&msgTo, sock, &server);
+		          if (n < 0)
+			         error("sendMessage");
 
-      cout << msgFrom.buffer << endl;
+		          n = receiveMessage(&msgFrom, sock, &from);
+		          if (n < 0)
+			         error("receiveMessage");
+
+		          vctChat.push_back(string(msgFrom.buffer));
+			   }
+
+			   break;
+         }
+
+		 if(ALLEGRO_KEY_A <= ev.keyboard.keycode && ev.keyboard.keycode <= ALLEGRO_KEY_Z)
+		 {
+            char newChar = 'a'+ev.keyboard.keycode-ALLEGRO_KEY_A;
+            strPrompt.append(1, newChar);
+		 }
+
+		 if(ALLEGRO_KEY_0 <= ev.keyboard.keycode && ev.keyboard.keycode <= ALLEGRO_KEY_9)
+		 {
+            char newChar = '0'+ev.keyboard.keycode-ALLEGRO_KEY_0;
+            strPrompt.append(1, newChar);
+		 }
+      }
+      else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
+         switch(ev.keyboard.keycode) {
+            case ALLEGRO_KEY_UP:
+               key[KEY_UP] = false;
+               break;
+ 
+            case ALLEGRO_KEY_DOWN:
+               key[KEY_DOWN] = false;
+               break;
+ 
+            case ALLEGRO_KEY_LEFT: 
+               key[KEY_LEFT] = false;
+               break;
+ 
+            case ALLEGRO_KEY_RIGHT:
+               key[KEY_RIGHT] = false;
+               break;
+ 
+            case ALLEGRO_KEY_ESCAPE:
+               doexit = true;
+               break;
+         }
+      }
+ 
+      if(redraw && al_is_event_queue_empty(event_queue)) {
+         redraw = false;
+ 
+         al_clear_to_color(al_map_rgb(0,0,0));
+ 
+         al_draw_bitmap(bouncer, bouncer_x, bouncer_y, 0);
+
+		 for(int x=0; x<vctChat.size(); x++)
+            al_draw_text(font, al_map_rgb(255,255,255), 10, 10+x*15, ALLEGRO_ALIGN_LEFT, vctChat[x].c_str());
+
+		 al_draw_text(font, al_map_rgb(255,255,255), 10, 460, ALLEGRO_ALIGN_LEFT, strPrompt.c_str());
+         
+         al_flip_display();
+      }
    }
 
-#if defined WINDOWS
-   closesocket(sock);
-#elif defined LINUX
-   close(sock);
-#endif
+   #if defined WINDOWS
+      closesocket(sock);
+   #elif defined LINUX
+      close(sock);
+   #endif
 
    shutdownWinSock();
-
-   cout << "Thank you for playing!" << endl;
-   getchar();
-
+   
+   al_destroy_event_queue(event_queue);
+   al_destroy_bitmap(bouncer);
+   al_destroy_display(display);
+   al_destroy_timer(timer);
+ 
    return 0;
 }
-*/
 
 void initWinSock()
 {
