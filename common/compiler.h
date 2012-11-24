@@ -1,11 +1,11 @@
 #if defined _WIN64
-	#define WINDOWS
+   #define WINDOWS
 #elif defined _WIN32
-	#define WINDOWS
+   #define WINDOWS
 #elif defined __linux
-	#define LINUX
+   #define LINUX
 #elif defined __unix
-	#define LINUX
+   #define LINUX
 #elif defined __posix
-	#define LINUX
+   #define LINUX
 #endif
