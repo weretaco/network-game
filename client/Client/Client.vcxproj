@@ -64,11 +64,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\message.cpp" />
+    <ClCompile Include="chat.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\compiler.h" />
     <ClInclude Include="..\..\common\message.h" />
+    <ClInclude Include="chat.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

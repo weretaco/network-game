@@ -25,8 +25,10 @@
 
 #include "../../common/message.h"
 
+#include "chat.h"
+
 #ifdef WINDOWS
-	#pragma comment(lib, "ws2_32.lib")
+   #pragma comment(lib, "ws2_32.lib")
 #endif
 
 using namespace std;
@@ -55,9 +57,7 @@ int main(int argc, char **argv)
    bool redraw = true;
    bool doexit = false;
 
-   vector<string> vctChat;
-   string strPrompt;
-   string strEnteredInput;
+   chat chatConsole;
 
    if(!al_init()) {
       fprintf(stderr, "failed to initialize allegro!\n");
@@ -160,7 +160,7 @@ int main(int argc, char **argv)
    if (n < 0)
       error("receiveMessage");
 	
-   vctChat.push_back(string(msgFrom.buffer));
+   chatConsole.addLine(msgFrom.buffer);
 
    al_start_timer(timer);
  
@@ -192,58 +192,44 @@ int main(int argc, char **argv)
          doexit = true;
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-         switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = true;
-               break;
+         bool eventConsumed = chatConsole.processEvent(ev);
+
+         if (eventConsumed) {
+            string input = chatConsole.getInput();
+            if (!input.empty()) {
+               cout << "input: " << input << endl;
+               strcpy(msgTo.buffer, input.c_str());
+               
+               n=sendMessage(&msgTo, sock, &server);
+               if (n < 0)
+                  error("sendMessage");
+
+               n = receiveMessage(&msgFrom, sock, &from);
+               if (n < 0)
+                  error("receiveMessage");
+
+               chatConsole.addLine(string(msgFrom.buffer));
+               cout << "Added new line" << endl;
+            }
+         }else {
+            switch(ev.keyboard.keycode) {
+               case ALLEGRO_KEY_UP:
+                  key[KEY_UP] = true;
+                  break;
  
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = true;
-               break;
+               case ALLEGRO_KEY_DOWN:
+                  key[KEY_DOWN] = true;
+                  break;
  
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = true;
-               break;
+               case ALLEGRO_KEY_LEFT: 
+                  key[KEY_LEFT] = true;
+                  break;
  
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = true;
-               break;
-
-			case ALLEGRO_KEY_ENTER:
-			   strEnteredInput = strPrompt;
-			   strPrompt.clear();
-
-			   if (strEnteredInput.compare("q") == 0) {
-			      doexit = true;
-		       }
-			   else
-			   {
-                  strcpy(msgTo.buffer, strEnteredInput.c_str());
-		          n=sendMessage(&msgTo, sock, &server);
-		          if (n < 0)
-			         error("sendMessage");
-
-		          n = receiveMessage(&msgFrom, sock, &from);
-		          if (n < 0)
-			         error("receiveMessage");
-
-		          vctChat.push_back(string(msgFrom.buffer));
-			   }
-
-			   break;
+               case ALLEGRO_KEY_RIGHT:
+                  key[KEY_RIGHT] = true;
+                  break;
+            }
          }
-
-		 if(ALLEGRO_KEY_A <= ev.keyboard.keycode && ev.keyboard.keycode <= ALLEGRO_KEY_Z)
-		 {
-            char newChar = 'a'+ev.keyboard.keycode-ALLEGRO_KEY_A;
-            strPrompt.append(1, newChar);
-		 }
-
-		 if(ALLEGRO_KEY_0 <= ev.keyboard.keycode && ev.keyboard.keycode <= ALLEGRO_KEY_9)
-		 {
-            char newChar = '0'+ev.keyboard.keycode-ALLEGRO_KEY_0;
-            strPrompt.append(1, newChar);
-		 }
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
          switch(ev.keyboard.keycode) {
@@ -276,11 +262,8 @@ int main(int argc, char **argv)
  
          al_draw_bitmap(bouncer, bouncer_x, bouncer_y, 0);
 
-		 for(int x=0; x<vctChat.size(); x++)
-            al_draw_text(font, al_map_rgb(255,255,255), 10, 10+x*15, ALLEGRO_ALIGN_LEFT, vctChat[x].c_str());
+         chatConsole.draw(font, al_map_rgb(255,255,255));
 
-		 al_draw_text(font, al_map_rgb(255,255,255), 10, 460, ALLEGRO_ALIGN_LEFT, strPrompt.c_str());
-         
          al_flip_display();
       }
    }

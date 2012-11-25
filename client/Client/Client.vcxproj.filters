@@ -16,6 +16,9 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{9ecfb491-9e8e-4a29-bc07-dd887204d590}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{6c9ad2f2-bc8d-4e25-9c5c-c4440c60991c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -24,13 +27,19 @@
     <ClCompile Include="..\..\common\message.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="chat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\message.h">
-      <Filter>Source Files\common</Filter>
+    <ClInclude Include="chat.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\compiler.h">
-      <Filter>Source Files\common</Filter>
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\message.h">
+      <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
