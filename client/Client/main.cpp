@@ -42,7 +42,15 @@ const int SCREEN_W = 640;
 const int SCREEN_H = 480;
 const int BOUNCER_SIZE = 32;
 enum MYKEYS {
-   KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
+   KEY_UP,
+   KEY_DOWN,
+   KEY_LEFT,
+   KEY_RIGHT
+};
+
+enum STATE {
+   STATE_START,
+   STATE_LOGIN
 };
  
 int main(int argc, char **argv)
@@ -56,6 +64,8 @@ int main(int argc, char **argv)
    bool key[4] = { false, false, false, false };
    bool redraw = true;
    bool doexit = false;
+
+   int state = STATE_START;
 
    chat chatConsole;
 
@@ -129,7 +139,7 @@ int main(int argc, char **argv)
    int sock, n;
    struct sockaddr_in server, from;
    struct hostent *hp;
-   char buffer[256];
+   //char buffer[256];
    NETWORK_MSG msgTo, msgFrom;
 
    if (argc != 3) {
@@ -199,7 +209,20 @@ int main(int argc, char **argv)
             if (!input.empty()) {
                cout << "input: " << input << endl;
                strcpy(msgTo.buffer, input.c_str());
-               
+
+               switch(state)
+               {
+               case STATE_START:
+                  msgTo.type = MSG_TYPE_LOGIN;
+                  break;
+               case STATE_LOGIN:
+                  msgTo.type = MSG_TYPE_CHAT;
+                  break;
+               default:
+                  cout << "The state has an invalid value: " << state << endl;
+                  break;
+               }
+
                n=sendMessage(&msgTo, sock, &server);
                if (n < 0)
                   error("sendMessage");
@@ -208,8 +231,19 @@ int main(int argc, char **argv)
                if (n < 0)
                   error("receiveMessage");
 
-               chatConsole.addLine(string(msgFrom.buffer));
-               cout << "Added new line" << endl;
+               switch(state)
+               {
+               case STATE_START:
+                  state = STATE_LOGIN;
+                  break;
+               case STATE_LOGIN:
+                  chatConsole.addLine(string(msgFrom.buffer));
+                  cout << "Added new line" << endl;
+                  break;
+               default:
+                  cout << "The state has an invalid value: " << state << endl;
+                  break;
+               }
             }
          }else {
             switch(ev.keyboard.keycode) {

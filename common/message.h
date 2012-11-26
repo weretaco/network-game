@@ -1,7 +1,8 @@
 #ifndef _MESAGE_H
 #define _MESSAGE_H
 
-#define MSG_TYPE_SOMETHING 1000
+#define MSG_TYPE_LOGIN  1
+#define MSG_TYPE_CHAT   2
 
 typedef struct
 {
