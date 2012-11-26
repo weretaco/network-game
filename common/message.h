@@ -2,7 +2,8 @@
 #define _MESSAGE_H
 
 #define MSG_TYPE_LOGIN  1
-#define MSG_TYPE_CHAT   2
+#define MSG_TYPE_LOGOUT 2
+#define MSG_TYPE_CHAT   3
 
 typedef struct
 {

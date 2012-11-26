@@ -139,8 +139,8 @@ int main(int argc, char **argv)
    int sock, n;
    struct sockaddr_in server, from;
    struct hostent *hp;
-   //char buffer[256];
    NETWORK_MSG msgTo, msgFrom;
+   string username;
 
    if (argc != 3) {
       cout << "Usage: server port" << endl;
@@ -160,17 +160,6 @@ int main(int argc, char **argv)
 
    memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
    server.sin_port = htons(atoi(argv[2]));
-
-   strcpy(msgTo.buffer, "Hello");
-   n=sendMessage(&msgTo, sock, &server);
-   if (n < 0)
-      error("sendMessage");
-
-   n = receiveMessage(&msgFrom, sock, &from);
-   if (n < 0)
-      error("receiveMessage");
-	
-   chatConsole.addLine(msgFrom.buffer);
 
    al_start_timer(timer);
  
@@ -214,9 +203,18 @@ int main(int argc, char **argv)
                {
                case STATE_START:
                   msgTo.type = MSG_TYPE_LOGIN;
+                  username = input;
                   break;
                case STATE_LOGIN:
-                  msgTo.type = MSG_TYPE_CHAT;
+                  if (input.compare("quit") == 0 ||
+                      input.compare("exit") == 0 ||
+                      input.compare("logout") == 0)
+                  {
+                     strcpy(msgTo.buffer, username.c_str());
+                     msgTo.type = MSG_TYPE_LOGOUT;
+                  }
+                  else
+                     msgTo.type = MSG_TYPE_CHAT;
                   break;
                default:
                   cout << "The state has an invalid value: " << state << endl;
@@ -233,16 +231,34 @@ int main(int argc, char **argv)
 
                switch(state)
                {
-               case STATE_START:
-                  state = STATE_LOGIN;
-                  break;
-               case STATE_LOGIN:
-                  chatConsole.addLine(string(msgFrom.buffer));
-                  cout << "Added new line" << endl;
-                  break;
-               default:
-                  cout << "The state has an invalid value: " << state << endl;
-                  break;
+                  case STATE_START:
+                  {
+                     string loginResponse = string(msgFrom.buffer);
+                     chatConsole.addLine(string(msgFrom.buffer));
+
+                     if (loginResponse.compare("Player has already logged in.") == 0)
+                     {
+                        cout << "User login failed" << endl;
+                        username.clear();
+                     }
+                     else
+                     {
+                        cout << "User login successful" << endl;
+                        state = STATE_LOGIN;
+                     }
+                     break;
+                  }
+                  case STATE_LOGIN:
+                  {
+                     chatConsole.addLine(string(msgFrom.buffer));
+                     cout << "Added new line" << endl;
+                     break;
+                  }
+                  default:
+                  {
+                     cout << "The state has an invalid value: " << state << endl;
+                     break;
+                  }
                }
             }
          }else {
