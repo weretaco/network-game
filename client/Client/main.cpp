@@ -50,7 +50,8 @@ enum MYKEYS {
 
 enum STATE {
    STATE_START,
-   STATE_LOGIN
+   STATE_LOGIN,
+   STATE_LOGOUT
 };
  
 int main(int argc, char **argv)
@@ -201,24 +202,37 @@ int main(int argc, char **argv)
 
                switch(state)
                {
-               case STATE_START:
-                  msgTo.type = MSG_TYPE_LOGIN;
-                  username = input;
-                  break;
-               case STATE_LOGIN:
-                  if (input.compare("quit") == 0 ||
-                      input.compare("exit") == 0 ||
-                      input.compare("logout") == 0)
+                  case STATE_START:
                   {
-                     strcpy(msgTo.buffer, username.c_str());
-                     msgTo.type = MSG_TYPE_LOGOUT;
+                     msgTo.type = MSG_TYPE_LOGIN;
+                     username = input;
+                     break;
                   }
-                  else
-                     msgTo.type = MSG_TYPE_CHAT;
-                  break;
-               default:
-                  cout << "The state has an invalid value: " << state << endl;
-                  break;
+                  case STATE_LOGIN:
+                  {
+                     if (input.compare("quit") == 0 ||
+                         input.compare("exit") == 0 ||
+                         input.compare("logout") == 0)
+                     {
+                        strcpy(msgTo.buffer, username.c_str());
+                        msgTo.type = MSG_TYPE_LOGOUT;
+                     }
+                     else
+                        msgTo.type = MSG_TYPE_CHAT;
+                     break;
+                  }
+                  case STATE_LOGOUT:
+                  {
+                     cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
+                  
+                     break;
+                  }
+                  default:
+                  {
+                     cout << "The state has an invalid value: " << state << endl;
+                  
+                     break;
+                  }
                }
 
                n=sendMessage(&msgTo, sock, &server);
@@ -229,14 +243,15 @@ int main(int argc, char **argv)
                if (n < 0)
                   error("receiveMessage");
 
+               string response = string(msgFrom.buffer);
+
                switch(state)
                {
                   case STATE_START:
                   {
-                     string loginResponse = string(msgFrom.buffer);
                      chatConsole.addLine(string(msgFrom.buffer));
 
-                     if (loginResponse.compare("Player has already logged in.") == 0)
+                     if (response.compare("Player has already logged in.") == 0)
                      {
                         cout << "User login failed" << endl;
                         username.clear();
@@ -251,12 +266,28 @@ int main(int argc, char **argv)
                   case STATE_LOGIN:
                   {
                      chatConsole.addLine(string(msgFrom.buffer));
-                     cout << "Added new line" << endl;
+
+                     if (response.compare("You have been successfully logged out. You may quit the game.") == 0)
+                     {
+                        state = STATE_LOGOUT;
+                     }
+                     else
+                     {
+                        cout << "Added new line" << endl;
+                     }
+                     
+                     break;
+                  }
+                  case STATE_LOGOUT:
+                  {
+                     cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
+                  
                      break;
                   }
                   default:
                   {
                      cout << "The state has an invalid value: " << state << endl;
+
                      break;
                   }
                }
