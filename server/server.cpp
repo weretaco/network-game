@@ -135,9 +135,11 @@ int main(int argc, char *argv[])
             }
             else
             {
-               vctPlayers.erase(p);
+               vctPlayers.erase((vector<player>::iterator)p);
                strcpy(serverMsg.buffer, "You have successfully logged out. You may quit the game.");
             }
+
+            break;
          }
          case MSG_TYPE_CHAT:
          {
