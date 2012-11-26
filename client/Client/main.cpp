@@ -137,7 +137,7 @@ int main(int argc, char **argv)
  
    al_flip_display();
 
-   int sock, n;
+   int sock;
    struct sockaddr_in server, from;
    struct hostent *hp;
    NETWORK_MSG msgTo, msgFrom;
@@ -206,6 +206,7 @@ int main(int argc, char **argv)
                   {
                      msgTo.type = MSG_TYPE_LOGIN;
                      username = input;
+
                      break;
                   }
                   case STATE_LOGIN:
@@ -219,6 +220,7 @@ int main(int argc, char **argv)
                      }
                      else
                         msgTo.type = MSG_TYPE_CHAT;
+
                      break;
                   }
                   case STATE_LOGOUT:
@@ -235,16 +237,13 @@ int main(int argc, char **argv)
                   }
                }
 
-               n=sendMessage(&msgTo, sock, &server);
-               if (n < 0)
-                  error("sendMessage");
+               sendMessage(&msgTo, sock, &server);
 
-               n = receiveMessage(&msgFrom, sock, &from);
-               if (n < 0)
-                  error("receiveMessage");
-
+               receiveMessage(&msgFrom, sock, &from);
                string response = string(msgFrom.buffer);
 
+               // this whole select block should go in a new function.
+               // Figure out how to pass and return params properly
                switch(state)
                {
                   case STATE_START:
@@ -261,6 +260,7 @@ int main(int argc, char **argv)
                         cout << "User login successful" << endl;
                         state = STATE_LOGIN;
                      }
+
                      break;
                   }
                   case STATE_LOGIN:
