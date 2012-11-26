@@ -35,6 +35,8 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &username);
+
 void error(const char *);
 
 const float FPS = 60;
@@ -207,6 +209,11 @@ int main(int argc, char **argv)
                      msgTo.type = MSG_TYPE_LOGIN;
                      username = input;
 
+                     sendMessage(&msgTo, sock, &server);
+                     receiveMessage(&msgFrom, sock, &from);
+                     processMessage(msgFrom, state, chatConsole, username);
+                     cout << "state: " << state << endl;
+
                      break;
                   }
                   case STATE_LOGIN:
@@ -221,11 +228,18 @@ int main(int argc, char **argv)
                      else
                         msgTo.type = MSG_TYPE_CHAT;
 
+                     sendMessage(&msgTo, sock, &server);
+                     receiveMessage(&msgFrom, sock, &from);
+                     processMessage(msgFrom, state, chatConsole, username);
+                     cout << "state: " << state << endl;
+
                      break;
                   }
                   case STATE_LOGOUT:
                   {
-                     cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
+                     chatConsole.addLine("You're logged out, so you can't send any messages to the server.");
+
+                     cout << "You're logged out, so you can't send any messages to the server." << endl;
                   
                      break;
                   }
@@ -233,61 +247,6 @@ int main(int argc, char **argv)
                   {
                      cout << "The state has an invalid value: " << state << endl;
                   
-                     break;
-                  }
-               }
-
-               sendMessage(&msgTo, sock, &server);
-
-               receiveMessage(&msgFrom, sock, &from);
-               string response = string(msgFrom.buffer);
-
-               // this whole select block should go in a new function.
-               // Figure out how to pass and return params properly
-               switch(state)
-               {
-                  case STATE_START:
-                  {
-                     chatConsole.addLine(string(msgFrom.buffer));
-
-                     if (response.compare("Player has already logged in.") == 0)
-                     {
-                        cout << "User login failed" << endl;
-                        username.clear();
-                     }
-                     else
-                     {
-                        cout << "User login successful" << endl;
-                        state = STATE_LOGIN;
-                     }
-
-                     break;
-                  }
-                  case STATE_LOGIN:
-                  {
-                     chatConsole.addLine(string(msgFrom.buffer));
-
-                     if (response.compare("You have been successfully logged out. You may quit the game.") == 0)
-                     {
-                        state = STATE_LOGOUT;
-                     }
-                     else
-                     {
-                        cout << "Added new line" << endl;
-                     }
-                     
-                     break;
-                  }
-                  case STATE_LOGOUT:
-                  {
-                     cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
-                  
-                     break;
-                  }
-                  default:
-                  {
-                     cout << "The state has an invalid value: " << state << endl;
-
                      break;
                   }
                }
@@ -365,6 +324,14 @@ int main(int argc, char **argv)
    return 0;
 }
 
+// need to make a function like this that works on windows
+void error(const char *msg)
+{
+   perror(msg);
+   shutdownWinSock();
+   exit(1);
+}
+
 void initWinSock()
 {
 #if defined WINDOWS
@@ -390,10 +357,58 @@ void shutdownWinSock()
 #endif
 }
 
-// need to make a function like this that works on windows
-void error(const char *msg)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &username)
 {
-   perror(msg);
-   shutdownWinSock();
-   exit(1);
+   string response = string(msg.buffer);
+
+   // this whole select block should go in a new function.
+   // Figure out how to pass and return params properly
+   switch(state)
+   {
+      case STATE_START:
+      {
+         chatConsole.addLine(response);
+
+         if (response.compare("Player has already logged in.") == 0)
+         {
+            cout << "User login failed" << endl;
+            username.clear();
+         }
+         else
+         {
+            cout << "User login successful" << endl;
+            state = STATE_LOGIN;
+         }
+
+         break;
+      }
+      case STATE_LOGIN:
+      {
+         chatConsole.addLine(response);
+
+         if (response.compare("You have successfully logged out. You may quit the game.") == 0)
+         {
+            cout << "Logged out" << endl;
+            state = STATE_LOGOUT;
+         }
+         else
+         {
+            cout << "Added new line" << endl;
+         }
+                     
+         break;
+      }
+      case STATE_LOGOUT:
+      {
+         cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
+                  
+         break;
+      }
+      default:
+      {
+         cout << "The state has an invalid value: " << state << endl;
+
+         break;
+      }
+   }
 }
