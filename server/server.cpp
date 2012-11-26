@@ -101,89 +101,74 @@ int main(int argc, char *argv[])
 
       switch(clientMsg.type)
       {
-      {
-      case MSG_TYPE_LOGIN:
-         string name(clientMsg.buffer);
-         cout << "Player logging in: " << name << endl;
-
-         player *p = findPlayerByName(vctPlayers, name);
-
-         if (p == NULL)
+         case MSG_TYPE_LOGIN:
          {
-            vctPlayers.push_back(player(name, from));
-            strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+            string name(clientMsg.buffer);
+            cout << "Player logging in: " << name << endl;
+
+            player *p = findPlayerByName(vctPlayers, name);
+
+            if (p == NULL)
+            {
+               vctPlayers.push_back(player(name, from));
+               strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+            }
+            else
+            {
+               strcpy(serverMsg.buffer, "Player has already logged in.");
+            }
+
+            serverMsg.type = MSG_TYPE_LOGIN;
+
+            break;
          }
-         else
+         case MSG_TYPE_LOGOUT:
          {
-            strcpy(serverMsg.buffer, "Player has already logged in.");
+            string name(clientMsg.buffer);
+            cout << "Player logging out: " << name << endl;
+
+            player *p = findPlayerByName(vctPlayers, name);
+
+            if (p == NULL)
+            {
+               strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
+            }
+            else
+            {
+               vctPlayers.erase(p);
+               strcpy(serverMsg.buffer, "You have successfully logged out. You may quit the game.");
+            }
          }
-
-         serverMsg.type = MSG_TYPE_LOGIN;
-
-         break;
-      }
-      case MSG_TYPE_CHAT:
-      {
-         int guess = atoi(clientMsg.buffer);
-
-         cout << "guess: " << guess << endl;
-
-         if (guess < 1 || guess > 1000) {
-            strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
-         }else if(guess > num)
-            strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
-         else if(guess < num)
-            strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
-         else if(guess == num) {
-            strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
-            num = (rand() % 1000) + 1;
-         }	
-
-         serverMsg.type = MSG_TYPE_CHAT;
-
-         break;
-      }
-      default:
-      {
-         strcpy(serverMsg.buffer, "Server error occured. Report this please.");
-
-         serverMsg.type = MSG_TYPE_CHAT;
-
-         break;
-      }
-      }
-
-      /*
-      if (strcmp(clientMsg.buffer, "Hello") == 0)
-      {
-         player *p = findPlayerByName(vctPlayers, "Boberty");
-
-         if (p == NULL)
+         case MSG_TYPE_CHAT:
          {
-            vctPlayers.push_back(player("Boberty", from));
-            strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+            int guess = atoi(clientMsg.buffer);
+
+            cout << "guess: " << guess << endl;
+
+            if (guess < 1 || guess > 1000) {
+               strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
+            }else if(guess > num)
+               strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
+            else if(guess < num)
+               strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
+            else if(guess == num) {
+               strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
+               num = (rand() % 1000) + 1;
+            }	
+
+            serverMsg.type = MSG_TYPE_CHAT;
+
+            break;
          }
-         else
+         default:
          {
-            strcpy(serverMsg.buffer, "Player has already logged in.");
+            strcpy(serverMsg.buffer, "Server error occured. Report this please.");
+
+            serverMsg.type = MSG_TYPE_CHAT;
+
+            break;
          }
-      }else {
-         int guess = atoi(clientMsg.buffer);
-
-         cout << "guess: " << guess << endl;
-
-         if (guess < 1 || guess > 1000) {
-            strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
-         }else if(guess > num)
-            strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
-         else if(guess < num)
-            strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
-         else if(guess == num) {
-            strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
-            num = (rand() % 1000) + 1;
-         }	
       }
-      */
 
       cout << "msg: " << serverMsg.buffer << endl;
 
