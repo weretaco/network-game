@@ -1,28 +1,45 @@
 #include "../common/compiler.h"
 
 #include <sys/types.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <string.h>
+#include <string>
 #include <netdb.h>
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 #include <mysql/mysql.h>
 
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include "../common/message.h"
 
+#include "player.h"
+#include "../common/message.h"
+///////////
 using namespace std;
 
 void error(const char *msg)
 {
     perror(msg);
     exit(0);
+}
+
+player *findPlayerByName(vector<player> &vec, string name)
+{
+   vector<player>::iterator it;
+
+   for (it = vec.begin(); it != vec.end(); it++)
+   {
+      if ( it->name.compare(name) == 0 )
+         return &(*it);
+   }
+
+   return NULL;
 }
 
 int main(int argc, char *argv[])
@@ -32,6 +49,7 @@ int main(int argc, char *argv[])
    struct sockaddr_in server;
    struct sockaddr_in from;
    NETWORK_MSG clientMsg, serverMsg;
+   vector<player> vctPlayers;
 
    srand(time(NULL));
    int num = (rand() % 1000) + 1;
@@ -52,20 +70,47 @@ int main(int argc, char *argv[])
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
-   server.sin_addr.s_addr=INADDR_ANY;
    server.sin_port=htons(atoi(argv[1]));
-   if (bind(sock,(struct sockaddr *)&server,length)<0) 
+   server.sin_addr.s_addr=INADDR_ANY;
+   if ( bind(sock, (struct sockaddr *)&server, length) < 0 ) 
       error("binding");
    fromlen = sizeof(struct sockaddr_in);
    while (true) {
+      // if n == 0, means the client disconnected. may want to check this
       n = receiveMessage(&clientMsg, sock, &from);
       if (n < 0)
          error("recieveMessage");
       cout << "msg: " << clientMsg.buffer << endl;
 
+      // Ptoyovol Design
+      //
+      // Client sends a login message
+      // Server replies with client's position in the world and positions of
+      // oall other logged in players
+      // Merver sends player ids along with locations
+      // This means a newly logged in client will need to know which id is
+      // assigned to it
+      // So server needs to send an id message, wait for an ack, and then send
+      // the location messages
+
+      // When a client shuts down, it sends a message to indicate this so the
+      // server can remove it from the list of connected clients
+      // Eventually, there'll need to be a way to detect timeouts from clients
+      // (if they crashed or otherwise failed to send the logout message)
+
       if (strcmp(clientMsg.buffer, "Hello") == 0)
       {
-         strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+         player *p = findPlayerByName(vctPlayers, "Boberty");
+
+         if (p == NULL)
+         {
+            vctPlayers.push_back(player("Boberty", from));
+            strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+         }
+         else
+         {
+            strcpy(serverMsg.buffer, "Player has already logged in.");
+         }
       }else {
          int guess = atoi(clientMsg.buffer);
 

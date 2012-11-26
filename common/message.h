@@ -1,5 +1,5 @@
 #ifndef _MESAGE_H
-#define _MESSAGE__H
+#define _MESSAGE_H
 
 #define MSG_TYPE_SOMETHING 1000
 
