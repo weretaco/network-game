@@ -1,16 +1,17 @@
 #include "../common/compiler.h"
 
-#include <sys/types.h>
 #include <cstdlib>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <string>
 #include <netdb.h>
 #include <cstdio>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <mysql/mysql.h>
 
@@ -40,6 +41,7 @@
 
 using namespace std;
 
+// this should probably go somewhere in the common folder
 void error(const char *msg)
 {
     perror(msg);
@@ -59,12 +61,27 @@ player *findPlayerByName(vector<player> &vec, string name)
    return NULL;
 }
 
+// not sure if we actually need this function
+// when I made it, I thought we did
+player *findPlayerByAddr(vector<player> &vec, sockaddr_in &addr)
+{
+   vector<player>::iterator it;
+
+   for (it = vec.begin(); it != vec.end(); it++)
+   {
+      if ( it->addr.sin_addr.s_addr == addr.sin_addr.s_addr &&
+           it->addr.sin_port == addr.sin_port )
+         return &(*it);
+   }
+
+   return NULL;
+}
+
 int main(int argc, char *argv[])
 {
    int sock, length, n;
-   socklen_t fromlen;
    struct sockaddr_in server;
-   struct sockaddr_in from;
+   struct sockaddr_in from; // holds the info on the connected client
    NETWORK_MSG clientMsg, serverMsg;
    vector<player> vctPlayers;
 
@@ -78,8 +95,8 @@ int main(int argc, char *argv[])
    OpenSSL_add_all_algorithms();
 
    if (argc < 2) {
-      fprintf(stderr, "ERROR, no port provided\n");
-      exit(0);
+      cerr << "ERROR, no port provided" << endl;
+      exit(1);
    }
    
    sock=socket(AF_INET, SOCK_DGRAM, 0);
@@ -91,14 +108,19 @@ int main(int argc, char *argv[])
    server.sin_addr.s_addr=INADDR_ANY;
    if ( bind(sock, (struct sockaddr *)&server, length) < 0 ) 
       error("binding");
-   fromlen = sizeof(struct sockaddr_in);
+
    while (true) {
       // if n == 0, means the client disconnected. may want to check this
       n = receiveMessage(&clientMsg, sock, &from);
       if (n < 0)
          error("recieveMessage");
-      cout << "MSG: type: " << clientMsg.type << " contents: " << clientMsg.buffer << endl;
+      cout << "ip address: " << inet_ntoa(from.sin_addr) << endl;
+      cout << "port: " << from.sin_port << endl;
+      cout << "MSG: type: " << clientMsg.type << endl;
+      cout << "MSG contents: " << clientMsg.buffer << endl;
 
+      // Check that if an invalid message is sent, the client will corectly
+      // receive and display the response. Maybe make a special error msg type
       switch(clientMsg.type)
       {
          case MSG_TYPE_LOGIN:
@@ -133,6 +155,11 @@ int main(int argc, char *argv[])
             {
                strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
             }
+            else if( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
+                     p->addr.sin_port != from.sin_port )
+            {
+               strcpy(serverMsg.buffer, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
+            }
             else
             {
                vctPlayers.erase((vector<player>::iterator)p);
@@ -143,19 +170,28 @@ int main(int argc, char *argv[])
          }
          case MSG_TYPE_CHAT:
          {
-            int guess = atoi(clientMsg.buffer);
+            player *p = findPlayerByAddr(vctPlayers, from);
 
-            cout << "guess: " << guess << endl;
+            if (p == NULL)
+            {
+               strcpy(serverMsg.buffer, "No player is logged in using this connection. This is either a bug, or you're trying to hack the server.");
+            }
+            else
+            {
+               int guess = atoi(clientMsg.buffer);
 
-            if (guess < 1 || guess > 1000) {
-               strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
-            }else if(guess > num)
-               strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
-            else if(guess < num)
-               strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
-            else if(guess == num) {
-               strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
-               num = (rand() % 1000) + 1;
+               cout << "guess: " << guess << endl;
+
+               if (guess < 1 || guess > 1000) {
+                  strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
+               }else if(guess > num)
+                  strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
+               else if(guess < num)
+                  strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
+               else if(guess == num) {
+                  strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
+                  num = (rand() % 1000) + 1;
+               }
             }	
 
             serverMsg.type = MSG_TYPE_CHAT;

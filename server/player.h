@@ -7,11 +7,9 @@
 using namespace std;
 
 class player {
-private:
-   sockaddr_in addr;
-
 public:
    string name;
+   sockaddr_in addr;
 
    player(string name, sockaddr_in addr);
    ~player();

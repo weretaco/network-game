@@ -17,6 +17,7 @@ player::~player()
 {
 }
 
+// was meant for the find find function. Currently unused
 bool player::operator == (const player &p)
 {
    bool eq = addr.sin_addr.s_addr == p.addr.sin_addr.s_addr;
