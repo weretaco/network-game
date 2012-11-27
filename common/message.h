@@ -1,4 +1,4 @@
-#ifndef _MESAGE_H
+#ifndef _MESSAGE_H
 #define _MESSAGE_H
 
 #define MSG_TYPE_REGISTER     1

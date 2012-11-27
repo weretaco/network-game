@@ -19,7 +19,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "player.h"
+#include "Player.h"
 #include "../common/message.h"
 
 /*
@@ -41,6 +41,8 @@
 
 using namespace std;
 
+void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg);
+
 // this should probably go somewhere in the common folder
 void error(const char *msg)
 {
@@ -48,9 +50,9 @@ void error(const char *msg)
     exit(0);
 }
 
-player *findPlayerByName(vector<player> &vec, string name)
+Player *findPlayerByName(vector<Player> &vec, string name)
 {
-   vector<player>::iterator it;
+   vector<Player>::iterator it;
 
    for (it = vec.begin(); it != vec.end(); it++)
    {
@@ -63,9 +65,9 @@ player *findPlayerByName(vector<player> &vec, string name)
 
 // not sure if we actually need this function
 // when I made it, I thought we did
-player *findPlayerByAddr(vector<player> &vec, sockaddr_in &addr)
+Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
 {
-   vector<player>::iterator it;
+   vector<Player>::iterator it;
 
    for (it = vec.begin(); it != vec.end(); it++)
    {
@@ -83,7 +85,7 @@ int main(int argc, char *argv[])
    struct sockaddr_in server;
    struct sockaddr_in from; // holds the info on the connected client
    NETWORK_MSG clientMsg, serverMsg;
-   vector<player> vctPlayers;
+   vector<Player> vctPlayers;
 
    srand(time(NULL));
    int num = (rand() % 1000) + 1;
@@ -114,99 +116,8 @@ int main(int argc, char *argv[])
       n = receiveMessage(&clientMsg, sock, &from);
       if (n < 0)
          error("recieveMessage");
-      cout << "ip address: " << inet_ntoa(from.sin_addr) << endl;
-      cout << "port: " << from.sin_port << endl;
-      cout << "MSG: type: " << clientMsg.type << endl;
-      cout << "MSG contents: " << clientMsg.buffer << endl;
 
-      // Check that if an invalid message is sent, the client will corectly
-      // receive and display the response. Maybe make a special error msg type
-      switch(clientMsg.type)
-      {
-         case MSG_TYPE_LOGIN:
-         {
-            string name(clientMsg.buffer);
-            cout << "Player logging in: " << name << endl;
-
-            player *p = findPlayerByName(vctPlayers, name);
-
-            if (p == NULL)
-            {
-               vctPlayers.push_back(player(name, from));
-               strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
-            }
-            else
-            {
-               strcpy(serverMsg.buffer, "Player has already logged in.");
-            }
-
-            serverMsg.type = MSG_TYPE_LOGIN;
-
-            break;
-         }
-         case MSG_TYPE_LOGOUT:
-         {
-            string name(clientMsg.buffer);
-            cout << "Player logging out: " << name << endl;
-
-            player *p = findPlayerByName(vctPlayers, name);
-
-            if (p == NULL)
-            {
-               strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
-            }
-            else if( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
-                     p->addr.sin_port != from.sin_port )
-            {
-               strcpy(serverMsg.buffer, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
-            }
-            else
-            {
-               vctPlayers.erase((vector<player>::iterator)p);
-               strcpy(serverMsg.buffer, "You have successfully logged out. You may quit the game.");
-            }
-
-            break;
-         }
-         case MSG_TYPE_CHAT:
-         {
-            player *p = findPlayerByAddr(vctPlayers, from);
-
-            if (p == NULL)
-            {
-               strcpy(serverMsg.buffer, "No player is logged in using this connection. This is either a bug, or you're trying to hack the server.");
-            }
-            else
-            {
-               int guess = atoi(clientMsg.buffer);
-
-               cout << "guess: " << guess << endl;
-
-               if (guess < 1 || guess > 1000) {
-                  strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
-               }else if(guess > num)
-                  strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
-               else if(guess < num)
-                  strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
-               else if(guess == num) {
-                  strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
-                  num = (rand() % 1000) + 1;
-               }
-            }	
-
-            serverMsg.type = MSG_TYPE_CHAT;
-
-            break;
-         }
-         default:
-         {
-            strcpy(serverMsg.buffer, "Server error occured. Report this please.");
-
-            serverMsg.type = MSG_TYPE_CHAT;
-
-            break;
-         }
-      }
+      processMessage(clientMsg, from, vctPlayers, num, serverMsg);
 
       cout << "msg: " << serverMsg.buffer << endl;
 
@@ -215,6 +126,117 @@ int main(int argc, char *argv[])
          error("sendMessage");
    }
    return 0;
+}
+
+void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg)
+{
+   cout << "ip address: " << inet_ntoa(from.sin_addr) << endl;
+   cout << "port: " << from.sin_port << endl;
+   cout << "MSG: type: " << clientMsg.type << endl;
+   cout << "MSG contents: " << clientMsg.buffer << endl;
+
+   // Check that if an invalid message is sent, the client will correctly
+   // receive and display the response. Maybe make a special error msg type
+   switch(clientMsg.type)
+   {
+      case MSG_TYPE_REGISTER:
+      {
+         string username(clientMsg.buffer);
+         string password(strchr(clientMsg.buffer, '\0')+1);
+
+         cout << "username: " << username << endl;
+         cout << "password: " << password << endl;
+
+         strcpy(serverMsg.buffer, "Registration test");
+
+         serverMsg.type = MSG_TYPE_REGISTER;
+
+         break;
+      }
+      case MSG_TYPE_LOGIN:
+      {
+         string username(clientMsg.buffer);
+         cout << "Player logging in: " << username << endl;
+
+         Player *p = findPlayerByName(vctPlayers, username);
+
+         if (p == NULL)
+         {
+            vctPlayers.push_back(Player(username, from));
+            strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+         }
+         else
+         {
+            strcpy(serverMsg.buffer, "Player has already logged in.");
+         }
+
+         serverMsg.type = MSG_TYPE_LOGIN;
+
+         break;
+      }
+      case MSG_TYPE_LOGOUT:
+      {
+         string name(clientMsg.buffer);
+         cout << "Player logging out: " << name << endl;
+
+         Player *p = findPlayerByName(vctPlayers, name);
+
+         if (p == NULL)
+         {
+            strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
+         }
+         else if( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
+                  p->addr.sin_port != from.sin_port )
+         {
+            strcpy(serverMsg.buffer, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
+         }
+         else
+         {
+            vctPlayers.erase((vector<Player>::iterator)p);
+            strcpy(serverMsg.buffer, "You have successfully logged out. You may quit the game.");
+         }
+
+         break;
+      }
+      case MSG_TYPE_CHAT:
+      {
+         Player *p = findPlayerByAddr(vctPlayers, from);
+
+         if (p == NULL)
+         {
+            strcpy(serverMsg.buffer, "No player is logged in using this connection. This is either a bug, or you're trying to hack the server.");
+         }
+         else
+         {
+            int guess = atoi(clientMsg.buffer);
+
+            cout << "guess: " << guess << endl;
+
+            if (guess < 1 || guess > 1000) {
+               strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
+            }else if(guess > num)
+               strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
+            else if(guess < num)
+               strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
+            else if(guess == num) {
+               strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
+               num = (rand() % 1000) + 1;
+            }
+         }	
+
+         serverMsg.type = MSG_TYPE_CHAT;
+
+         break;
+      }
+      default:
+      {
+         strcpy(serverMsg.buffer, "Server error occured. Report this please.");
+
+         serverMsg.type = MSG_TYPE_CHAT;
+
+         break;
+      }
+   }
 }
 
 int dbtest()

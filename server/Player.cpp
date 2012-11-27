@@ -1,11 +1,11 @@
-#include "player.h"
+#include "Player.h"
 
 #include <iostream>
 #include <arpa/inet.h>
 
 using namespace std;
 
-player::player(string name, sockaddr_in addr)
+Player::Player(string name, sockaddr_in addr)
 {
    this->name = name;
    this->addr = addr;
@@ -13,12 +13,12 @@ player::player(string name, sockaddr_in addr)
    cout << "Created new played: " << this->name << endl;
 }
 
-player::~player()
+Player::~Player()
 {
 }
 
 // was meant for the find find function. Currently unused
-bool player::operator == (const player &p)
+bool Player::operator == (const Player &p)
 {
    bool eq = addr.sin_addr.s_addr == p.addr.sin_addr.s_addr;
 
