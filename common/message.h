@@ -1,9 +1,10 @@
 #ifndef _MESAGE_H
 #define _MESSAGE_H
 
-#define MSG_TYPE_LOGIN  1
-#define MSG_TYPE_LOGOUT 2
-#define MSG_TYPE_CHAT   3
+#define MSG_TYPE_REGISTER     1
+#define MSG_TYPE_LOGIN        2
+#define MSG_TYPE_LOGOUT       3
+#define MSG_TYPE_CHAT         4
 
 typedef struct
 {
