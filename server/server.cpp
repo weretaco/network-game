@@ -62,8 +62,6 @@ Player *findPlayerByName(vector<Player> &vec, string name)
    return NULL;
 }
 
-// not sure if we actually need this function
-// when I made it, I thought we did
 Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
 {
    vector<Player>::iterator it;
@@ -99,6 +97,24 @@ int main(int argc, char *argv[])
       cerr << "ERROR, no port provided" << endl;
       exit(1);
    }
+
+   DataAccess da;
+
+   da.printPlayers();
+
+   da.insertPlayer("playerName3", "playerPass");
+   cout << endl << "Inserted player" << endl << endl;
+
+   Player* p = da.getPlayer("playerName");
+   cout << "player name: " << p->name << endl;
+   delete(p);
+
+   p = da.getPlayer("playerName3");
+   cout << "player name: " << p->name << endl;
+   delete(p);
+
+   da.printPlayers();
+   cout << endl;
    
    sock=socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
@@ -161,7 +177,10 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
 
          if (p == NULL)
          {
-            vctPlayers.push_back(Player(username, from));
+            Player newP(username, "");
+            newP.setAddr(from);
+
+            vctPlayers.push_back(newP);
             strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
          }
          else
