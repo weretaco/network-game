@@ -1,15 +1,18 @@
 #include "../common/compiler.h"
 
 #include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 #include <string>
-#include <netdb.h>
-#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 
+#include <fcntl.h>
+#include <assert.h>
+
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -76,6 +79,14 @@ Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
    return NULL;
 }
 
+void set_nonblock(int sock)
+{
+    int flags;
+    flags = fcntl(sock, F_GETFL,0);
+    assert(flags != -1);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+}
+
 int main(int argc, char *argv[])
 {
    int sock, length, n;
@@ -85,7 +96,8 @@ int main(int argc, char *argv[])
    vector<Player> vctPlayers;
 
    srand(time(NULL));
-   int num = (rand() % 1000) + 1;
+   int num = 500;
+   //int num = (rand() % 0) + 1;
 
    cout << "num: " << num << endl;
 
@@ -98,6 +110,7 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
+   /*
    DataAccess da;
 
    da.printPlayers();
@@ -115,8 +128,9 @@ int main(int argc, char *argv[])
 
    da.printPlayers();
    cout << endl;
+   */
    
-   sock=socket(AF_INET, SOCK_DGRAM, 0);
+   sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
    length = sizeof(server);
    bzero(&server,length);
@@ -126,20 +140,28 @@ int main(int argc, char *argv[])
    if ( bind(sock, (struct sockaddr *)&server, length) < 0 ) 
       error("binding");
 
+   set_nonblock(sock);
+
    while (true) {
-      // if n == 0, means the client disconnected. may want to check this
+
+      usleep(5000);
+
       n = receiveMessage(&clientMsg, sock, &from);
-      if (n < 0)
-         error("recieveMessage");
 
-      processMessage(clientMsg, from, vctPlayers, num, serverMsg);
+      if (n >= 0) {
+         cout << "Got a message" << endl;
 
-      cout << "msg: " << serverMsg.buffer << endl;
+         processMessage(clientMsg, from, vctPlayers, num, serverMsg);
 
-      n = sendMessage(&serverMsg, sock, &from);
-      if (n  < 0)
-         error("sendMessage");
+         cout << "msg: " << serverMsg.buffer << endl;
+
+         n = sendMessage(&serverMsg, sock, &from);
+         if (n  < 0)
+            error("sendMessage");
+      }
+
    }
+
    return 0;
 }
 
