@@ -206,8 +206,10 @@ int main(int argc, char **argv)
                {
                   case STATE_START:
                   {
-                     msgTo.type = MSG_TYPE_LOGIN;
                      username = input;
+                     strcpy(msgTo.buffer+input.size()+1, "MyPassword");
+                     msgTo.type = MSG_TYPE_REGISTER;
+                     //msgTo.type = MSG_TYPE_LOGIN;
 
                      sendMessage(&msgTo, sock, &server);
                      receiveMessage(&msgFrom, sock, &from);
@@ -369,6 +371,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &use
       {
          chatConsole.addLine(response);
 
+         /*
          if (response.compare("Player has already logged in.") == 0)
          {
             cout << "User login failed" << endl;
@@ -379,6 +382,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &use
             cout << "User login successful" << endl;
             state = STATE_LOGIN;
          }
+         */
 
          break;
       }
