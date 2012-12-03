@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string>
 #include <iostream>
-#include <vector>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -25,6 +24,9 @@
 
 #include "../../common/message.h"
 
+#include "Window.h"
+#include "Textbox.h"
+#include "Button.h"
 #include "chat.h"
 
 #ifdef WINDOWS
@@ -35,7 +37,14 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &username);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole);
+
+// callbacks
+void registerAccount();
+void login();
+void logout();
+void quit();
+void sendChatMessage();
 
 void error(const char *);
 
@@ -52,9 +61,27 @@ enum MYKEYS {
 
 enum STATE {
    STATE_START,
-   STATE_LOGIN,
-   STATE_LOGOUT
+   STATE_LOGIN // this means you're already logged in
 };
+
+int state;
+
+bool doexit;
+
+Window* wndLogin;
+Window* wndMain;
+Window* wndCurrent;
+
+Textbox* txtUsername;
+Textbox* txtPassword;
+Textbox* txtChat;
+
+int sock;
+struct sockaddr_in server, from;
+struct hostent *hp;
+NETWORK_MSG msgTo, msgFrom;
+string username;
+chat chatConsole;
  
 int main(int argc, char **argv)
 {
@@ -62,21 +89,21 @@ int main(int argc, char **argv)
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
    ALLEGRO_BITMAP *bouncer = NULL;
-   float bouncer_x = SCREEN_W / 2.0 - BOUNCER_SIZE / 2.0;
-   float bouncer_y = SCREEN_H / 2.0 - BOUNCER_SIZE / 2.0;
    bool key[4] = { false, false, false, false };
    bool redraw = true;
-   bool doexit = false;
+   doexit = false;
 
-   int state = STATE_START;
+   float bouncer_x = SCREEN_W / 2.0 - BOUNCER_SIZE / 2.0;
+   float bouncer_y = SCREEN_H / 2.0 - BOUNCER_SIZE / 2.0;
 
-   chat chatConsole;
+   state = STATE_START;
 
    if(!al_init()) {
       fprintf(stderr, "failed to initialize allegro!\n");
       return -1;
    }
 
+   al_init_primitives_addon();
    al_init_font_addon();
    al_init_ttf_addon();
 
@@ -92,6 +119,11 @@ int main(int argc, char **argv)
       fprintf(stderr, "failed to initialize the keyboard!\n");
       return -1;
    }
+
+    if(!al_install_mouse()) {
+      fprintf(stderr, "failed to initialize the mouse!\n");
+      return -1;
+   }
  
    timer = al_create_timer(1.0 / FPS);
    if(!timer) {
@@ -105,7 +137,26 @@ int main(int argc, char **argv)
       al_destroy_timer(timer);
       return -1;
    }
- 
+
+   wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));
+   wndLogin->addComponent(new Textbox(104, 70, 100, 20, font));
+   wndLogin->addComponent(new Button(22, 100, 90, 20, font, "Register", registerAccount));
+   wndLogin->addComponent(new Button(122, 100, 60, 20, font, "Login", login));
+   wndLogin->addComponent(new Button(540, 10, 80, 20, font, "Quit", quit));
+
+   txtUsername = (Textbox*)wndLogin->getComponent(0);
+   txtPassword = (Textbox*)wndLogin->getComponent(1);
+
+   wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndMain->addComponent(new Textbox(95, 40, 525, 20, font));
+   wndMain->addComponent(new Button(95, 70, 160, 20, font, "Send Message", sendChatMessage));
+   wndMain->addComponent(new Button(540, 10, 80, 20, font, "Logout", logout));
+
+   txtChat = (Textbox*)wndMain->getComponent(0);
+
+   wndCurrent = wndLogin;
+
    bouncer = al_create_bitmap(BOUNCER_SIZE, BOUNCER_SIZE);
    if(!bouncer) {
       fprintf(stderr, "failed to create bouncer bitmap!\n");
@@ -130,20 +181,13 @@ int main(int argc, char **argv)
    al_set_target_bitmap(al_get_backbuffer(display));
  
    al_register_event_source(event_queue, al_get_display_event_source(display));
- 
    al_register_event_source(event_queue, al_get_timer_event_source(timer));
- 
    al_register_event_source(event_queue, al_get_keyboard_event_source());
+   al_register_event_source(event_queue, al_get_mouse_event_source());
  
    al_clear_to_color(al_map_rgb(0,0,0));
  
    al_flip_display();
-
-   int sock;
-   struct sockaddr_in server, from;
-   struct hostent *hp;
-   NETWORK_MSG msgTo, msgFrom;
-   string username;
 
    if (argc != 3) {
       cout << "Usage: server port" << endl;
@@ -170,8 +214,11 @@ int main(int argc, char **argv)
    {
       ALLEGRO_EVENT ev;
       al_wait_for_event(event_queue, &ev);
- 
-      if(ev.type == ALLEGRO_EVENT_TIMER) {
+
+      if(wndCurrent->handleEvent(ev)) {
+         // do nothing
+      }
+      else if(ev.type == ALLEGRO_EVENT_TIMER) {
          if(key[KEY_UP] && bouncer_y >= 4.0) {
             bouncer_y -= 4.0;
          }
@@ -194,83 +241,22 @@ int main(int argc, char **argv)
          doexit = true;
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-         bool eventConsumed = chatConsole.processEvent(ev);
-
-         if (eventConsumed) {
-            string input = chatConsole.getInput();
-            if (!input.empty()) {
-               cout << "input: " << input << endl;
-               strcpy(msgTo.buffer, input.c_str());
-
-               switch(state)
-               {
-                  case STATE_START:
-                  {
-                     username = input;
-                     strcpy(msgTo.buffer+input.size()+1, "MyPassword");
-                     msgTo.type = MSG_TYPE_REGISTER;
-                     //msgTo.type = MSG_TYPE_LOGIN;
-
-                     sendMessage(&msgTo, sock, &server);
-                     receiveMessage(&msgFrom, sock, &from);
-                     processMessage(msgFrom, state, chatConsole, username);
-                     cout << "state: " << state << endl;
-
-                     break;
-                  }
-                  case STATE_LOGIN:
-                  {
-                     if (input.compare("quit") == 0 ||
-                         input.compare("exit") == 0 ||
-                         input.compare("logout") == 0)
-                     {
-                        strcpy(msgTo.buffer, username.c_str());
-                        msgTo.type = MSG_TYPE_LOGOUT;
-                     }
-                     else
-                        msgTo.type = MSG_TYPE_CHAT;
-
-                     sendMessage(&msgTo, sock, &server);
-                     receiveMessage(&msgFrom, sock, &from);
-                     processMessage(msgFrom, state, chatConsole, username);
-                     cout << "state: " << state << endl;
-
-                     break;
-                  }
-                  case STATE_LOGOUT:
-                  {
-                     chatConsole.addLine("You're logged out, so you can't send any messages to the server.");
-
-                     cout << "You're logged out, so you can't send any messages to the server." << endl;
-                  
-                     break;
-                  }
-                  default:
-                  {
-                     cout << "The state has an invalid value: " << state << endl;
-                  
-                     break;
-                  }
-               }
-            }
-         }else {
-            switch(ev.keyboard.keycode) {
-               case ALLEGRO_KEY_UP:
-                  key[KEY_UP] = true;
-                  break;
+         switch(ev.keyboard.keycode) {
+            case ALLEGRO_KEY_UP:
+               key[KEY_UP] = true;
+               break;
  
-               case ALLEGRO_KEY_DOWN:
-                  key[KEY_DOWN] = true;
-                  break;
+            case ALLEGRO_KEY_DOWN:
+               key[KEY_DOWN] = true;
+               break;
  
-               case ALLEGRO_KEY_LEFT: 
-                  key[KEY_LEFT] = true;
-                  break;
+            case ALLEGRO_KEY_LEFT: 
+               key[KEY_LEFT] = true;
+               break;
  
-               case ALLEGRO_KEY_RIGHT:
-                  key[KEY_RIGHT] = true;
-                  break;
-            }
+            case ALLEGRO_KEY_RIGHT:
+               key[KEY_RIGHT] = true;
+               break;
          }
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
@@ -300,11 +286,19 @@ int main(int argc, char **argv)
       if(redraw && al_is_event_queue_empty(event_queue)) {
          redraw = false;
  
-         al_clear_to_color(al_map_rgb(0,0,0));
+         wndCurrent->draw(display);
  
          al_draw_bitmap(bouncer, bouncer_x, bouncer_y, 0);
 
          chatConsole.draw(font, al_map_rgb(255,255,255));
+
+         if(wndCurrent == wndLogin) {
+            al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Username:");
+            al_draw_text(font, al_map_rgb(0, 255, 0), 1, 73, ALLEGRO_ALIGN_LEFT, "Password:");
+         }
+         else if(wndCurrent == wndMain) {
+            al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
+         }
 
          al_flip_display();
       }
@@ -318,6 +312,9 @@ int main(int argc, char **argv)
 
    shutdownWinSock();
    
+   delete wndLogin;
+   delete wndMain;
+
    al_destroy_event_queue(event_queue);
    al_destroy_bitmap(bouncer);
    al_destroy_display(display);
@@ -359,7 +356,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &username)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
 {
    string response = string(msg.buffer);
 
@@ -371,18 +368,33 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &use
       {
          chatConsole.addLine(response);
 
-         /*
-         if (response.compare("Player has already logged in.") == 0)
+         switch(msg.type)
          {
-            cout << "User login failed" << endl;
-            username.clear();
+            case MSG_TYPE_REGISTER:
+            {
+               break;
+            }
+            case MSG_TYPE_LOGIN:
+            {
+               if (response.compare("Player has already logged in.") == 0)
+               {
+                  username.clear();
+                  cout << "User login failed" << endl;
+               }
+               else if (response.compare("Incorrect username or password") == 0)
+               {
+                  username.clear();
+                  cout << "User login failed" << endl;
+               }
+               else
+               {
+                  state = STATE_LOGIN;
+                  wndCurrent = wndMain;
+                  cout << "User login successful" << endl;
+               }
+               break;
+            }
          }
-         else
-         {
-            cout << "User login successful" << endl;
-            state = STATE_LOGIN;
-         }
-         */
 
          break;
       }
@@ -390,22 +402,29 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &use
       {
          chatConsole.addLine(response);
 
-         if (response.compare("You have successfully logged out. You may quit the game.") == 0)
+          switch(msg.type)
          {
-            cout << "Logged out" << endl;
-            state = STATE_LOGOUT;
-         }
-         else
-         {
-            cout << "Added new line" << endl;
+            case MSG_TYPE_REGISTER:
+            {
+               break;
+            }
+            case MSG_TYPE_LOGIN:
+            {
+               if (response.compare("You have successfully logged out.") == 0)
+               {
+                  cout << "Logged out" << endl;
+                  state = STATE_START;
+                  wndCurrent = wndLogin;
+               }
+               else
+               {
+                  cout << "Added new line" << endl;
+               }
+
+               break;
+            }
          }
                      
-         break;
-      }
-      case STATE_LOGOUT:
-      {
-         cout << "Bug: You're logged out, so you shouldn't be receiving any messages." << endl;
-                  
          break;
       }
       default:
@@ -415,4 +434,76 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, string &use
          break;
       }
    }
+}
+
+void registerAccount()
+{
+   string username = txtUsername->getStr();
+   string password = txtPassword->getStr();
+
+   txtUsername->clear();
+   txtPassword->clear();
+
+   msgTo.type = MSG_TYPE_REGISTER;
+
+   strcpy(msgTo.buffer, username.c_str());
+   strcpy(msgTo.buffer+username.size()+1, password.c_str());
+
+   sendMessage(&msgTo, sock, &server);
+   receiveMessage(&msgFrom, sock, &from);
+   processMessage(msgFrom, state, chatConsole);
+   cout << "state: " << state << endl;
+}
+
+void login()
+{
+   string strUsername = txtUsername->getStr();
+   string strPassword = txtPassword->getStr();
+   username = strUsername;
+
+   txtUsername->clear();
+   txtPassword->clear();
+
+   msgTo.type = MSG_TYPE_LOGIN;
+
+   strcpy(msgTo.buffer, strUsername.c_str());
+   strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
+
+   sendMessage(&msgTo, sock, &server);
+   receiveMessage(&msgFrom, sock, &from);
+   processMessage(msgFrom, state, chatConsole);
+   cout << "state: " << state << endl;
+}
+
+void logout()
+{
+   txtChat->clear();
+
+   msgTo.type = MSG_TYPE_LOGOUT;
+
+   strcpy(msgTo.buffer, username.c_str());
+
+   sendMessage(&msgTo, sock, &server);
+   receiveMessage(&msgFrom, sock, &from);
+   processMessage(msgFrom, state, chatConsole);
+}
+
+void quit()
+{
+   doexit = true;
+}
+
+void sendChatMessage()
+{
+   string msg = txtChat->getStr();
+
+   txtChat->clear();
+
+   msgTo.type = MSG_TYPE_CHAT;
+
+   strcpy(msgTo.buffer, msg.c_str());
+
+   sendMessage(&msgTo, sock, &server);
+   receiveMessage(&msgFrom, sock, &from);
+   processMessage(msgFrom, state, chatConsole);
 }

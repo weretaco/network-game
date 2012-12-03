@@ -65,12 +65,20 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\message.cpp" />
     <ClCompile Include="chat.cpp" />
+    <ClCompile Include="Button.cpp" />
+    <ClCompile Include="GuiComponent.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Textbox.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\compiler.h" />
     <ClInclude Include="..\..\common\message.h" />
     <ClInclude Include="chat.h" />
+    <ClInclude Include="Button.h" />
+    <ClInclude Include="GuiComponent.h" />
+    <ClInclude Include="Textbox.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

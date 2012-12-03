@@ -23,6 +23,6 @@ public:
    void draw(ALLEGRO_FONT *font, ALLEGRO_COLOR color);
    void addLine(string s);
 
-   bool processEvent(ALLEGRO_EVENT ev);
+   bool handleEvent(ALLEGRO_EVENT e);
 };
 

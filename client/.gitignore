@@ -3,5 +3,5 @@ ipch/
 Client.suo
 Client.sdf
 Client.opensdf
-client
+gameClient
 allegro.log

@@ -19,6 +19,12 @@
     <Filter Include="Header Files\common">
       <UniqueIdentifier>{6c9ad2f2-bc8d-4e25-9c5c-c4440c60991c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{c6c812ef-0533-42bc-9d71-aa40428b5ca8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{10ae8361-2a07-4085-b595-761b47868bad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -28,6 +34,18 @@
       <Filter>Source Files\common</Filter>
     </ClCompile>
     <ClCompile Include="chat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiComponent.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="Textbox.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -40,6 +58,18 @@
     </ClInclude>
     <ClInclude Include="..\..\common\message.h">
       <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiComponent.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="Textbox.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="Button.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
