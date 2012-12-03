@@ -39,16 +39,12 @@ Player *findPlayerByName(vector<Player> &vec, string name)
 {
    vector<Player>::iterator it;
 
-   cout << "Entered findPlayerByName" << endl;
-
    for (it = vec.begin(); it != vec.end(); it++)
    {
-      cout << "Comparing name" << endl;
       if ( it->name.compare(name) == 0 )
          return &(*it);
    }
 
-   cout << "About to return" << endl;
    return NULL;
 }
 
@@ -78,13 +74,12 @@ int main(int argc, char *argv[])
 {
    int sock, length, n;
    struct sockaddr_in server;
-   struct sockaddr_in from; // holds the info on the connected client
+   struct sockaddr_in from; // holds the info about the connected client
    NETWORK_MSG clientMsg, serverMsg;
    vector<Player> vctPlayers;
 
    srand(time(NULL));
-   int num = 500;
-   //int num = (rand() % 0) + 1;
+   int num = (rand() % 1000) + 1;
 
    cout << "num: " << num << endl;
 
@@ -171,11 +166,6 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
 
          if (p == NULL || p->password != password)
          {
-            if (p != NULL)
-            {
-               cout << "p->password: " << p->password << endl;
-               cout << "password: " << password << endl;
-            }
             strcpy(serverMsg.buffer, "Incorrect username or password");
          }
          else if(findPlayerByName(vctPlayers, username) != NULL)
