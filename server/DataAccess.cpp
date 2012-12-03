@@ -42,15 +42,20 @@ Player *DataAccess::getPlayer(string username)
 
    result = select("users", oss.str().c_str());
 
+   cout << "Got result" << endl;
+
    if (result == NULL) {
+      cout << "Error occured" << endl;
       cout << mysql_error(connection) << endl;
       return NULL;
    }
 
    if ( ( row = mysql_fetch_row(result)) != NULL )
       p = new Player(string(row[1]), string(row[2]));
-   else
+   else {
+      cout << "Returned no results for some reason" << endl;
       p = NULL;
+   }
 
    mysql_free_result(result);
 

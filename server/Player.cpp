@@ -26,14 +26,6 @@ Player::~Player()
 {
 }
 
-// was meant for the find find function. Currently unused
-bool Player::operator == (const Player &p)
-{
-   bool eq = addr.sin_addr.s_addr == p.addr.sin_addr.s_addr;
-
-   return eq;
-}
-
 void Player::setAddr(sockaddr_in addr)
 {
    this->addr = addr;

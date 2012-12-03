@@ -24,23 +24,6 @@
 #include "DataAccess.h"
 #include "../common/message.h"
 
-/*
- Protocol Design
-
- Client sends a login message
- Server replies with client's position in the world and positions of
- oall other logged in players
- Merver sends player ids along with locations
- This means a newly logged in client will need to know which id is
- assigned to it
- So server needs to send an id message, wait for an ack, and then send
- the location messages
- When a client shuts down, it sends a message to indicate this so the
- server can remove it from the list of connected clients
- Eventually, there'll need to be a way to detect timeouts from clients
- (if they crashed or otherwise failed to send the logout message)
-*/
-
 using namespace std;
 
 void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg);
@@ -56,12 +39,16 @@ Player *findPlayerByName(vector<Player> &vec, string name)
 {
    vector<Player>::iterator it;
 
+   cout << "Entered findPlayerByName" << endl;
+
    for (it = vec.begin(); it != vec.end(); it++)
    {
+      cout << "Comparing name" << endl;
       if ( it->name.compare(name) == 0 )
          return &(*it);
    }
 
+   cout << "About to return" << endl;
    return NULL;
 }
 
@@ -109,27 +96,7 @@ int main(int argc, char *argv[])
       cerr << "ERROR, no port provided" << endl;
       exit(1);
    }
-
-   /*
-   DataAccess da;
-
-   da.printPlayers();
-
-   da.insertPlayer("playerName3", "playerPass");
-   cout << endl << "Inserted player" << endl << endl;
-
-   Player* p = da.getPlayer("playerName");
-   cout << "player name: " << p->name << endl;
-   delete(p);
-
-   p = da.getPlayer("playerName3");
-   cout << "player name: " << p->name << endl;
-   delete(p);
-
-   da.printPlayers();
-   cout << endl;
-   */
-   
+ 
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
    length = sizeof(server);
@@ -167,6 +134,8 @@ int main(int argc, char *argv[])
 
 void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg)
 {
+   DataAccess da;
+
    cout << "ip address: " << inet_ntoa(from.sin_addr) << endl;
    cout << "port: " << from.sin_port << endl;
    cout << "MSG: type: " << clientMsg.type << endl;
@@ -184,7 +153,9 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          cout << "username: " << username << endl;
          cout << "password: " << password << endl;
 
-         strcpy(serverMsg.buffer, "Registration test");
+         da.insertPlayer(username, password);
+
+         strcpy(serverMsg.buffer, "Registration successful");
 
          serverMsg.type = MSG_TYPE_REGISTER;
 
@@ -193,11 +164,25 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
       case MSG_TYPE_LOGIN:
       {
          string username(clientMsg.buffer);
+         string password(strchr(clientMsg.buffer, '\0')+1);
          cout << "Player logging in: " << username << endl;
 
-         Player *p = findPlayerByName(vctPlayers, username);
+         Player* p = da.getPlayer(username);
 
-         if (p == NULL)
+         if (p == NULL || p->password != password)
+         {
+            if (p != NULL)
+            {
+               cout << "p->password: " << p->password << endl;
+               cout << "password: " << password << endl;
+            }
+            strcpy(serverMsg.buffer, "Incorrect username or password");
+         }
+         else if(findPlayerByName(vctPlayers, username) != NULL)
+         {
+            strcpy(serverMsg.buffer, "Player has already logged in.");
+         }
+         else
          {
             Player newP(username, "");
             newP.setAddr(from);
@@ -205,12 +190,10 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
             vctPlayers.push_back(newP);
             strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
          }
-         else
-         {
-            strcpy(serverMsg.buffer, "Player has already logged in.");
-         }
 
          serverMsg.type = MSG_TYPE_LOGIN;
+   
+         delete(p);
 
          break;
       }
@@ -233,7 +216,7 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          else
          {
             vctPlayers.erase((vector<Player>::iterator)p);
-            strcpy(serverMsg.buffer, "You have successfully logged out. You may quit the game.");
+            strcpy(serverMsg.buffer, "You have successfully logged out.");
          }
 
          break;
