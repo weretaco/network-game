@@ -63,7 +63,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\message.cpp" />
+    <ClCompile Include="..\..\common\Message.cpp" />
     <ClCompile Include="chat.cpp" />
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="GuiComponent.cpp" />
@@ -72,8 +72,8 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\compiler.h" />
-    <ClInclude Include="..\..\common\message.h" />
+    <ClInclude Include="..\..\common\Compiler.h" />
+    <ClInclude Include="..\..\common\Message.h" />
     <ClInclude Include="chat.h" />
     <ClInclude Include="Button.h" />
     <ClInclude Include="GuiComponent.h" />
