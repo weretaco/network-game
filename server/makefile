@@ -2,12 +2,12 @@ CC = g++
 LIB_FLAGS = -lssl -lmysqlclient
 FLAGS = $(LIB_FLAGS)
 COMMON_PATH = ../common
-DEPENDENCIES = message.o Player.o DataAccess.o
+DEPENDENCIES = Message.o Player.o DataAccess.o
 
 server : server.cpp $(DEPENDENCIES)
 	$(CC) -o $@ $+ $(FLAGS)
 
-message.o : $(COMMON_PATH)/message.cpp
+Message.o : $(COMMON_PATH)/Message.cpp
 	$(CC) -c -o $@ $?
 
 %.o : %.cpp

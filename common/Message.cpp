@@ -1,6 +1,6 @@
-#include "message.h"
+#include "Message.h"
 
-#include "compiler.h"
+#include "Compiler.h"
 
 #if defined WINDOWS
    #include <winsock2.h>

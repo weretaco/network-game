@@ -1,5 +1,3 @@
-#include "../common/compiler.h"
-
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
@@ -20,9 +18,11 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "../common/Compiler.h"
+#include "../common/Message.h"
+
 #include "Player.h"
 #include "DataAccess.h"
-#include "../common/message.h"
 
 using namespace std;
 

@@ -1,2 +1,2 @@
-gameClient : ../common/message.cpp Client/main.cpp
+gameClient : ../common/Message.cpp Client/main.cpp
 	g++ -o $@ $?

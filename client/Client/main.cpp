@@ -1,5 +1,3 @@
-#include "../../common/compiler.h"
-
 #if defined WINDOWS
    #include <winsock2.h>
    #include <WS2tcpip.h>
@@ -22,7 +20,8 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
 
-#include "../../common/message.h"
+#include "../../common/Compiler.h"
+#include "../../common/Message.h"
 
 #include "Window.h"
 #include "Textbox.h"
