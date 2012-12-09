@@ -359,8 +359,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
 {
    string response = string(msg.buffer);
 
-   // this whole select block should go in a new function.
-   // Figure out how to pass and return params properly
    switch(state)
    {
       case STATE_START:

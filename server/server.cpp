@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -20,13 +21,14 @@
 
 #include "../common/Compiler.h"
 #include "../common/Message.h"
+#include "../common/Common.h"
 
 #include "Player.h"
 #include "DataAccess.h"
 
 using namespace std;
 
-void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg);
+bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, NETWORK_MSG &serverMsg);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -62,26 +64,13 @@ Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
    return NULL;
 }
 
-void set_nonblock(int sock)
-{
-    int flags;
-    flags = fcntl(sock, F_GETFL,0);
-    assert(flags != -1);
-    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-}
-
 int main(int argc, char *argv[])
 {
    int sock, length, n;
    struct sockaddr_in server;
-   struct sockaddr_in from; // holds the info about the connected client
+   struct sockaddr_in from; // info of client sending the message
    NETWORK_MSG clientMsg, serverMsg;
    vector<Player> vctPlayers;
-
-   srand(time(NULL));
-   int num = (rand() % 1000) + 1;
-
-   cout << "num: " << num << endl;
 
    SSL_load_error_strings();
    ERR_load_BIO_strings();
@@ -104,6 +93,7 @@ int main(int argc, char *argv[])
 
    set_nonblock(sock);
 
+   bool broadcastMessage;
    while (true) {
 
       usleep(5000);
@@ -113,13 +103,25 @@ int main(int argc, char *argv[])
       if (n >= 0) {
          cout << "Got a message" << endl;
 
-         processMessage(clientMsg, from, vctPlayers, num, serverMsg);
+         broadcastMessage = processMessage(clientMsg, from, vctPlayers, serverMsg);
 
          cout << "msg: " << serverMsg.buffer << endl;
 
-         n = sendMessage(&serverMsg, sock, &from);
-         if (n  < 0)
-            error("sendMessage");
+         if (broadcastMessage)
+         {
+            vector<Player>::iterator it;
+
+            for (it = vctPlayers.begin(); it != vctPlayers.end(); it++)
+            {
+               if ( sendMessage(&serverMsg, sock, &(it->addr)) < 0 )
+                  error("sendMessage");
+            }
+         }
+         else
+         {
+            if ( sendMessage(&serverMsg, sock, &from) < 0 )
+               error("sendMessage");
+         }
       }
 
    }
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, int &num, NETWORK_MSG &serverMsg)
+bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, NETWORK_MSG &serverMsg)
 {
    DataAccess da;
 
@@ -135,6 +137,8 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
    cout << "port: " << from.sin_port << endl;
    cout << "MSG: type: " << clientMsg.type << endl;
    cout << "MSG contents: " << clientMsg.buffer << endl;
+
+   bool broadcastResponse = false;
 
    // Check that if an invalid message is sent, the client will correctly
    // receive and display the response. Maybe make a special error msg type
@@ -148,9 +152,12 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          cout << "username: " << username << endl;
          cout << "password: " << password << endl;
 
-         da.insertPlayer(username, password);
+         int error = da.insertPlayer(username, password);
 
-         strcpy(serverMsg.buffer, "Registration successful");
+         if (!error)
+            strcpy(serverMsg.buffer, "Registration successful.");
+         else
+            strcpy(serverMsg.buffer, "Registration failed. Please try again.");
 
          serverMsg.type = MSG_TYPE_REGISTER;
 
@@ -178,7 +185,7 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
             newP.setAddr(from);
 
             vctPlayers.push_back(newP);
-            strcpy(serverMsg.buffer, "I'm thinking of a number between 1 and 1000. Guess what it is.");
+            strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with outher players.");
          }
 
          serverMsg.type = MSG_TYPE_LOGIN;
@@ -221,20 +228,12 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          }
          else
          {
-            int guess = atoi(clientMsg.buffer);
+            broadcastResponse = true;
 
-            cout << "guess: " << guess << endl;
+            stringstream ss;
+            ss << p->name << ": " << clientMsg.buffer << endl;
 
-            if (guess < 1 || guess > 1000) {
-               strcpy(serverMsg.buffer, "You must guess a number between 1 and 1000");
-            }else if(guess > num)
-               strcpy(serverMsg.buffer, "The number I'm thinking of is less than that.");
-            else if(guess < num)
-               strcpy(serverMsg.buffer, "The number I'm thinking of is greater than that.");
-            else if(guess == num) {
-               strcpy(serverMsg.buffer, "Congratulations! I will now think of a new number.");
-               num = (rand() % 1000) + 1;
-            }
+            strcpy(serverMsg.buffer, ss.str().c_str());
          }	
 
          serverMsg.type = MSG_TYPE_CHAT;
@@ -249,5 +248,7 @@ void processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
 
          break;
       }
+
+      return broadcastResponse;
    }
 }
