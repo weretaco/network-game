@@ -4,6 +4,7 @@
 #include "GuiComponent.h"
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -13,6 +14,8 @@ class Textbox :
 private:
    string str;
    bool selected;
+   bool shiftPressed;
+   map<char, char> shiftMap;
 
 public:
    Textbox(int x, int y, int width, int height, ALLEGRO_FONT *font);

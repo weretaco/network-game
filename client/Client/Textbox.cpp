@@ -9,6 +9,35 @@ Textbox::Textbox(int x, int y, int width, int height, ALLEGRO_FONT *font) :
 {
    str = "";
    selected = false;
+   shiftPressed = false;
+   
+   // populate the shift map
+   for(int i=0; i<26; i++)
+      shiftMap['a'+i] = 'A'+i;
+
+   shiftMap['1'] = '!';
+   shiftMap['2'] = '@';
+   shiftMap['3'] = '#';
+   shiftMap['4'] = '$';
+   shiftMap['5'] = '%';
+   shiftMap['6'] = '^';
+   shiftMap['7'] = '&';
+   shiftMap['8'] = '*';
+   shiftMap['9'] = '(';
+   shiftMap['0'] = ')';
+
+   shiftMap['`'] = '~';
+   shiftMap['-'] = '_';
+   shiftMap['='] = '+';
+   shiftMap['['] = '{';
+   shiftMap[']'] = '}';
+   shiftMap['\\'] = '|';
+   shiftMap[';'] = ':';
+   shiftMap['\''] = '\"';
+   shiftMap[','] = '<';
+   shiftMap['.'] = '>';
+   shiftMap['/'] = '?';
+   shiftMap[' '] = ' ';
 }
 
 Textbox::~Textbox(void)
@@ -69,19 +98,83 @@ bool Textbox::handleEvent(ALLEGRO_EVENT& e)
    if (e.type == ALLEGRO_EVENT_KEY_DOWN) {
       char newChar = 0;
 
-      if (ALLEGRO_KEY_A <= e.keyboard.keycode && e.keyboard.keycode <= ALLEGRO_KEY_Z) {
+      if (ALLEGRO_KEY_A <= e.keyboard.keycode && e.keyboard.keycode <= ALLEGRO_KEY_Z)
          newChar = 'a'+e.keyboard.keycode-ALLEGRO_KEY_A;
-         if (al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT))
-            newChar -= 32;
-      }
       else if (ALLEGRO_KEY_0 <= e.keyboard.keycode && e.keyboard.keycode <= ALLEGRO_KEY_9)
          newChar = '0'+e.keyboard.keycode-ALLEGRO_KEY_0;
-      else if (e.keyboard.keycode = ALLEGRO_KEY_BACKSPACE && str.size() > 0)
-         str = str.substr(0, str.size()-1);
+      else {
+         switch(e.keyboard.keycode)
+         {
+         case ALLEGRO_KEY_TILDE:
+            newChar = '`';
+            break;
+         case ALLEGRO_KEY_MINUS:
+            newChar = '-';
+            break;
+         case ALLEGRO_KEY_EQUALS:
+            newChar = '=';
+            break;
+         case ALLEGRO_KEY_OPENBRACE:
+            newChar = '[';
+            break;
+         case ALLEGRO_KEY_CLOSEBRACE:
+            newChar = ']';
+            break;
+         case ALLEGRO_KEY_SEMICOLON:
+            newChar = ';';
+            break;
+         case ALLEGRO_KEY_QUOTE:
+            newChar = '\'';
+            break;
+         case ALLEGRO_KEY_BACKSLASH:
+            newChar = '\\';
+            break;
+         case ALLEGRO_KEY_COMMA:
+            newChar = ',';
+            break;
+         case ALLEGRO_KEY_FULLSTOP:
+            newChar = '.';
+            break;
+         case ALLEGRO_KEY_SLASH:
+            newChar = '/';
+            break;
+         case ALLEGRO_KEY_SPACE:
+            newChar = ' ';
+            break;
+         case  ALLEGRO_KEY_BACKSPACE:
+            if (str.size() > 0)
+            {
+               str = str.substr(0, str.size()-1);
+               return true;
+            }
+            else
+               return false;
+            break;
+         case  ALLEGRO_KEY_LSHIFT:
+         case  ALLEGRO_KEY_RSHIFT:
+            shiftPressed = true;
+            break;
+         default:
+            cout << "unknown keycode: " << e.keyboard.keycode << endl;
+            break;
+         }
+      }
 
       if (newChar != 0) {
+         if (al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT))
+            newChar = shiftMap[newChar];
+
          str.append(1, newChar);
          return true;
+      }
+   }
+   else if (e.type == ALLEGRO_EVENT_KEY_UP) {
+      switch(e.keyboard.keycode)
+      {
+      case ALLEGRO_KEY_LSHIFT:
+      case ALLEGRO_KEY_RSHIFT:
+         shiftPressed = false;
+         break;
       }
    }
 
