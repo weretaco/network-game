@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
    set_nonblock(sock);
 
-   bool broadcastMessage;
+   bool broadcastResponse;
    while (true) {
 
       usleep(5000);
@@ -103,12 +103,14 @@ int main(int argc, char *argv[])
       if (n >= 0) {
          cout << "Got a message" << endl;
 
-         broadcastMessage = processMessage(clientMsg, from, vctPlayers, serverMsg);
+         broadcastResponse = processMessage(clientMsg, from, vctPlayers, serverMsg);
 
          cout << "msg: " << serverMsg.buffer << endl;
 
-         if (broadcastMessage)
+         if (broadcastResponse)
          {
+            cout << "Should be broadcasting the message" << endl;
+
             vector<Player>::iterator it;
 
             for (it = vctPlayers.begin(); it != vctPlayers.end(); it++)
@@ -119,6 +121,8 @@ int main(int argc, char *argv[])
          }
          else
          {
+            cout << "Should be sending back the message" << endl;
+
             if ( sendMessage(&serverMsg, sock, &from) < 0 )
                error("sendMessage");
          }
@@ -138,6 +142,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
    cout << "MSG: type: " << clientMsg.type << endl;
    cout << "MSG contents: " << clientMsg.buffer << endl;
 
+   // maybe we should make a message class and have this be a member
    bool broadcastResponse = false;
 
    // Check that if an invalid message is sent, the client will correctly
@@ -185,7 +190,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
             newP.setAddr(from);
 
             vctPlayers.push_back(newP);
-            strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with outher players.");
+            strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with other players.");
          }
 
          serverMsg.type = MSG_TYPE_LOGIN;
@@ -220,6 +225,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
       }
       case MSG_TYPE_CHAT:
       {
+         cout << "Got a chat message" << endl;
+
          Player *p = findPlayerByAddr(vctPlayers, from);
 
          if (p == NULL)
@@ -231,7 +238,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
             broadcastResponse = true;
 
             stringstream ss;
-            ss << p->name << ": " << clientMsg.buffer << endl;
+            ss << p->name << ": " << clientMsg.buffer;
 
             strcpy(serverMsg.buffer, ss.str().c_str());
          }	
@@ -248,7 +255,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
 
          break;
       }
-
-      return broadcastResponse;
    }
+
+   return broadcastResponse;
 }
+
