@@ -22,6 +22,7 @@
 
 #include "../../common/Compiler.h"
 #include "../../common/Message.h"
+#include "../../common/Common.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -199,6 +200,8 @@ int main(int argc, char **argv)
    if (sock < 0)
       error("socket");
 
+   set_nonblock(sock);
+
    server.sin_family = AF_INET;
    hp = gethostbyname(argv[1]);
    if (hp==0)
@@ -208,7 +211,7 @@ int main(int argc, char **argv)
    server.sin_port = htons(atoi(argv[2]));
 
    al_start_timer(timer);
- 
+
    while(!doexit)
    {
       ALLEGRO_EVENT ev;
@@ -281,8 +284,15 @@ int main(int argc, char **argv)
                break;
          }
       }
+
+      if (receiveMessage(&msgFrom, sock, &from) >= 0)
+      {
+         processMessage(msgFrom, state, chatConsole);
+         cout << "state: " << state << endl;
+      }
  
-      if(redraw && al_is_event_queue_empty(event_queue)) {
+      if (redraw && al_is_event_queue_empty(event_queue))
+      {
          redraw = false;
  
          wndCurrent->draw(display);
@@ -363,6 +373,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
    {
       case STATE_START:
       {
+         cout << "In STATE_START" << endl;
+
          chatConsole.addLine(response);
 
          switch(msg.type)
@@ -447,9 +459,6 @@ void registerAccount()
    strcpy(msgTo.buffer+username.size()+1, password.c_str());
 
    sendMessage(&msgTo, sock, &server);
-   receiveMessage(&msgFrom, sock, &from);
-   processMessage(msgFrom, state, chatConsole);
-   cout << "state: " << state << endl;
 }
 
 void login()
@@ -467,9 +476,6 @@ void login()
    strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
 
    sendMessage(&msgTo, sock, &server);
-   receiveMessage(&msgFrom, sock, &from);
-   processMessage(msgFrom, state, chatConsole);
-   cout << "state: " << state << endl;
 }
 
 void logout()
@@ -481,8 +487,6 @@ void logout()
    strcpy(msgTo.buffer, username.c_str());
 
    sendMessage(&msgTo, sock, &server);
-   receiveMessage(&msgFrom, sock, &from);
-   processMessage(msgFrom, state, chatConsole);
 }
 
 void quit()
@@ -501,6 +505,4 @@ void sendChatMessage()
    strcpy(msgTo.buffer, msg.c_str());
 
    sendMessage(&msgTo, sock, &server);
-   receiveMessage(&msgFrom, sock, &from);
-   processMessage(msgFrom, state, chatConsole);
 }
