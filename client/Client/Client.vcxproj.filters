@@ -42,11 +42,11 @@
     <ClCompile Include="Button.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\Message.cpp">
       <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\gui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -62,9 +62,6 @@
     <ClInclude Include="Button.h">
       <Filter>Header Files\gui</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\Compiler.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -74,5 +71,13 @@
     <ClInclude Include="..\..\common\Common.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pirulen.ttf">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
