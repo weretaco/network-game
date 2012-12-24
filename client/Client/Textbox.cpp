@@ -67,7 +67,12 @@ void Textbox::draw(ALLEGRO_DISPLAY *display)
       textPos = this->width-textWidth-3;
 
    al_draw_text(font, al_map_rgb(0, 255, 0), textPos, (this->height-fontHeight)/2, ALLEGRO_ALIGN_LEFT, str.c_str());
-   al_draw_rectangle(1, 1, this->width, this->height, al_map_rgb(0, 255, 0), 1);
+
+   #ifdef WINDOWS
+      al_draw_rectangle(1, 1, this->width, this->height, al_map_rgb(0, 255, 0), 1);
+   #else
+      al_draw_rectangle(1, 0, this->width, this->height-1, al_map_rgb(0, 255, 0), 1);
+   #endif
 
    al_set_target_bitmap(al_get_backbuffer(display));
    al_draw_bitmap(bitmap, x, y, 0);
