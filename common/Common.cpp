@@ -2,10 +2,10 @@
 
 void set_nonblock(int sock)
 {
-   #ifdef WIN32
+   #if defined WINDOWS
       unsigned long mode = 1;
       ioctlsocket(sock, FIONBIO, &mode);
-   #else
+   #elif defined LINUX
       int flags;
       flags = fcntl(sock, F_GETFL,0);
       assert(flags != -1);

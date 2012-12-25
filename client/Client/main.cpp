@@ -1,3 +1,5 @@
+#include "../../common/Compiler.h"
+
 #if defined WINDOWS
    #include <winsock2.h>
    #include <WS2tcpip.h>
@@ -20,9 +22,9 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
 
-#include "../../common/Compiler.h"
 #include "../../common/Message.h"
 #include "../../common/Common.h"
+#include "../../common/Player.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -429,6 +431,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
                {
                   cout << "Added new line" << endl;
                }
+
+               break;
+            }
+            case MSG_TYPE_PLAYER:
+            {
+               Player p = *(Player*)(&(msg.buffer));
+
+               cout << "p.name: " << p.name;
+               cout << "p.pos.x: " << p.pos.x;
+               cout << "p.pos.y: " << p.pos.y;
 
                break;
             }
