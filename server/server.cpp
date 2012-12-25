@@ -6,24 +6,24 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-
-#include <fcntl.h>
-#include <assert.h>
+#include <cstring>
 
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+/*
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+*/
 
 #include "../common/Compiler.h"
-#include "../common/Message.h"
 #include "../common/Common.h"
+#include "../common/Message.h"
+#include "../common/Player.h"
 
-#include "Player.h"
 #include "DataAccess.h"
 
 using namespace std;
@@ -64,6 +64,25 @@ Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
    return NULL;
 }
 
+void broadcastPlayerPositions(vector<Player> &vec, int sock)
+{
+   vector<Player>::iterator it, it2;
+   NETWORK_MSG serverMsg;
+
+   serverMsg.type = MSG_TYPE_PLAYER;   
+
+   for (it = vec.begin(); it != vec.end(); it++)
+   {
+      strncpy(serverMsg.buffer, (char*)&*it, sizeof(Player));
+
+      for (it2 = vec.begin(); it2 != vec.end(); it2++)
+      {
+         if ( sendMessage(&serverMsg, sock, &(it2->addr)) < 0 )
+            error("sendMessage");
+      }
+   }
+}
+
 int main(int argc, char *argv[])
 {
    int sock, length, n;
@@ -72,9 +91,9 @@ int main(int argc, char *argv[])
    NETWORK_MSG clientMsg, serverMsg;
    vector<Player> vctPlayers;
 
-   SSL_load_error_strings();
-   ERR_load_BIO_strings();
-   OpenSSL_add_all_algorithms();
+   //SSL_load_error_strings();
+   //ERR_load_BIO_strings();
+   //OpenSSL_add_all_algorithms();
 
    if (argc < 2) {
       cerr << "ERROR, no port provided" << endl;
@@ -126,8 +145,9 @@ int main(int argc, char *argv[])
             if ( sendMessage(&serverMsg, sock, &from) < 0 )
                error("sendMessage");
          }
-      }
 
+         broadcastPlayerPositions(vctPlayers, sock);
+      }
    }
 
    return 0;

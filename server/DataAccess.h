@@ -5,7 +5,7 @@
 
 #include <mysql/mysql.h>
 
-#include "Player.h"
+#include "../common/Player.h"
 
 using namespace std;
 

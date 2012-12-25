@@ -1,17 +1,15 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-void set_nonblock(int sock)
+#include <fcntl.h>
+#include <assert.h>
+
+void set_nonblock(int sock);
+
+typedef struct
 {
-   #ifdef WIN32
-      unsigned long mode = 1;
-      ioctlsocket(sock, FIONBIO, &mode);
-   #else
-      int flags;
-      flags = fcntl(sock, F_GETFL,0);
-      assert(flags != -1);
-      fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-   #endif
-}
+   int x;
+   int y;
+} PLAYER_POS;
 
 #endif

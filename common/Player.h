@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <string>
 
+#include "Common.h"
+
 using namespace std;
 
 class Player {
@@ -13,10 +15,12 @@ public:
    ~Player();
 
    void setAddr(sockaddr_in addr);
+   void clearSensitiveInfo();
 
    string name;
    string password;
    sockaddr_in addr;
+   PLAYER_POS pos;
 };
 
 #endif
