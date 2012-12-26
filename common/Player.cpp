@@ -36,15 +36,20 @@ void Player::serialize(char* buffer)
    ostringstream oss;
 
    oss << this->name;
+   oss.write((char*)&(this->pos.x), sizeof(int));
+   oss.write((char*)&(this->pos.y), sizeof(int));
 
-   memcpy(buffer, oss.str().c_str(), this->name.length()+1);
+   memcpy(buffer, oss.str().c_str(), this->name.length()+1+2*sizeof(int));
 }
 
 void Player::deserialize(char* buffer)
 {
    istringstream iss;
+   iss.str(buffer);
 
    iss >> this->name;
+   iss.read((char*)&(this->pos.x), sizeof(int));
+   iss.read((char*)&(this->pos.y), sizeof(int));
 }
 
 void Player::setAddr(sockaddr_in addr)

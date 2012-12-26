@@ -371,6 +371,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
 {
    string response = string(msg.buffer);
 
+   cout << "Got message: " << msg.type << endl;
+
    switch(state)
    {
       case STATE_START:
@@ -436,11 +438,12 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
             }
             case MSG_TYPE_PLAYER:
             {
-               Player p = *(Player*)(&(msg.buffer));
+               Player p("", "");
+               p.deserialize(msg.buffer);
 
-               cout << "p.name: " << p.name;
-               cout << "p.pos.x: " << p.pos.x;
-               cout << "p.pos.y: " << p.pos.y;
+               cout << "p.name: " << p.name << endl;
+               cout << "p.pos.x: " << p.pos.x << endl;
+               cout << "p.pos.y: " << p.pos.y << endl;
 
                break;
             }
