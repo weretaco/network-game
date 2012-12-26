@@ -22,8 +22,10 @@ public:
    Player(string name, sockaddr_in addr); // this will be deleted
    ~Player();
 
+   void serialize(char* buffer);
+   void deserialize(char* buffer);
+
    void setAddr(sockaddr_in addr);
-   void clearSensitiveInfo();
 
    string name;
    string password;

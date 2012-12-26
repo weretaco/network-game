@@ -1,6 +1,8 @@
 #include "Player.h"
 
 #include <iostream>
+#include <sstream>
+#include <cstring>
 
 using namespace std;
 
@@ -29,15 +31,23 @@ Player::~Player()
 {
 }
 
+void Player::serialize(char* buffer)
+{
+   ostringstream oss;
+
+   oss << this->name;
+
+   memcpy(buffer, oss.str().c_str(), this->name.length()+1);
+}
+
+void Player::deserialize(char* buffer)
+{
+   istringstream iss;
+
+   iss >> this->name;
+}
+
 void Player::setAddr(sockaddr_in addr)
 {
    this->addr = addr;
-}
-
-void Player::clearSensitiveInfo()
-{
-   this->password = "";
-   this->addr.sin_family = 0;
-   this->addr.sin_port = 0;
-   this->addr.sin_addr.s_addr = 0;
 }

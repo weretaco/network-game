@@ -73,7 +73,7 @@ void broadcastPlayerPositions(vector<Player> &vec, int sock)
 
    for (it = vec.begin(); it != vec.end(); it++)
    {
-      strncpy(serverMsg.buffer, (char*)&*it, sizeof(Player));
+      it->serialize(serverMsg.buffer);
 
       for (it2 = vec.begin(); it2 != vec.end(); it2++)
       {
