@@ -36,6 +36,7 @@ void Player::serialize(char* buffer)
    ostringstream oss;
 
    oss << this->name;
+   oss.write("\0", 1);
    oss.write((char*)&(this->pos.x), sizeof(int));
    oss.write((char*)&(this->pos.y), sizeof(int));
 
