@@ -18,15 +18,20 @@ using namespace std;
 
 class Player {
 public:
+   Player();
+   Player(const Player& p);
    Player(string name, string password);
    Player(string name, sockaddr_in addr); // this will be deleted
+
    ~Player();
 
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
+   void setId(int id);
    void setAddr(sockaddr_in addr);
 
+   int id;
    string name;
    string password;
    sockaddr_in addr;

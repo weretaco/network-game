@@ -4,9 +4,10 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <vector>
-#include <algorithm>
 #include <cstring>
+
+#include <vector>
+#include <map>
 
 #include <sys/socket.h>
 #include <netdb.h>
@@ -28,7 +29,9 @@
 
 using namespace std;
 
-bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, NETWORK_MSG &serverMsg);
+bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, unsigned int& unusedId, NETWORK_MSG &serverMsg);
+
+void updateUnusedId(unsigned int& id);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -37,47 +40,47 @@ void error(const char *msg)
     exit(0);
 }
 
-Player *findPlayerByName(vector<Player> &vec, string name)
+Player *findPlayerByName(map<unsigned int, Player> &m, string name)
 {
-   vector<Player>::iterator it;
+   map<unsigned int, Player>::iterator it;
 
-   for (it = vec.begin(); it != vec.end(); it++)
+   for (it = m.begin(); it != m.end(); it++)
    {
-      if ( it->name.compare(name) == 0 )
-         return &(*it);
+      if ( it->second.name.compare(name) == 0 )
+         return &(it->second);
    }
 
    return NULL;
 }
 
-Player *findPlayerByAddr(vector<Player> &vec, const sockaddr_in &addr)
+Player *findPlayerByAddr(map<unsigned int, Player> &m, const sockaddr_in &addr)
 {
-   vector<Player>::iterator it;
+   map<unsigned int, Player>::iterator it;
 
-   for (it = vec.begin(); it != vec.end(); it++)
+   for (it = m.begin(); it != m.end(); it++)
    {
-      if ( it->addr.sin_addr.s_addr == addr.sin_addr.s_addr &&
-           it->addr.sin_port == addr.sin_port )
-         return &(*it);
+      if ( it->second.addr.sin_addr.s_addr == addr.sin_addr.s_addr &&
+           it->second.addr.sin_port == addr.sin_port )
+         return &(it->second);
    }
 
    return NULL;
 }
 
-void broadcastPlayerPositions(vector<Player> &vec, int sock)
+void broadcastPlayerPositions(map<unsigned int, Player> &m, int sock)
 {
-   vector<Player>::iterator it, it2;
+   map<unsigned int, Player>::iterator it, it2;
    NETWORK_MSG serverMsg;
 
    serverMsg.type = MSG_TYPE_PLAYER;   
 
-   for (it = vec.begin(); it != vec.end(); it++)
+   for (it = m.begin(); it != m.end(); it++)
    {
-      it->serialize(serverMsg.buffer);
+      it->second.serialize(serverMsg.buffer);
 
-      for (it2 = vec.begin(); it2 != vec.end(); it2++)
+      for (it2 = m.begin(); it2 != m.end(); it2++)
       {
-         if ( sendMessage(&serverMsg, sock, &(it2->addr)) < 0 )
+         if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
             error("sendMessage");
       }
    }
@@ -89,7 +92,8 @@ int main(int argc, char *argv[])
    struct sockaddr_in server;
    struct sockaddr_in from; // info of client sending the message
    NETWORK_MSG clientMsg, serverMsg;
-   vector<Player> vctPlayers;
+   map<unsigned int, Player> mapPlayers;
+   unsigned int unusedId = 0;
 
    //SSL_load_error_strings();
    //ERR_load_BIO_strings();
@@ -122,7 +126,7 @@ int main(int argc, char *argv[])
       if (n >= 0) {
          cout << "Got a message" << endl;
 
-         broadcastResponse = processMessage(clientMsg, from, vctPlayers, serverMsg);
+         broadcastResponse = processMessage(clientMsg, from, mapPlayers, unusedId, serverMsg);
 
          cout << "msg: " << serverMsg.buffer << endl;
 
@@ -130,11 +134,11 @@ int main(int argc, char *argv[])
          {
             cout << "Should be broadcasting the message" << endl;
 
-            vector<Player>::iterator it;
+            map<unsigned int, Player>::iterator it;
 
-            for (it = vctPlayers.begin(); it != vctPlayers.end(); it++)
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
-               if ( sendMessage(&serverMsg, sock, &(it->addr)) < 0 )
+               if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                   error("sendMessage");
             }
          }
@@ -146,14 +150,14 @@ int main(int argc, char *argv[])
                error("sendMessage");
          }
 
-         broadcastPlayerPositions(vctPlayers, sock);
+         broadcastPlayerPositions(mapPlayers, sock);
       }
    }
 
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, vector<Player> &vctPlayers, NETWORK_MSG &serverMsg)
+bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, unsigned int& unusedId, NETWORK_MSG& serverMsg)
 {
    DataAccess da;
 
@@ -200,16 +204,17 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          {
             strcpy(serverMsg.buffer, "Incorrect username or password");
          }
-         else if(findPlayerByName(vctPlayers, username) != NULL)
+         else if(findPlayerByName(mapPlayers, username) != NULL)
          {
             strcpy(serverMsg.buffer, "Player has already logged in.");
          }
          else
          {
-            Player newP(username, "");
-            newP.setAddr(from);
+            p->setAddr(from);
+            p->id = unusedId;
+            mapPlayers[unusedId] = *p;
+            updateUnusedId(unusedId);
 
-            vctPlayers.push_back(newP);
             strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with other players.");
          }
 
@@ -224,20 +229,22 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
          string name(clientMsg.buffer);
          cout << "Player logging out: " << name << endl;
 
-         Player *p = findPlayerByName(vctPlayers, name);
+         Player *p = findPlayerByName(mapPlayers, name);
 
          if (p == NULL)
          {
             strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
          }
-         else if( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
-                  p->addr.sin_port != from.sin_port )
+         else if ( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
+                   p->addr.sin_port != from.sin_port )
          {
             strcpy(serverMsg.buffer, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
          }
          else
          {
-            vctPlayers.erase((vector<Player>::iterator)p);
+            if (p->id < unusedId)
+               unusedId = p->id;
+            mapPlayers.erase(p->id);
             strcpy(serverMsg.buffer, "You have successfully logged out.");
          }
 
@@ -247,7 +254,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
       {
          cout << "Got a chat message" << endl;
 
-         Player *p = findPlayerByAddr(vctPlayers, from);
+         Player *p = findPlayerByAddr(mapPlayers, from);
 
          if (p == NULL)
          {
@@ -280,3 +287,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from
    return broadcastResponse;
 }
 
+void updateUnusedId(unsigned int& id)
+{
+   id = 5;
+}
