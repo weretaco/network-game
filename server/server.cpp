@@ -31,7 +31,7 @@ using namespace std;
 
 bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, unsigned int& unusedId, NETWORK_MSG &serverMsg);
 
-void updateUnusedId(unsigned int& id);
+void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
    struct sockaddr_in from; // info of client sending the message
    NETWORK_MSG clientMsg, serverMsg;
    map<unsigned int, Player> mapPlayers;
-   unsigned int unusedId = 0;
+   unsigned int unusedId = 1;
 
    //SSL_load_error_strings();
    //ERR_load_BIO_strings();
@@ -211,9 +211,9 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          else
          {
             p->setAddr(from);
+            updateUnusedId(unusedId, mapPlayers);
             p->id = unusedId;
             mapPlayers[unusedId] = *p;
-            updateUnusedId(unusedId);
 
             strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with other players.");
          }
@@ -287,7 +287,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
    return broadcastResponse;
 }
 
-void updateUnusedId(unsigned int& id)
+void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers)
 {
-   id = 5;
+   while (mapPlayers.find(id) != mapPlayers.end())
+      id++;
 }

@@ -52,13 +52,25 @@ void Player::serialize(char* buffer)
 {
    ostringstream oss;
 
+   cout << "Player name: " << this->name << endl;
+
+   /*
    oss.write((char*)&(this->id), sizeof(int));
    oss << this->name;
+   cout << "first oss str: " << oss.str() << endl;
    oss.write("\0", 1);
+   cout << "second oss str: " << oss.str() << endl;
    oss.write((char*)&(this->pos.x), sizeof(int));
+   cout << "third oss str: " << oss.str() << endl;
    oss.write((char*)&(this->pos.y), sizeof(int));
+   */
 
-   memcpy(buffer, oss.str().c_str(), this->name.length()+1+2*sizeof(int));
+   oss << this->id;
+   oss << this->name;
+   css << this->pos.x;
+   css << this->pos.y;
+
+   memcpy(buffer, oss.str().c_str(), oss.str().length);
 }
 
 void Player::deserialize(char* buffer)
@@ -66,10 +78,17 @@ void Player::deserialize(char* buffer)
    istringstream iss;
    iss.str(buffer);
 
+   /*
    iss.read((char*)&(this->id), sizeof(int));
    iss >> this->name;
    iss.read((char*)&(this->pos.x), sizeof(int));
    iss.read((char*)&(this->pos.y), sizeof(int));
+   */
+
+   iss >> this.id;
+   iss >> this->name;
+   iss >> this->pos.x;
+   iss >> this->pos.y;
 }
 
 void Player::setId(int id)
