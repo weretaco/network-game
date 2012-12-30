@@ -67,10 +67,11 @@ void Player::serialize(char* buffer)
 
    oss << this->id;
    oss << this->name;
-   css << this->pos.x;
-   css << this->pos.y;
+   //oss << '\0';
+   oss << this->pos.x;
+   oss << this->pos.y;
 
-   memcpy(buffer, oss.str().c_str(), oss.str().length);
+   memcpy(buffer, oss.str().c_str(), oss.str().length());
 }
 
 void Player::deserialize(char* buffer)
@@ -85,7 +86,7 @@ void Player::deserialize(char* buffer)
    iss.read((char*)&(this->pos.y), sizeof(int));
    */
 
-   iss >> this.id;
+   iss >> this->id;
    iss >> this->name;
    iss >> this->pos.x;
    iss >> this->pos.y;
