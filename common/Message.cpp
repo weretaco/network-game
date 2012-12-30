@@ -30,7 +30,8 @@ int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
    // assume we don't care about the value of socklen
    int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, &socklen);
 
-   cout << "Received message of type " << msg->type << endl;
+   if (ret > -1)
+      cout << "Received message of type " << msg->type << endl;
 
    return ret;
 }
