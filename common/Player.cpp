@@ -67,7 +67,7 @@ void Player::serialize(char* buffer)
 
    oss << this->id;
    oss << this->name;
-   //oss << '\0';
+   oss << '\0';
    oss << this->pos.x;
    oss << this->pos.y;
 
