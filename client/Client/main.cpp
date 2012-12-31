@@ -18,6 +18,8 @@
 #include <string>
 #include <iostream>
 
+#include <map>
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
@@ -39,7 +41,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers);
 
 // callbacks
 void registerAccount();
@@ -94,6 +96,7 @@ int main(int argc, char **argv)
    bool key[4] = { false, false, false, false };
    bool redraw = true;
    doexit = false;
+   map<unsigned int, Player> mapPlayers;
 
    float bouncer_x = SCREEN_W / 2.0 - BOUNCER_SIZE / 2.0;
    float bouncer_y = SCREEN_H / 2.0 - BOUNCER_SIZE / 2.0;
@@ -289,7 +292,7 @@ int main(int argc, char **argv)
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
       {
-         processMessage(msgFrom, state, chatConsole);
+         processMessage(msgFrom, state, chatConsole, mapPlayers);
          cout << "state: " << state << endl;
       }
  
@@ -367,7 +370,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers)
 {
    string response = string(msg.buffer);
 
@@ -413,9 +416,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
       }
       case STATE_LOGIN:
       {
-         chatConsole.addLine(response);
-
-          switch(msg.type)
+         switch(msg.type)
          {
             case MSG_TYPE_REGISTER:
             {
@@ -423,6 +424,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
             }
             case MSG_TYPE_LOGIN:
             {
+               chatConsole.addLine(response);
+
                if (response.compare("You have successfully logged out.") == 0)
                {
                   cout << "Logged out" << endl;
@@ -441,14 +444,23 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
                Player p("", "");
                p.deserialize(msg.buffer);
 
+               cout << "p.id: " << p.id << endl;
                cout << "p.name: " << p.name << endl;
                cout << "p.pos.x: " << p.pos.x << endl;
                cout << "p.pos.y: " << p.pos.y << endl;
 
+               mapPlayers[p.id] = p;
+
+               break;
+            }
+            case MSG_TYPE_CHAT:
+            {
+               chatConsole.addLine(response);
+
                break;
             }
          }
-                     
+
          break;
       }
       default:
