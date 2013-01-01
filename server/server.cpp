@@ -215,7 +215,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
             p->id = unusedId;
             mapPlayers[unusedId] = *p;
 
-            strcpy(serverMsg.buffer, "Login successful. Enjoy chatting with other players.");
+            // sendd back the new player info to the user
+            p->serialize(serverMsg.buffer);
          }
 
          serverMsg.type = MSG_TYPE_LOGIN;
