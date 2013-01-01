@@ -6,6 +6,7 @@
 #define MSG_TYPE_LOGOUT       3
 #define MSG_TYPE_CHAT         4
 #define MSG_TYPE_PLAYER       5
+#define MSG_TYPE_PLAYER_MOVE  6
 
 typedef struct
 {

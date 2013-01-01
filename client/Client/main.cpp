@@ -13,20 +13,22 @@
 #endif
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <iostream>
+#include <sstream>
 
 #include <map>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
+#include <allegro5/allegro_primitives.h>
 
 #include "../../common/Message.h"
 #include "../../common/Common.h"
-#include "../../common/Player.h"
+#include "../../common/Player.h"_
 
 #include "Window.h"
 #include "Textbox.h"
@@ -41,7 +43,8 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId);
+void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId);
 
 // callbacks
 void registerAccount();
@@ -97,6 +100,7 @@ int main(int argc, char **argv)
    bool redraw = true;
    doexit = false;
    map<unsigned int, Player> mapPlayers;
+   unsigned int curPlayerId = -1;
 
    float bouncer_x = SCREEN_W / 2.0 - BOUNCER_SIZE / 2.0;
    float bouncer_y = SCREEN_H / 2.0 - BOUNCER_SIZE / 2.0;
@@ -108,12 +112,20 @@ int main(int argc, char **argv)
       return -1;
    }
 
-   al_init_primitives_addon();
+   if (al_init_primitives_addon())
+      cout << "Primitives initialized" << endl;
+   else
+      cout << "Primitives not initialized" << endl;
+
    al_init_font_addon();
    al_init_ttf_addon();
 
-   ALLEGRO_FONT *font = al_load_ttf_font("../pirulen.ttf", 12, 0);
- 
+   #if defined WINDOWS
+      ALLEGRO_FONT *font = al_load_ttf_font("../pirulen.ttf", 12, 0);
+   #elif defined LINUX
+      ALLEGRO_FONT *font = al_load_ttf_font("pirulen.ttf", 12, 0);
+   #endif
+
    if (!font) {
       fprintf(stderr, "Could not load 'pirulen.ttf'.\n");
       getchar();
@@ -289,20 +301,34 @@ int main(int argc, char **argv)
                break;
          }
       }
+      else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+         mapPlayers[curPlayerId].pos.x = ev.mouse.x;
+         mapPlayers[curPlayerId].pos.y = ev.mouse.y;
+
+         // send the server a MSG_TYPE_PLAYER_MOVE message
+         msgTo.type = MSG_TYPE_PLAYER_MOVE;
+
+         ostringstream oss;
+         oss << ev.mouse.x;
+         oss << ev.mouse.y;
+
+         memcpy(msgTo.buffer, oss.str().c_str(), oss.str().length());
+         sendMessage(&msgTo, sock, &server);
+      }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
       {
-         processMessage(msgFrom, state, chatConsole, mapPlayers);
+         processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
          cout << "state: " << state << endl;
       }
  
       if (redraw && al_is_event_queue_empty(event_queue))
       {
          redraw = false;
- 
+
          wndCurrent->draw(display);
- 
-         al_draw_bitmap(bouncer, bouncer_x, bouncer_y, 0);
+
+         drawPlayers(mapPlayers, curPlayerId);
 
          chatConsole.draw(font, al_map_rgb(255,255,255));
 
@@ -370,7 +396,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId)
 {
    string response = string(msg.buffer);
 
@@ -381,8 +407,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
       case STATE_START:
       {
          cout << "In STATE_START" << endl;
-
-         chatConsole.addLine(response);
 
          switch(msg.type)
          {
@@ -406,8 +430,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                {
                   state = STATE_LOGIN;
                   wndCurrent = wndMain;
-                  cout << "User login successful" << endl;
+                  
+                  Player p("", "");
+                  p.deserialize(msg.buffer);
+                  mapPlayers[p.id] = p;
+                  curPlayerId = p.id;
+
+                  cout << "Got a valid login response with the player" << endl;
+                  cout << "Player id: " << curPlayerId << endl; 
                }
+
                break;
             }
          }
@@ -443,13 +475,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             {
                Player p("", "");
                p.deserialize(msg.buffer);
-
-               cout << "p.id: " << p.id << endl;
-               cout << "p.name: " << p.name << endl;
-               cout << "p.pos.x: " << p.pos.x << endl;
-               cout << "p.pos.y: " << p.pos.y << endl;
-
                mapPlayers[p.id] = p;
+
+               cout << "Received MSG_TYPE_PLAYER message" << endl;
 
                break;
             }
@@ -469,6 +497,21 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
          break;
       }
+   }
+}
+
+void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId)
+{
+   map<unsigned int, Player>::iterator it;
+
+   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+   {
+      Player *p = &it->second;
+
+      if (p->id == curPlayerId)
+         al_draw_filled_circle(p->pos.x, p->pos.y, 15, al_map_rgb(0, 255, 0));
+      else
+         al_draw_filled_circle(p->pos.x, p->pos.y, 30, al_map_rgb(255, 0, 0));
    }
 }
 
