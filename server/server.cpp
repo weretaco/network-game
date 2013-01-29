@@ -14,6 +14,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <crypt.h>
+
 /*
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
@@ -128,8 +130,10 @@ int main(int argc, char *argv[])
 
          broadcastResponse = processMessage(clientMsg, from, mapPlayers, unusedId, serverMsg);
 
+         // probably replace this with a function that prints based on the
+         // message type
          cout << "msg: " << serverMsg.buffer << endl;
-
+         cout << "broadcastResponse: " << broadcastResponse << endl;
          if (broadcastResponse)
          {
             cout << "Should be broadcasting the message" << endl;
@@ -196,11 +200,10 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
       {
          string username(clientMsg.buffer);
          string password(strchr(clientMsg.buffer, '\0')+1);
-         cout << "Player logging in: " << username << endl;
 
          Player* p = da.getPlayer(username);
 
-         if (p == NULL || p->password != password)
+         if (p == NULL || !da.verifyPassword(password, p->password))
          {
             strcpy(serverMsg.buffer, "Incorrect username or password");
          }
@@ -271,13 +274,46 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          {
             broadcastResponse = true;
 
-            stringstream ss;
-            ss << p->name << ": " << clientMsg.buffer;
+            ostringstream oss;
+            oss << p->name << ": " << clientMsg.buffer;
 
-            strcpy(serverMsg.buffer, ss.str().c_str());
+            strcpy(serverMsg.buffer, oss.str().c_str());
          }	
 
          serverMsg.type = MSG_TYPE_CHAT;
+
+         break;
+      }
+      case MSG_TYPE_PLAYER_MOVE:
+      {
+         istringstream iss;
+         iss.str(clientMsg.buffer);
+
+         cout << "PLAYER_MOVE" << endl;
+
+         int id, x, y;
+
+         memcpy(&id, clientMsg.buffer, 4);
+         memcpy(&x, clientMsg.buffer+4, 4);
+         memcpy(&y, clientMsg.buffer+8, 4);
+         
+         cout << "x: " << x << endl;
+         cout << "y: " << y << endl;
+         cout << "id: " << id << endl;
+
+         if ( mapPlayers[id].addr.sin_addr.s_addr == from.sin_addr.s_addr &&
+              mapPlayers[id].addr.sin_port == from.sin_port )
+         {
+            memcpy(&mapPlayers[id].pos.x, clientMsg.buffer+4, 4);
+            memcpy(&mapPlayers[id].pos.y, clientMsg.buffer+8, 4);
+
+            serverMsg.type = MSG_TYPE_PLAYER_MOVE;
+            memcpy(serverMsg.buffer, clientMsg.buffer, 12);
+
+            broadcastResponse = true;
+         }
+         else  // nned to send back a message indicating failure
+            cout << "Player id (" << id << ") doesn't match sender" << endl;
 
          break;
       }

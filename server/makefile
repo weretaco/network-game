@@ -1,5 +1,5 @@
 CC = g++
-LIB_FLAGS = -lssl -lmysqlclient
+LIB_FLAGS = -lssl -lmysqlclient -lcrypt
 FLAGS = $(LIB_FLAGS)
 COMMON_PATH = ../common
 DEPENDENCIES = Common.o Message.o Player.o DataAccess.o

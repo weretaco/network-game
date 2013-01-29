@@ -2,6 +2,7 @@
 #define _DATA_ACCESS_H
 
 #include <string>
+#include <list>
 
 #include <mysql/mysql.h>
 
@@ -15,11 +16,14 @@ public:
    ~DataAccess();
 
    int insertPlayer(string username, string password);
+   int updatePlayer(string username, string password);
 
-   Player *getPlayer(string username);
-   int printPlayers();
+   Player* getPlayer(string username);
+   list<Player*>* getPlayers();
+   bool verifyPassword(string encrypted, string password);
 
    int insert(string table, string rows, string values);
+   int update(string table, string values, string where);
    MYSQL_RES *select(string table, string filter);
 
 private:
