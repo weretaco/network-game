@@ -50,26 +50,25 @@ Player::~Player()
 
 void Player::serialize(char* buffer)
 {
-   ostringstream oss;
-
-   oss << this->id;
-   oss << this->name;
-   oss << '\0';
-   oss << this->pos.x;
-   oss << this->pos.y;
-
-   memcpy(buffer, oss.str().c_str(), oss.str().length());
+   memcpy(buffer, &this->id, 4);
+   strcpy(buffer+4, this->name.c_str());
+   memcpy(buffer+4+this->name.length(), &this->pos.x, 4);
+   memcpy(buffer+8+this->name.length(), &this->pos.y, 4);
 }
 
 void Player::deserialize(char* buffer)
 {
-   istringstream iss;
-   iss.str(buffer);
+   char test[256];
 
-   iss >> this->id;
-   iss >> this->name;
-   iss >> this->pos.x;
-   iss >> this->pos.y;
+   memcpy(&this->id, buffer, 4);
+   strcpy(test, buffer+4);
+   memcpy(&this->pos.x, buffer+4+strlen(test), 4);
+   memcpy(&this->pos.y, buffer+8+strlen(test), 4);
+
+   cout << "id: " << this->id << endl;
+   cout << "name: " << test << endl;
+   cout << "x: " << this->pos.x << endl;
+   cout << "y: " << this->pos.y << endl;
 }
 
 void Player::setId(int id)
