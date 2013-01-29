@@ -58,15 +58,13 @@ void Player::serialize(char* buffer)
 
 void Player::deserialize(char* buffer)
 {
-   char test[256];
-
    memcpy(&this->id, buffer, 4);
-   strcpy(test, buffer+4);
-   memcpy(&this->pos.x, buffer+5+strlen(test), 4);
-   memcpy(&this->pos.y, buffer+9+strlen(test), 4);
+   this->name.assign(buffer+4);
+   memcpy(&this->pos.x, buffer+5+this->name.size(), 4);
+   memcpy(&this->pos.y, buffer+9+this->name.size(), 4);
 
    cout << "id: " << this->id << endl;
-   cout << "name: " << test << endl;
+   cout << "name: " << this->name << endl;
    cout << "x: " << this->pos.x << endl;
    cout << "y: " << this->pos.y << endl;
 }
