@@ -52,8 +52,8 @@ void Player::serialize(char* buffer)
 {
    memcpy(buffer, &this->id, 4);
    strcpy(buffer+4, this->name.c_str());
-   memcpy(buffer+4+this->name.length(), &this->pos.x, 4);
-   memcpy(buffer+8+this->name.length(), &this->pos.y, 4);
+   memcpy(buffer+5+this->name.length(), &this->pos.x, 4);
+   memcpy(buffer+9+this->name.length(), &this->pos.y, 4);
 }
 
 void Player::deserialize(char* buffer)
@@ -62,8 +62,8 @@ void Player::deserialize(char* buffer)
 
    memcpy(&this->id, buffer, 4);
    strcpy(test, buffer+4);
-   memcpy(&this->pos.x, buffer+4+strlen(test), 4);
-   memcpy(&this->pos.y, buffer+8+strlen(test), 4);
+   memcpy(&this->pos.x, buffer+5+strlen(test), 4);
+   memcpy(&this->pos.y, buffer+9+strlen(test), 4);
 
    cout << "id: " << this->id << endl;
    cout << "name: " << test << endl;

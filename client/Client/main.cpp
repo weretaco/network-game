@@ -302,18 +302,15 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         mapPlayers[curPlayerId].pos.x = ev.mouse.x;
-         mapPlayers[curPlayerId].pos.y = ev.mouse.y;
+         if(wndCurrent == wndMain) {
+            msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
-         // send the server a MSG_TYPE_PLAYER_MOVE message
-         msgTo.type = MSG_TYPE_PLAYER_MOVE;
+            memcpy(msgTo.buffer, &curPlayerId, 4);
+            memcpy(msgTo.buffer+4, &ev.mouse.x, 4);
+            memcpy(msgTo.buffer+8, &ev.mouse.y, 4);
 
-         ostringstream oss;
-         oss << ev.mouse.x;
-         oss << ev.mouse.y;
-
-         memcpy(msgTo.buffer, oss.str().c_str(), oss.str().length());
-         sendMessage(&msgTo, sock, &server);
+            sendMessage(&msgTo, sock, &server);
+         }
       }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
