@@ -28,7 +28,8 @@
 
 #include "../../common/Message.h"
 #include "../../common/Common.h"
-#include "../../common/Player.h"_
+#include "../../common/Player.h"
+#include "../../common/WorldMap.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -44,7 +45,10 @@ using namespace std;
 void initWinSock();
 void shutdownWinSock();
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId);
+void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId);
+POSITION screenToMap(POSITION pos);
+POSITION mapToScreen(POSITION pos);
 
 // callbacks
 void registerAccount();
@@ -154,6 +158,8 @@ int main(int argc, char **argv)
       al_destroy_timer(timer);
       return -1;
    }
+
+   WorldMap* gameMap = WorldMap::createDefaultMap();
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));
@@ -305,11 +311,21 @@ int main(int argc, char **argv)
          if(wndCurrent == wndMain) {
             msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
-            memcpy(msgTo.buffer, &curPlayerId, 4);
-            memcpy(msgTo.buffer+4, &ev.mouse.x, 4);
-            memcpy(msgTo.buffer+8, &ev.mouse.y, 4);
+            POSITION pos;
+            pos.x = ev.mouse.x;
+            pos.y = ev.mouse.y;
+            pos = screenToMap(pos);
 
-            sendMessage(&msgTo, sock, &server);
+            if (pos.x != -1)
+            {
+               memcpy(msgTo.buffer, &curPlayerId, 4);
+               memcpy(msgTo.buffer+4, &pos.x, 4);
+               memcpy(msgTo.buffer+8, &pos.y, 4);
+
+               sendMessage(&msgTo, sock, &server);
+            }
+            else
+               cout << "Invalid point: User did not click on the map" << endl;
          }
       }
 
@@ -325,8 +341,6 @@ int main(int argc, char **argv)
 
          wndCurrent->draw(display);
 
-         drawPlayers(mapPlayers, curPlayerId);
-
          chatConsole.draw(font, al_map_rgb(255,255,255));
 
          if(wndCurrent == wndLogin) {
@@ -335,6 +349,9 @@ int main(int argc, char **argv)
          }
          else if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
+
+            drawMap(gameMap);
+            drawPlayers(mapPlayers, curPlayerId);
          }
 
          al_flip_display();
@@ -351,6 +368,8 @@ int main(int argc, char **argv)
    
    delete wndLogin;
    delete wndMain;
+
+   delete gameMap;
 
    al_destroy_event_queue(event_queue);
    al_destroy_bitmap(bouncer);
@@ -391,6 +410,28 @@ void shutdownWinSock()
 #if defined WINDOWS
    WSACleanup();
 #endif
+}
+
+POSITION screenToMap(POSITION pos)
+{
+   pos.x = pos.x-300;
+   pos.y = pos.y-100;
+
+   if (pos.x < 0 || pos.y < 0)
+   {
+      pos.x = -1;
+      pos.y = -1;
+   }
+
+   return pos;
+}
+
+POSITION mapToScreen(POSITION pos)
+{
+   pos.x = pos.x+300;
+   pos.y = pos.y+100;
+
+   return pos;
 }
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId)
@@ -497,18 +538,44 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
    }
 }
 
+void drawMap(WorldMap* gameMap)
+{
+   POSITION mapPos;
+   mapPos.x = 0;
+   mapPos.y = 0;
+   mapPos = mapToScreen(mapPos);
+   for (int x=0; x<12; x++)
+   {
+      for (int y=0; y<12; y++)
+      {
+         WorldMap::TerrainType el = gameMap->getElement(x, y);
+
+         if (el == WorldMap::TERRAIN_GRASS)
+            al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 255, 0));
+         else if (el == WorldMap::TERRAIN_OCEAN)
+            al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 0, 255));
+         else if (el == WorldMap::TERRAIN_ROCK)
+            al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
+      }
+   }
+}
+
 void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId)
 {
    map<unsigned int, Player>::iterator it;
 
+   Player* p;
+   POSITION pos;
+
    for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
    {
-      Player *p = &it->second;
+      p = &it->second;
+      pos = mapToScreen(p->pos);
 
       if (p->id == curPlayerId)
-         al_draw_filled_circle(p->pos.x, p->pos.y, 15, al_map_rgb(0, 255, 0));
+         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
       else
-         al_draw_filled_circle(p->pos.x, p->pos.y, 30, al_map_rgb(255, 0, 0));
+         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(191, 0, 0));
    }
 }
 

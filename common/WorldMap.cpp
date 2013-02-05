@@ -1,8 +1,8 @@
-#include "Map.h"
+#include "WorldMap.h"
 
 using namespace std;
 
-Map::Map(int width, int height)
+WorldMap::WorldMap(int width, int height)
 {
    this->width = width;
    this->height = height;
@@ -19,7 +19,7 @@ Map::Map(int width, int height)
    }
 }
 
-Map::~Map()
+WorldMap::~WorldMap()
 {
    for (int x=0; x<width; x++)
       delete (*vctMap)[x];
@@ -27,25 +27,32 @@ Map::~Map()
    delete vctMap;
 }
 
-void Map::setElement(int x, int y, TerrainType t)
+WorldMap::TerrainType WorldMap::getElement(int x, int y)
+{
+   return (*(*vctMap)[x])[y];
+}
+
+void WorldMap::setElement(int x, int y, TerrainType t)
 {
    (*(*vctMap)[x])[y] = t;
 }
 
-Map* Map::createDefaultMap()
+WorldMap* WorldMap::createDefaultMap()
 {
-   Map* m = new Map(20l, 20);
+   WorldMap* m = new WorldMap(12l, 12);
 
-   for(int x=0; x<20; x++)
+   for(int x=0; x<12; x++)
    {   
-      for(int y=0; y<20; y++)
+      for(int y=0; y<12; y++)
       {
-         if (x ==0 || y == 0 || x == 19 || y == 19)
+         if (x ==0 || y == 0 || x == 11 || y == 11)
             m->setElement(x, y, TERRAIN_OCEAN);
          else
             m->setElement(x, y, TERRAIN_GRASS);
       }
    }
+
+   m->setElement(5, 5, TERRAIN_ROCK);
 
    return m;
 }

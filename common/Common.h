@@ -17,6 +17,6 @@ typedef struct
 {
    int x;
    int y;
-} PLAYER_POS;
+} POSITION;
 
 #endif

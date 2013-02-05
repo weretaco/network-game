@@ -35,7 +35,7 @@ public:
    string name;
    string password;
    sockaddr_in addr;
-   PLAYER_POS pos;
+   POSITION pos;
 };
 
 #endif
