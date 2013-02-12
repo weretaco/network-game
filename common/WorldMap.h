@@ -25,6 +25,7 @@ public:
    void setElement(int x, int y, TerrainType type);
 
    static WorldMap* createDefaultMap();
+   static WorldMap* loadMapFromFile(string filename);
 };
 
 #endif
