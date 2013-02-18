@@ -19,4 +19,10 @@ typedef struct
    int y;
 } POSITION;
 
+typedef struct
+{
+   float x;
+   float y;
+} FLOAT_POSITION;
+
 #endif

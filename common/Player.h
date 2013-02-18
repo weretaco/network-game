@@ -11,6 +11,7 @@
 #endif
 
 #include <string>
+#include <sys/time.h>
 
 #include "Common.h"
 
@@ -31,11 +32,15 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
+   void move();
+
    int id;
    string name;
    string password;
    sockaddr_in addr;
-   POSITION pos;
+   FLOAT_POSITION pos;
+   POSITION target;
+   timespec timeLastUpdated;
 };
 
 #endif

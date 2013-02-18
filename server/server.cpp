@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <cmath>
+#include <sys/time.h>
 
 #include <vector>
 #include <map>
@@ -25,13 +27,14 @@
 #include "../common/Compiler.h"
 #include "../common/Common.h"
 #include "../common/Message.h"
+#include "../common/WorldMap.h"
 #include "../common/Player.h"
 
 #include "DataAccess.h"
 
 using namespace std;
 
-bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, unsigned int& unusedId, NETWORK_MSG &serverMsg);
+bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg);
 
 void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 
@@ -105,6 +108,8 @@ int main(int argc, char *argv[])
       cerr << "ERROR, no port provided" << endl;
       exit(1);
    }
+
+   WorldMap* gameMap = WorldMap::createDefaultMap();
  
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
@@ -118,6 +123,17 @@ int main(int argc, char *argv[])
 
    set_nonblock(sock);
 
+   Player testP;
+   clock_gettime(CLOCK_REALTIME, &testP.timeLastUpdated);
+
+   cout << "Before sleep" << endl;
+   // wait some time
+   sleep(3);
+   cout << "After sleep" << endl;
+
+   testP.move();
+
+/*
    bool broadcastResponse;
    while (true) {
 
@@ -128,7 +144,7 @@ int main(int argc, char *argv[])
       if (n >= 0) {
          cout << "Got a message" << endl;
 
-         broadcastResponse = processMessage(clientMsg, from, mapPlayers, unusedId, serverMsg);
+         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg);
 
          // probably replace this with a function that prints based on the
          // message type
@@ -157,11 +173,12 @@ int main(int argc, char *argv[])
          broadcastPlayerPositions(mapPlayers, sock);
       }
    }
+*/
 
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, unsigned int& unusedId, NETWORK_MSG& serverMsg)
+bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg)
 {
    DataAccess da;
 
@@ -198,6 +215,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
       }
       case MSG_TYPE_LOGIN:
       {
+         cout << "Got login message" << endl;
+
          string username(clientMsg.buffer);
          string password(strchr(clientMsg.buffer, '\0')+1);
 
@@ -286,6 +305,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
       }
       case MSG_TYPE_PLAYER_MOVE:
       {
+         cout << "Got a move message" << endl;
+
          istringstream iss;
          iss.str(clientMsg.buffer);
 
@@ -304,13 +325,41 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          if ( mapPlayers[id].addr.sin_addr.s_addr == from.sin_addr.s_addr &&
               mapPlayers[id].addr.sin_port == from.sin_port )
          {
-            memcpy(&mapPlayers[id].pos.x, clientMsg.buffer+4, 4);
-            memcpy(&mapPlayers[id].pos.y, clientMsg.buffer+8, 4);
+            // we need to make sure the player can move here
+            if (0 <= x && x < 300 && 0 <= y && y < 300 &&
+               gameMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
+            {
+               // first we get the correct vector 
+               mapPlayers[id].target.x = x;
+               mapPlayers[id].target.y = y;
+               int xDiff = mapPlayers[id].target.x - mapPlayers[id].pos.x;
+               int yDiff = mapPlayers[id].target.y - mapPlayers[id].pos.y;
+               cout << "xDiff: " << xDiff << endl;               
+               cout << "yDiff: " << yDiff << endl;               
 
-            serverMsg.type = MSG_TYPE_PLAYER_MOVE;
-            memcpy(serverMsg.buffer, clientMsg.buffer, 12);
+               // then we get the correct angle
+               double angle = atan2(yDiff, xDiff);
+               cout << "angle: " << angle << endl;               
 
-            broadcastResponse = true;
+               // finally we use the angle to determine
+               // how much the player moves
+               // the player will move 50 pixels in the correct direction
+               mapPlayers[id].pos.x += cos(angle)*50;
+               mapPlayers[id].pos.y += sin(angle)*50;
+               cout << "new x: " << mapPlayers[id].pos.x << endl;               
+               cout << "new y: " << mapPlayers[id].pos.y << endl;               
+
+               serverMsg.type = MSG_TYPE_PLAYER_MOVE;
+               
+               memcpy(serverMsg.buffer, &id, 4);
+               memcpy(serverMsg.buffer+4, &mapPlayers[id].pos.x, 4);
+               memcpy(serverMsg.buffer+8, &mapPlayers[id].pos.y, 4);
+               //memcpy(serverMsg.buffer, clientMsg.buffer, 12);
+
+               broadcastResponse = true;
+            }
+            else
+               cout << "Bad terrain detected" << endl;
          }
          else  // nned to send back a message indicating failure
             cout << "Player id (" << id << ") doesn't match sender" << endl;
@@ -326,6 +375,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          break;
       }
    }
+
+   cout << "Got to the end of the switch" << endl;
 
    return broadcastResponse;
 }
