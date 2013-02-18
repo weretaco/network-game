@@ -28,8 +28,8 @@
 
 #include "../../common/Message.h"
 #include "../../common/Common.h"
-#include "../../common/Player.h"
 #include "../../common/WorldMap.h"
+#include "../../common/Player.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -159,7 +159,9 @@ int main(int argc, char **argv)
       return -1;
    }
 
-   WorldMap* gameMap = WorldMap::createDefaultMap();
+   WorldMap* gameMap = WorldMap::loadMapFromFile("../../data/map.txt");
+   //delete gameMap;
+   //gameMap = WorldMap::createDefaultMap();
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));

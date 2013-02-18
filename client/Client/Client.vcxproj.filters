@@ -55,7 +55,7 @@
       <Filter>Source Files\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\WorldMap.cpp">
-      <Filter>Source Files\gui</Filter>
+      <Filter>Source Files\common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
