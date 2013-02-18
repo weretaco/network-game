@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
 
    set_nonblock(sock);
 
+   /*
    Player testP;
    clock_gettime(CLOCK_REALTIME, &testP.timeLastUpdated);
 
@@ -136,8 +137,8 @@ int main(int argc, char *argv[])
    testP.move();
 
    cout << "Loc after: (" << testP.pos.x << ", " << testP.pos.y << ")" << endl;
+   */
 
-/*
    bool broadcastResponse;
    while (true) {
 
@@ -159,7 +160,6 @@ int main(int argc, char *argv[])
             cout << "Should be broadcasting the message" << endl;
 
             map<unsigned int, Player>::iterator it;
-
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
@@ -174,10 +174,16 @@ int main(int argc, char *argv[])
                error("sendMessage");
          }
 
+         // update player positions
+         map<unsigned int, Player>::iterator it;
+         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+         {
+            it->second.move();
+         }
+
          broadcastPlayerPositions(mapPlayers, sock);
       }
    }
-*/
 
    return 0;
 }
