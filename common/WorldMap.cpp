@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -66,7 +67,7 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 {
    WorldMap* m = new WorldMap(12l, 12);
 
-   ifstream file(filename);
+   ifstream file(filename.c_str());
 
    if (file.is_open())
    {

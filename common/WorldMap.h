@@ -1,6 +1,8 @@
 #ifndef _WORLDMAP_H
 #define _WORLDMAP_H
 
+#include <string>
+
 #include <vector>
 
 using namespace std;

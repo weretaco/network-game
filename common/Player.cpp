@@ -102,15 +102,19 @@ void Player::move(void) {
    cout << "elapsed secs: " << diffTS.tv_sec << endl;
    cout << "elapsed nsecs: " << diffTS.tv_nsec << endl;
 
-   // here we move 100 pixels per second
-   float pixels = 100 * (diffTS.tv_sec+diffTS.tv_nsec/1000000000.0);
-   cout << "We need to move " << pixels << "pixels" << endl;
+   // if we're at our target, don't move
+   if (pos.x == target.x || pos.y == target.y)
+      cout << "We're already at our target" << endl;
+   else {
+      float pixels = speed * (diffTS.tv_sec+diffTS.tv_nsec/1000000000.0);
+      cout << "We need to move " << pixels << " pixels" << endl;
 
-   double angle = atan2(target.y-pos.y, target.x-pos.x);
+      double angle = atan2(target.y-pos.y, target.x-pos.x);
 
-   // we just need to check that we don't overjump the target
-   pos.x += cos(angle)*pixels;
-   pos.y += sin(angle)*pixels;
+      // we just need to check that we don't overjump the target
+      pos.x += cos(angle)*pixels;
+      pos.y += sin(angle)*pixels;
+   }
 
    timeLastUpdated.tv_sec = curTS.tv_sec;
    timeLastUpdated.tv_nsec = curTS.tv_nsec;

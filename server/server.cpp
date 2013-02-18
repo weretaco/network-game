@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   WorldMap* gameMap = WorldMap::createDefaultMap();
+   WorldMap* gameMap = NULL; //WorldMap::createDefaultMap();
  
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
@@ -131,7 +131,11 @@ int main(int argc, char *argv[])
    sleep(3);
    cout << "After sleep" << endl;
 
+   cout << "Loc before: (" << testP.pos.x << ", " << testP.pos.y << ")" << endl;
+
    testP.move();
+
+   cout << "Loc after: (" << testP.pos.x << ", " << testP.pos.y << ")" << endl;
 
 /*
    bool broadcastResponse;
