@@ -70,13 +70,6 @@ void Player::deserialize(char* buffer)
    memcpy(&this->target.x, buffer+12, 4);
    memcpy(&this->target.y, buffer+16, 4);
    this->name.assign(buffer+20);
-
-   cout << "id: " << this->id << endl;
-   cout << "pos x: " << this->pos.x << endl;
-   cout << "pos y: " << this->pos.y << endl;
-   cout << "target x: " << this->target.x << endl;
-   cout << "target y: " << this->target.y << endl;
-   cout << "name: " << this->name << endl;
 }
 
 void Player::setId(int id)

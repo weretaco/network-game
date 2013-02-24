@@ -164,8 +164,6 @@ int main(int argc, char **argv)
    }
 
    WorldMap* gameMap = WorldMap::loadMapFromFile("../../data/map.txt");
-   //delete gameMap;
-   //gameMap = WorldMap::createDefaultMap();
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));
@@ -244,6 +242,7 @@ int main(int argc, char **argv)
    while(!doexit)
    {
       ALLEGRO_EVENT ev;
+      
       al_wait_for_event(event_queue, &ev);
 
       if(wndCurrent->handleEvent(ev)) {
@@ -336,10 +335,7 @@ int main(int argc, char **argv)
       }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
-      {
          processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
-         cout << "state: " << state << endl;
-      }
  
       if (redraw && al_is_event_queue_empty(event_queue))
       {
@@ -453,8 +449,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 {
    string response = string(msg.buffer);
 
-   cout << "Got message: " << msg.type << endl;
-
    switch(state)
    {
       case STATE_START:
@@ -529,8 +523,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                Player p("", "");
                p.deserialize(msg.buffer);
                mapPlayers[p.id] = p;
-
-               cout << "p.id: " << p.id << endl;
 
                break;
             }
