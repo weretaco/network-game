@@ -10,9 +10,17 @@
    #include <netinet/in.h>
 #endif
 
+#include <iostream>
+
+using namespace std;
+
 int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
 {
-   return sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
+   int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
+
+   cout << "Sent message of type " << msg->type << endl;
+
+   return ret;
 }
 
 int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
@@ -20,5 +28,10 @@ int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
    socklen_t socklen = sizeof(struct sockaddr_in);
 
    // assume we don't care about the value of socklen
-   return recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, &socklen);
+   int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, &socklen);
+
+   if (ret > -1)
+      cout << "Received message of type " << msg->type << endl;
+
+   return ret;
 }

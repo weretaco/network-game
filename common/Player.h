@@ -31,11 +31,15 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
+   void move();
+
    int id;
    string name;
    string password;
    sockaddr_in addr;
-   PLAYER_POS pos;
+   FLOAT_POSITION pos;
+   POSITION target;
+   unsigned long long timeLastUpdated;
 };
 
 #endif

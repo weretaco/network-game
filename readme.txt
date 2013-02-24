@@ -1,3 +1,5 @@
+This info is outdated. The latest info is on the github wiki.
+
 BoostPro Installer options
 
 -multithreaded

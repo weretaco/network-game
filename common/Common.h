@@ -12,11 +12,18 @@
 #endif
 
 void set_nonblock(int sock);
+unsigned long long getCurrentMillis();
 
 typedef struct
 {
    int x;
    int y;
-} PLAYER_POS;
+} POSITION;
+
+typedef struct
+{
+   float x;
+   float y;
+} FLOAT_POSITION;
 
 #endif
