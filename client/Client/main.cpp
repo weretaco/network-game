@@ -18,6 +18,8 @@
 #include <string>
 #include <iostream>
 
+#include <map>
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
@@ -69,6 +71,8 @@ enum STATE {
 int state;
 
 bool doexit;
+
+map<unsigned int, Player> mapPlayers;
 
 Window* wndLogin;
 Window* wndMain;
@@ -440,7 +444,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole)
             {
                Player p("", "");
                p.deserialize(msg.buffer);
+               mapPlayers[p.id] = p;
 
+               cout << "p.id: " << p.id << endl;
                cout << "p.name: " << p.name << endl;
                cout << "p.pos.x: " << p.pos.x << endl;
                cout << "p.pos.y: " << p.pos.y << endl;
