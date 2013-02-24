@@ -14,6 +14,7 @@ Player::Player()
    this->password = "";
    this->pos.x = this->target.x = 0;
    this->pos.y = this->target.y = 0;
+   this->timeLastUpdated = 0;
 }
 
 Player::Player(const Player& p)
@@ -54,22 +55,28 @@ Player::~Player()
 void Player::serialize(char* buffer)
 {
    memcpy(buffer, &this->id, 4);
-   strcpy(buffer+4, this->name.c_str());
-   memcpy(buffer+5+this->name.length(), &this->pos.x, 4);
-   memcpy(buffer+9+this->name.length(), &this->pos.y, 4);
+   memcpy(buffer+4, &this->pos.x, 4);
+   memcpy(buffer+8, &this->pos.y, 4);
+   memcpy(buffer+12, &this->target.x, 4);
+   memcpy(buffer+16, &this->target.y, 4);
+   strcpy(buffer+20, this->name.c_str());
 }
 
 void Player::deserialize(char* buffer)
 {
    memcpy(&this->id, buffer, 4);
-   this->name.assign(buffer+4);
-   memcpy(&this->pos.x, buffer+5+this->name.size(), 4);
-   memcpy(&this->pos.y, buffer+9+this->name.size(), 4);
+   memcpy(&this->pos.x, buffer+4, 4);
+   memcpy(&this->pos.y, buffer+8, 4);
+   memcpy(&this->target.x, buffer+12, 4);
+   memcpy(&this->target.y, buffer+16, 4);
+   this->name.assign(buffer+20);
 
    cout << "id: " << this->id << endl;
+   cout << "pos x: " << this->pos.x << endl;
+   cout << "pos y: " << this->pos.y << endl;
+   cout << "target x: " << this->target.x << endl;
+   cout << "target y: " << this->target.y << endl;
    cout << "name: " << this->name << endl;
-   cout << "x: " << this->pos.x << endl;
-   cout << "y: " << this->pos.y << endl;
 }
 
 void Player::setId(int id)
@@ -83,39 +90,27 @@ void Player::setAddr(sockaddr_in addr)
 }
 
 void Player::move(void) {
-   // timeLastMoved
-   // pos
-   // target
    int speed = 100; // pixels per second
-
-   timespec curTS, diffTS;
-   clock_gettime(CLOCK_REALTIME, &curTS);
-
-   // get time elapsed
-   diffTS.tv_sec = curTS.tv_sec - timeLastUpdated.tv_sec;
-   diffTS.tv_nsec = curTS.tv_nsec - timeLastUpdated.tv_nsec;
-   if (diffTS.tv_nsec < 0) {
-      diffTS.tv_sec -= 1;
-      diffTS.tv_nsec += 1000000000;
-   }
-
-   cout << "elapsed secs: " << diffTS.tv_sec << endl;
-   cout << "elapsed nsecs: " << diffTS.tv_nsec << endl;
+   unsigned long long curTime = getCurrentMillis();
 
    // if we're at our target, don't move
-   if (pos.x == target.x || pos.y == target.y)
+   if (pos.x == target.x && pos.y == target.y)
       cout << "We're already at our target" << endl;
    else {
-      float pixels = speed * (diffTS.tv_sec+diffTS.tv_nsec/1000000000.0);
+      float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
       cout << "We need to move " << pixels << " pixels" << endl;
 
       double angle = atan2(target.y-pos.y, target.x-pos.x);
 
-      // we just need to check that we don't overjump the target
-      pos.x += cos(angle)*pixels;
-      pos.y += sin(angle)*pixels;
+      float dist = sqrt(pow(target.x-pos.x, 2) + pow(target.y-pos.y, 2));
+      if (dist <= pixels) {
+         pos.x = target.x;
+         pos.y = target.y;
+      }else {
+         pos.x += cos(angle)*pixels;
+         pos.y += sin(angle)*pixels;
+      }
    }
 
-   timeLastUpdated.tv_sec = curTS.tv_sec;
-   timeLastUpdated.tv_nsec = curTS.tv_nsec;
+   timeLastUpdated = curTime;
 }

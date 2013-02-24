@@ -12,6 +12,7 @@
 #endif
 
 void set_nonblock(int sock);
+unsigned long long getCurrentMillis();
 
 typedef struct
 {

@@ -40,7 +40,7 @@ public:
    sockaddr_in addr;
    FLOAT_POSITION pos;
    POSITION target;
-   timespec timeLastUpdated;
+   unsigned long long timeLastUpdated;
 };
 
 #endif

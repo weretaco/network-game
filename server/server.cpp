@@ -6,7 +6,6 @@
 #include <sstream>
 #include <cstring>
 #include <cmath>
-#include <sys/time.h>
 
 #include <vector>
 #include <map>
@@ -122,22 +121,6 @@ int main(int argc, char *argv[])
       error("binding");
 
    set_nonblock(sock);
-
-   /*
-   Player testP;
-   clock_gettime(CLOCK_REALTIME, &testP.timeLastUpdated);
-
-   cout << "Before sleep" << endl;
-   // wait some time
-   sleep(3);
-   cout << "After sleep" << endl;
-
-   cout << "Loc before: (" << testP.pos.x << ", " << testP.pos.y << ")" << endl;
-
-   testP.move();
-
-   cout << "Loc after: (" << testP.pos.x << ", " << testP.pos.y << ")" << endl;
-   */
 
    bool broadcastResponse;
    while (true) {
