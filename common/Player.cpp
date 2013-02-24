@@ -94,24 +94,8 @@ void Player::move(void) {
    unsigned long long curTime = getCurrentMillis();
 
    // if we're at our target, don't move
-   if (pos.x == target.x && pos.y == target.y)
-      cout << "We're already at our target" << endl;
-   else {
-      cout << "equals test:" << endl;
-      float f = 5.0;
-      int i = 5;
-
-      if (f == i)
-         cout << "test passed" << endl;
-      else
-         cout << "test failed" << endl;
-
-      cout << "Player about to be moved" << endl;
-      cout << "cur pos x: " << this->pos.x << endl;
-      cout << "cur pos y: " << this->pos.y << endl;
-
+   if (pos.x != target.x || pos.y != target.y) {
       float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
-      cout << "We need to move " << pixels << " pixels" << endl;
 
       double angle = atan2(target.y-pos.y, target.x-pos.x);
 
@@ -123,9 +107,6 @@ void Player::move(void) {
          pos.x += cos(angle)*pixels;
          pos.y += sin(angle)*pixels;
       }
-      cout << "new pos x: " << this->pos.x << endl;
-      cout << "new pos y: " << this->pos.y << endl;
-
    }
 
    timeLastUpdated = curTime;
