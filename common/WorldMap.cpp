@@ -40,6 +40,7 @@ WorldMap::TerrainType WorldMap::getElement(int x, int y)
 
 void WorldMap::setElement(int x, int y, TerrainType t)
 {
+   cout << "getting element" << endl;
    (*(*vctMap)[x])[y] = t;
 }
 

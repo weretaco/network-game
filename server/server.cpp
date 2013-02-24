@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   WorldMap* gameMap = NULL; //WorldMap::createDefaultMap();
+   WorldMap* gameMap = WorldMap::loadMapFromFile("../data/map.txt");
  
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
@@ -156,16 +156,16 @@ int main(int argc, char *argv[])
             if ( sendMessage(&serverMsg, sock, &from) < 0 )
                error("sendMessage");
          }
-
-         // update player positions
-         map<unsigned int, Player>::iterator it;
-         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-         {
-            it->second.move();
-         }
-
-         broadcastPlayerPositions(mapPlayers, sock);
       }
+
+      // update player positions
+      map<unsigned int, Player>::iterator it;
+      for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+      {
+         it->second.move();
+      }
+
+      broadcastPlayerPositions(mapPlayers, sock);
    }
 
    return 0;
@@ -175,8 +175,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
 {
    DataAccess da;
 
-   cout << "ip address: " << inet_ntoa(from.sin_addr) << endl;
-   cout << "port: " << from.sin_port << endl;
    cout << "MSG: type: " << clientMsg.type << endl;
    cout << "MSG contents: " << clientMsg.buffer << endl;
 
@@ -298,8 +296,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
       }
       case MSG_TYPE_PLAYER_MOVE:
       {
-         cout << "Got a move message" << endl;
-
          istringstream iss;
          iss.str(clientMsg.buffer);
 
@@ -310,11 +306,11 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          memcpy(&id, clientMsg.buffer, 4);
          memcpy(&x, clientMsg.buffer+4, 4);
          memcpy(&y, clientMsg.buffer+8, 4);
-         
+
          cout << "x: " << x << endl;
          cout << "y: " << y << endl;
          cout << "id: " << id << endl;
-
+         
          if ( mapPlayers[id].addr.sin_addr.s_addr == from.sin_addr.s_addr &&
               mapPlayers[id].addr.sin_port == from.sin_port )
          {
@@ -322,25 +318,27 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
             if (0 <= x && x < 300 && 0 <= y && y < 300 &&
                gameMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
             {
-               // first we get the correct vector 
+               cout << "valid terrain" << endl;
+
+               cout << "orig x: " << mapPlayers[id].pos.x << endl;
+               cout << "orig y: " << mapPlayers[id].pos.y << endl;
+               // first we get the correct vector
                mapPlayers[id].target.x = x;
                mapPlayers[id].target.y = y;
                int xDiff = mapPlayers[id].target.x - mapPlayers[id].pos.x;
                int yDiff = mapPlayers[id].target.y - mapPlayers[id].pos.y;
-               cout << "xDiff: " << xDiff << endl;               
-               cout << "yDiff: " << yDiff << endl;               
+               cout << "xDiff: " << xDiff << endl;
+               cout << "yDiff: " << yDiff << endl;
 
                // then we get the correct angle
                double angle = atan2(yDiff, xDiff);
-               cout << "angle: " << angle << endl;               
+               cout << "angle: " << angle << endl;
 
                // finally we use the angle to determine
                // how much the player moves
                // the player will move 50 pixels in the correct direction
-               mapPlayers[id].pos.x += cos(angle)*50;
-               mapPlayers[id].pos.y += sin(angle)*50;
-               cout << "new x: " << mapPlayers[id].pos.x << endl;               
-               cout << "new y: " << mapPlayers[id].pos.y << endl;               
+               //mapPlayers[id].pos.x += cos(angle)*50;
+               //mapPlayers[id].pos.y += sin(angle)*50;
 
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                
