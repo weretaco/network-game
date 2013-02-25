@@ -64,13 +64,6 @@ void error(const char *);
 const float FPS = 60;
 const int SCREEN_W = 640;
 const int SCREEN_H = 480;
-const int BOUNCER_SIZE = 32;
-enum MYKEYS {
-   KEY_UP,
-   KEY_DOWN,
-   KEY_LEFT,
-   KEY_RIGHT
-};
 
 enum STATE {
    STATE_START,
@@ -103,15 +96,11 @@ int main(int argc, char **argv)
    ALLEGRO_DISPLAY *display = NULL;
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
-   ALLEGRO_BITMAP *bouncer = NULL;
    bool key[4] = { false, false, false, false };
    bool redraw = true;
    doexit = false;
    map<unsigned int, Player> mapPlayers;
    unsigned int curPlayerId = -1;
-
-   float bouncer_x = SCREEN_W / 2.0 - BOUNCER_SIZE / 2.0;
-   float bouncer_y = SCREEN_H / 2.0 - BOUNCER_SIZE / 2.0;
 
    state = STATE_START;
 
@@ -183,27 +172,14 @@ int main(int argc, char **argv)
    txtChat = (Textbox*)wndMain->getComponent(0);
 
    wndCurrent = wndLogin;
-
-   bouncer = al_create_bitmap(BOUNCER_SIZE, BOUNCER_SIZE);
-   if(!bouncer) {
-      fprintf(stderr, "failed to create bouncer bitmap!\n");
-      al_destroy_display(display);
-      al_destroy_timer(timer);
-      return -1;
-   }
  
    event_queue = al_create_event_queue();
    if(!event_queue) {
       fprintf(stderr, "failed to create event_queue!\n");
-      al_destroy_bitmap(bouncer);
       al_destroy_display(display);
       al_destroy_timer(timer);
       return -1;
    }
-
-   al_set_target_bitmap(bouncer);
- 
-   al_clear_to_color(al_map_rgb(255, 0, 255));
  
    al_set_target_bitmap(al_get_backbuffer(display));
  
@@ -249,64 +225,15 @@ int main(int argc, char **argv)
          // do nothing
       }
       else if(ev.type == ALLEGRO_EVENT_TIMER) {
-         if(key[KEY_UP] && bouncer_y >= 4.0) {
-            bouncer_y -= 4.0;
-         }
- 
-         if(key[KEY_DOWN] && bouncer_y <= SCREEN_H - BOUNCER_SIZE - 4.0) {
-            bouncer_y += 4.0;
-         }
- 
-         if(key[KEY_LEFT] && bouncer_x >= 4.0) {
-            bouncer_x -= 4.0;
-         }
- 
-         if(key[KEY_RIGHT] && bouncer_x <= SCREEN_W - BOUNCER_SIZE - 4.0) {
-            bouncer_x += 4.0;
-         }
- 
          redraw = true;
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
          doexit = true;
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-         switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = true;
-               break;
- 
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = true;
-               break;
- 
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = true;
-               break;
- 
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = true;
-               break;
-         }
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
          switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = false;
-               break;
- 
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = false;
-               break;
- 
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = false;
-               break;
- 
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = false;
-               break;
- 
             case ALLEGRO_KEY_ESCAPE:
                doexit = true;
                break;
@@ -337,6 +264,13 @@ int main(int argc, char **argv)
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
          processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
  
+      // update player positions
+      map<unsigned int, Player>::iterator it;
+      for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+      {
+         it->second.move();
+      }
+
       if (redraw && al_is_event_queue_empty(event_queue))
       {
          redraw = false;
@@ -374,7 +308,6 @@ int main(int argc, char **argv)
    delete gameMap;
 
    al_destroy_event_queue(event_queue);
-   al_destroy_bitmap(bouncer);
    al_destroy_display(display);
    al_destroy_timer(timer);
  
@@ -505,6 +438,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             {
                chatConsole.addLine(response);
 
+               cout << "Got a logout message" << endl;
                if (response.compare("You have successfully logged out.") == 0)
                {
                   cout << "Logged out" << endl;
@@ -518,10 +452,17 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
+            case MSG_TYPE_LOGOUT:
+            {
+               cout << "Got a logout message, but we don't process it" << endl;
+
+               break;
+            }
             case MSG_TYPE_PLAYER:
             {
                Player p("", "");
                p.deserialize(msg.buffer);
+               p.timeLastUpdated = getCurrentMillis();
                mapPlayers[p.id] = p;
 
                break;
