@@ -13,6 +13,7 @@
 #include <string>
 
 #include "Common.h"
+#include "WorldMap.h"
 
 using namespace std;
 
@@ -31,7 +32,7 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
-   void move();
+   bool move(WorldMap map);
 
    int id;
    string name;

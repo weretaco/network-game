@@ -82,25 +82,36 @@ void Player::setAddr(sockaddr_in addr)
    this->addr = addr;
 }
 
-void Player::move(void) {
+bool Player::move(WorldMap map) {
    int speed = 100; // pixels per second
    unsigned long long curTime = getCurrentMillis();
+   bool moveCanceled = false;
 
    // if we're at our target, don't move
    if (pos.x != target.x || pos.y != target.y) {
       float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
-
       double angle = atan2(target.y-pos.y, target.x-pos.x);
-
       float dist = sqrt(pow(target.x-pos.x, 2) + pow(target.y-pos.y, 2));
+      POSITION newPos;
+
       if (dist <= pixels) {
          pos.x = target.x;
          pos.y = target.y;
       }else {
-         pos.x += cos(angle)*pixels;
-         pos.y += sin(angle)*pixels;
+         newPos.x = int(pos.x + cos(angle)*pixels);
+         newPos.y = int(pos.y + sin(angle)*pixels);
+
+         switch(map.getElement(newPos.x/25, newPos.y/25)) {
+            case WorldMap.TerrainType.TERRAIN_OCEAN:
+            case WorldMap.TerrainType.TERRAIN_ROCK:
+               target.x = pos.x;
+               target.y = pos.y;
+               moveCanceled = true;
+               break;
+         }
       }
    }
 
    timeLastUpdated = curTime;
+   return !moveCanceled;
 }

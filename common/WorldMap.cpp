@@ -14,23 +14,31 @@ WorldMap::WorldMap(int width, int height)
    this->height = height;
 
    vctMap = new vector<vector<TerrainType>*>(width);
+   vctObjects = new vector<vector<ObjectType>*>(width);
 
    for (int x=0; x<width; x++) {
-      vector<TerrainType>* newVector = new vector<TerrainType>(height);
+      vector<TerrainType>* newMapVector = new vector<TerrainType>(height);
+      vector<ObjectType>* newObjectVector = new vector<ObjectType>(height);
 
-      for (int y=0; y<height; y++)
-         (*newVector)[y] = TERRAIN_NONE;
+      for (int y=0; y<height; y++) {
+         (*newMapVector)[y] = TERRAIN_NONE;
+         (*newObjectVector)[y] = OBJECT_NONE;
+      }
 
-      (*vctMap)[x] = newVector;
+      (*vctMap)[x] = newMapVector;
+      (*vctObjects)[x] = newObjectVector;
    }
 }
 
 WorldMap::~WorldMap()
 {
-   for (int x=0; x<width; x++)
+   for (int x=0; x<width; x++) {
       delete (*vctMap)[x];
+      delete (*vctObjects)[x];
+   }
 
    delete vctMap;
+   delete vctObjects;
 }
 
 WorldMap::TerrainType WorldMap::getElement(int x, int y)
@@ -42,6 +50,17 @@ void WorldMap::setElement(int x, int y, TerrainType t)
 {
    cout << "getting element" << endl;
    (*(*vctMap)[x])[y] = t;
+}
+
+WorldMap::ObjectType WorldMap::getObject(int x, int y)
+{
+   return (*(*vctObjects)[x])[y];
+}
+
+void WorldMap::setObject(int x, int y, ObjectType t)
+{
+   cout << "getting object" << endl;
+   (*(*vctObjects)[x])[y] = t;
 }
 
 WorldMap* WorldMap::createDefaultMap()
@@ -56,6 +75,8 @@ WorldMap* WorldMap::createDefaultMap()
             m->setElement(x, y, TERRAIN_OCEAN);
          else
             m->setElement(x, y, TERRAIN_GRASS);
+
+         m->setObject(x, y, OBJECT_NONE);
       }
    }
 
@@ -101,32 +122,68 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
             istringstream iss(line);
             string token;
-            int type;
-            TerrainType terrain;
 
-            for(int x=0; x<width; x++)
-            {
+            if (row < height) {
+               // load terrain
+
+               int type;
+               TerrainType terrain;
+
+               for(int x=0; x<width; x++)
+               {
+                  getline(iss, token, ',');
+                  cout << "token: " << token << endl;
+                  type = atoi(token.c_str());
+                  cout << "type: " << type << endl;
+
+                  switch(type) {
+                  case 1:
+                     terrain = TERRAIN_GRASS;
+                     break;
+                  case 2:
+                     terrain = TERRAIN_OCEAN;
+                     break;
+                  case 3:
+                     terrain = TERRAIN_ROCK;
+                     break;
+                  }
+
+                  cout << "About to set element" << endl;
+                  cout << "x: " << x << endl;
+                  cout << "row: " << row << endl;
+                  m->setElement(x, row, terrain);
+               }
+            }else {
+               // load objects
+
+               int x, y, type;
+               ObjectType object;
+
                getline(iss, token, ',');
-               cout << "token: " << token << endl;
+               cout << "token(x): " << token << endl;
+               x = atoi(token.c_str());
+
+               getline(iss, token, ',');
+               cout << "token(y): " << token << endl;
+               y = atoi(token.c_str());
+
+               getline(iss, token, ',');
+               cout << "token(type): " << token << endl;
                type = atoi(token.c_str());
-               cout << "type: " << type << endl;
 
                switch(type) {
+               case 0:
+                  object = OBJECT_NONE;
+                  break;
                case 1:
-                  terrain = TERRAIN_GRASS;
+                  object = OBJECT_RED_FLAG;
                   break;
                case 2:
-                  terrain = TERRAIN_OCEAN;
-                  break;
-               case 3:
-                  terrain = TERRAIN_ROCK;
+                  object = OBJECT_BLUE_FLAG;
                   break;
                }
 
-               cout << "About to set element" << endl;
-               cout << "x: " << x << endl;
-               cout << "row: " << row << endl;
-               m->setElement(x, row, terrain);
+               m->setObject(x, y, object);
             }
          }
 

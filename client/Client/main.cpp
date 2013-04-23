@@ -74,8 +74,6 @@ int state;
 
 bool doexit;
 
-map<unsigned int, Player> mapPlayers;
-
 Window* wndLogin;
 Window* wndMain;
 Window* wndCurrent;
@@ -225,10 +223,14 @@ int main(int argc, char **argv)
          // do nothing
       }
       else if(ev.type == ALLEGRO_EVENT_TIMER) {
-         redraw = true;
+         redraw = true; // seems like we should just call a draw function here instead
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
          doexit = true;
+
+         // perform a check to see if it's time to send an update to the server
+         // need to store num ticks since the lst update for this
+         // also check how often each update actually happens and how much it deviates from 60 times per second
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
       }
@@ -263,15 +265,8 @@ int main(int argc, char **argv)
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
          processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
- 
-      // update player positions
-      map<unsigned int, Player>::iterator it;
-      for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-      {
-         it->second.move();
-      }
 
-      if (redraw && al_is_event_queue_empty(event_queue))
+      if (redraw)
       {
          redraw = false;
 
@@ -285,6 +280,13 @@ int main(int argc, char **argv)
          }
          else if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
+
+            // update player positions
+            map<unsigned int, Player>::iterator it;
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+            {
+               it->second.move();   // ignore return value
+            }
 
             drawMap(gameMap);
             drawPlayers(mapPlayers, curPlayerId);
@@ -382,6 +384,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 {
    string response = string(msg.buffer);
 
+   cout << "Processing message" << endl;
+   cout << response << endl;
+
    switch(state)
    {
       case STATE_START:
@@ -418,7 +423,22 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                   cout << "Got a valid login response with the player" << endl;
                   cout << "Player id: " << curPlayerId << endl; 
+                  cout << "map size: " << mapPlayers.size() << endl;
                }
+
+               break;
+            }
+            case MSG_TYPE_PLAYER:   // kind of hacky to put this here
+            {
+               cout << "Got MSG_TYPE_PLAYER message in Start" << endl;
+
+               Player p("", "");
+               p.deserialize(msg.buffer);
+               p.timeLastUpdated = getCurrentMillis();
+               mapPlayers[p.id] = p;
+
+               cout << "new player id: " << p.id << endl;
+               cout << "map size: " << mapPlayers.size() << endl;
 
                break;
             }
@@ -436,34 +456,50 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             }
             case MSG_TYPE_LOGIN:
             {
+               cout << "Got a login message" << endl;
+               
                chatConsole.addLine(response);
+               cout << "Added new line" << endl;
 
+               break;
+            }
+            case MSG_TYPE_LOGOUT:
+            {
                cout << "Got a logout message" << endl;
+
                if (response.compare("You have successfully logged out.") == 0)
                {
                   cout << "Logged out" << endl;
                   state = STATE_START;
                   wndCurrent = wndLogin;
                }
-               else
-               {
-                  cout << "Added new line" << endl;
-               }
-
-               break;
-            }
-            case MSG_TYPE_LOGOUT:
-            {
-               cout << "Got a logout message, but we don't process it" << endl;
 
                break;
             }
             case MSG_TYPE_PLAYER:
             {
+               cout << "Got MSG_TYPE_PLAYER message in Login" << endl;
+
                Player p("", "");
                p.deserialize(msg.buffer);
                p.timeLastUpdated = getCurrentMillis();
                mapPlayers[p.id] = p;
+
+               break;
+            }
+            case MSG_TYPE_PLAYER_MOVE:
+            {
+               cout << "Got a player move message" << endl;
+
+               unsigned int id;
+               int x, y;
+
+               memcpy(&id, msg.buffer, 4);
+               memcpy(&x, msg.buffer+4, 4);
+               memcpy(&y, msg.buffer+8, 4);
+
+               mapPlayers[id].target.x = x;
+               mapPlayers[id].target.y = y;
 
                break;
             }
@@ -497,6 +533,7 @@ void drawMap(WorldMap* gameMap)
       for (int y=0; y<12; y++)
       {
          WorldMap::TerrainType el = gameMap->getElement(x, y);
+         WorldMap::ObjectType obj = gameMap->getObject(x, y);
 
          if (el == WorldMap::TERRAIN_GRASS)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 255, 0));
@@ -504,6 +541,11 @@ void drawMap(WorldMap* gameMap)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 0, 255));
          else if (el == WorldMap::TERRAIN_ROCK)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
+
+         if (obj == WorldMap::OBJECT_RED_FLAG)
+            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
+         else if (obj == WorldMap::OBJECT_BLUE_FLAG)
+            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
       }
    }
 }
