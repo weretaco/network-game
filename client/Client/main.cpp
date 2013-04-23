@@ -285,7 +285,7 @@ int main(int argc, char **argv)
             map<unsigned int, Player>::iterator it;
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
-               it->second.move();   // ignore return value
+               it->second.move(gameMap);   // ignore return value
             }
 
             drawMap(gameMap);

@@ -82,7 +82,7 @@ void Player::setAddr(sockaddr_in addr)
    this->addr = addr;
 }
 
-bool Player::move(WorldMap map) {
+bool Player::move(WorldMap *map) {
    int speed = 100; // pixels per second
    unsigned long long curTime = getCurrentMillis();
    bool moveCanceled = false;
@@ -101,13 +101,13 @@ bool Player::move(WorldMap map) {
          newPos.x = int(pos.x + cos(angle)*pixels);
          newPos.y = int(pos.y + sin(angle)*pixels);
 
-         switch(map.getElement(newPos.x/25, newPos.y/25)) {
-            case WorldMap.TerrainType.TERRAIN_OCEAN:
-            case WorldMap.TerrainType.TERRAIN_ROCK:
-               target.x = pos.x;
-               target.y = pos.y;
-               moveCanceled = true;
-               break;
+         switch(map->getElement(newPos.x/25, newPos.y/25)) {
+         case WorldMap::TERRAIN_NONE:
+         case WorldMap::TERRAIN_ROCK:
+            target.x = pos.x;
+            target.y = pos.y;
+            moveCanceled = true;
+            break;
          }
       }
    }

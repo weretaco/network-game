@@ -32,7 +32,7 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
-   bool move(WorldMap map);
+   bool move(WorldMap *map);
 
    int id;
    string name;
