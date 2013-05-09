@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 
+#include <sys/time.h>
+
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -33,7 +35,9 @@
 
 using namespace std;
 
-bool processMessage(const NETWORK_MSG &clientMsg, const struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg);
+// from used to be const. Removed that so I could take a reference
+// and use it to send messages
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg, int sock);
 
 void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 
@@ -123,16 +127,42 @@ int main(int argc, char *argv[])
    set_nonblock(sock);
 
    bool broadcastResponse;
+   timespec ts;
+   long timeLastUpdated = 0, curTime = 0;
    while (true) {
 
       usleep(5000);
+
+      clock_gettime(CLOCK_REALTIME, &ts);
+      curTime = ts.tv_sec + ts.tv_nsec*1000000000;
+
+      if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50000) {
+         timeLastUpdated = curTime;
+
+         // maybe put this in a separate method
+         map<unsigned int, Player>::iterator it, it2;
+         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+            if (!it->second.move(gameMap)) {
+               cout << "Cenceling move" << endl;
+               //serverMsg.type = MSG_TYPE_PLAYER;
+               //it->second.serialize(serverMsg.buffer);
+
+               cout << "about to send move cencellation" << endl;
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  //if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                    // error("sendMessage");
+               }
+            }
+         }
+      }
 
       n = receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
          cout << "Got a message" << endl;
 
-         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg);
+         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock);
 
          // probably replace this with a function that prints based on the
          // message type
@@ -145,6 +175,7 @@ int main(int argc, char *argv[])
             map<unsigned int, Player>::iterator it;
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
+               cout << "Sent message back to " << it->second.name << endl;
                if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                   error("sendMessage");
             }
@@ -158,7 +189,12 @@ int main(int argc, char *argv[])
          }
       }
 
+      // we don't want to update and broadcast player positions here
+      // when a player sends a position update, we want to check if
+      // it's reasonable and send it out to all other players
+
       // update player positions
+      /*
       map<unsigned int, Player>::iterator it;
       for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
       {
@@ -166,12 +202,13 @@ int main(int argc, char *argv[])
       }
 
       broadcastPlayerPositions(mapPlayers, sock);
+      */
    }
 
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg)
+bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg, int sock)
 {
    DataAccess da;
 
@@ -208,6 +245,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
       {
          cout << "Got login message" << endl;
 
+         serverMsg.type = MSG_TYPE_LOGIN;
+         
          string username(clientMsg.buffer);
          string password(strchr(clientMsg.buffer, '\0')+1);
 
@@ -223,17 +262,41 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
          }
          else
          {
+            serverMsg.type = MSG_TYPE_PLAYER;
+
             p->setAddr(from);
             updateUnusedId(unusedId, mapPlayers);
             p->id = unusedId;
-            mapPlayers[unusedId] = *p;
+            cout << "new player id: " << p->id << endl;
 
-            // sendd back the new player info to the user
+            // tell the new player about all the existing players
+            cout << "Sending other players to new player" << endl;
+
+            map<unsigned int, Player>::iterator it;
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+            {
+               it->second.serialize(serverMsg.buffer);
+
+               cout << "sending info about " << it->second.name  << endl;
+               cout << "sending ind " << it->second.id  << endl;
+               if ( sendMessage(&serverMsg, sock, &from) < 0 )
+                  error("sendMessage");
+            }
+
             p->serialize(serverMsg.buffer);
+            cout << "Should be broadcasting the message" << endl;
+
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+            {
+               cout << "Sent message back to " << it->second.name << endl;
+               if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+                  error("sendMessage");
+            }
+
+            serverMsg.type = MSG_TYPE_LOGIN;
+            mapPlayers[unusedId] = *p;
          }
 
-         serverMsg.type = MSG_TYPE_LOGIN;
-   
          delete(p);
 
          break;
@@ -265,8 +328,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
             cout << "Player logged out successfuly" << endl;
          }
 
-         // should really be serverMsg.type = MSG_TYPE_LOGOUT;
-         serverMsg.type = MSG_TYPE_LOGIN;
+         serverMsg.type = MSG_TYPE_LOGOUT;
 
          break;
       }
@@ -320,15 +382,15 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
             {
                cout << "valid terrain" << endl;
 
-               cout << "orig x: " << mapPlayers[id].pos.x << endl;
-               cout << "orig y: " << mapPlayers[id].pos.y << endl;
+               //cout << "orig x: " << mapPlayers[id].pos.x << endl;
+               //cout << "orig y: " << mapPlayers[id].pos.y << endl;
                // first we get the correct vector
                mapPlayers[id].target.x = x;
                mapPlayers[id].target.y = y;
                int xDiff = mapPlayers[id].target.x - mapPlayers[id].pos.x;
                int yDiff = mapPlayers[id].target.y - mapPlayers[id].pos.y;
-               cout << "xDiff: " << xDiff << endl;
-               cout << "yDiff: " << yDiff << endl;
+               //cout << "xDiff: " << xDiff << endl;
+               //cout << "yDiff: " << yDiff << endl;
 
                // then we get the correct angle
                double angle = atan2(yDiff, xDiff);
@@ -343,8 +405,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, const struct sockaddr_in& from
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                
                memcpy(serverMsg.buffer, &id, 4);
-               memcpy(serverMsg.buffer+4, &mapPlayers[id].pos.x, 4);
-               memcpy(serverMsg.buffer+8, &mapPlayers[id].pos.y, 4);
+               memcpy(serverMsg.buffer+4, &mapPlayers[id].target.x, 4);
+               memcpy(serverMsg.buffer+8, &mapPlayers[id].target.y, 4);
                //memcpy(serverMsg.buffer, clientMsg.buffer, 12);
 
                broadcastResponse = true;
