@@ -103,8 +103,8 @@ bool Player::move(WorldMap *map) {
          newPos.x = target.x;
          newPos.y = target.y;
       }else {
-         newPos.x = int(pos.x + cos(angle)*pixels);
-         newPos.y = int(pos.y + sin(angle)*pixels);
+         newPos.x = pos.x + cos(angle)*pixels;
+         newPos.y = pos.y + sin(angle)*pixels;
       }
 
       //cout << "newPos.x: " << newPos.x << endl;
