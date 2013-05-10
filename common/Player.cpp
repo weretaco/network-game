@@ -92,7 +92,7 @@ bool Player::move(WorldMap *map) {
       float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
       double angle = atan2(target.y-pos.y, target.x-pos.x);
       float dist = sqrt(pow(target.x-pos.x, 2) + pow(target.y-pos.y, 2));
-      POSITION newPos;
+      FLOAT_POSITION newPos;
 
       //cout << "pos.x: " << pos.x << endl;
       //cout << "pos.y: " << pos.y << endl;
