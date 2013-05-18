@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 
    bool broadcastResponse;
    timespec ts;
-   long timeLastUpdated = 0, curTime = 0;
+   long timeLastUpdated = 0, curTime = 0, timeLastBroadcast = 0;
    while (true) {
 
       usleep(5000);
@@ -188,19 +188,6 @@ int main(int argc, char *argv[])
                error("sendMessage");
          }
       }
-
-      // we don't want to update and broadcast player positions here
-      // when a player sends a position update, we want to check if
-      // it's reasonable and send it out to all other players
-
-      // update player positions
-      map<unsigned int, Player>::iterator it;
-      for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-      {
-         it->second.move(gameMap);
-      }
-
-      broadcastPlayerPositions(mapPlayers, sock);
    }
 
    return 0;
