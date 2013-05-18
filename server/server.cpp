@@ -116,25 +116,26 @@ int main(int argc, char *argv[])
 
       clock_gettime(CLOCK_REALTIME, &ts);
       // make the number smaller so millis can fit in an int
-      ts.tv_sec = ts.tv_sec & 0x3fffff;
+      ts.tv_sec -= 1368000000;
       curTime = ts.tv_sec*1000 + ts.tv_nsec/1000000;
 
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
+         //cout << "Server-side player movement: " << timeLastUpdated << endl;
 
          // maybe put this in a separate method
          map<unsigned int, Player>::iterator it, it2;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
             if (!it->second.move(gameMap)) {
                cout << "Cenceling move" << endl;
-               //serverMsg.type = MSG_TYPE_PLAYER;
-               //it->second.serialize(serverMsg.buffer);
+               serverMsg.type = MSG_TYPE_PLAYER;
+               it->second.serialize(serverMsg.buffer);
 
                cout << "about to send move cencellation" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  //if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-                    // error("sendMessage");
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
                }
             }
          }
