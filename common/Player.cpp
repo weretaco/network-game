@@ -43,8 +43,8 @@ Player::Player(string name, string password)
    this->pos.x = this->target.x = 200;
    this->pos.y = this->target.y = 200;
    this->team = 0;   // blue team by default
-   this->hasBlueFlag = true;
-   this->hasRedFlag = true;
+   this->hasBlueFlag = false;
+   this->hasRedFlag = false;
 }
 
 Player::~Player()
