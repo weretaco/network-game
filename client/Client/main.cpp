@@ -543,10 +543,10 @@ void drawMap(WorldMap* gameMap)
          else if (el == WorldMap::TERRAIN_ROCK)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
 
-         if (obj == WorldMap::OBJECT_RED_FLAG)
-            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
-         else if (obj == WorldMap::OBJECT_BLUE_FLAG)
+         if (obj == WorldMap::OBJECT_BLUE_FLAG)
             al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
+         else if (obj == WorldMap::OBJECT_RED_FLAG)
+            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
       }
    }
 }
