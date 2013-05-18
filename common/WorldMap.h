@@ -18,8 +18,8 @@ public:
 
    enum ObjectType {
       OBJECT_NONE,
-      OBJECT_RED_FLAG,
-      OBJECT_BLUE_FLAG
+      OBJECT_BLUE_FLAG,
+      OBJECT_RED_FLAG
    };
 
    int width, height;

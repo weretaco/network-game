@@ -121,7 +121,6 @@ int main(int argc, char *argv[])
 
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
-         //cout << "Server-side player movement: " << timeLastUpdated << endl;
 
          // maybe put this in a separate method
          map<unsigned int, Player>::iterator it, it2;

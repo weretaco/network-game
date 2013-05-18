@@ -112,13 +112,9 @@ bool Player::move(WorldMap *map) {
          newPos.y = pos.y + sin(angle)*pixels;
       }
 
-      //cout << "newPos.x: " << newPos.x << endl;
-      //cout << "newPos.y: " << newPos.y << endl;
-      //cout << "newPos.x/25: " << newPos.x/25 << endl;
-      //cout << "newPos.y/25: " << newPos.y/25 << endl;
-
       switch(map->getElement(newPos.x/25, newPos.y/25)) {
       case WorldMap::TERRAIN_NONE:
+      case WorldMap::TERRAIN_OCEAN:
       case WorldMap::TERRAIN_ROCK:
          cout << "Encountered invalid terrain" << endl;
          target.x = pos.x;
@@ -129,6 +125,19 @@ bool Player::move(WorldMap *map) {
       default: // if there are no obstacles
          pos.x = newPos.x;
          pos.y = newPos.y;
+         break;
+      }
+
+      // using moveCanceled in a hacky way just to indicate that the server
+      // has updated some player info. Should change the variable name
+      switch(map->getObject(newPos.x/25, newPos.y/25)) {
+      case WorldMap::OBJECT_BLUE_FLAG:
+         hasBlueFlag = true;
+         moveCanceled = true;
+         break;
+      case WorldMap::OBJECT_RED_FLAG:
+         hasRedFlag = true;
+         moveCanceled = true;
          break;
       }
    }
