@@ -130,6 +130,7 @@ bool Player::move(WorldMap *map) {
 
       // using moveCanceled in a hacky way just to indicate that the server
       // has updated some player info. Should change the variable name
+      cout << "Object at location: " << map->getObject(newPos.x/25, newPos.y/25) << endl;
       switch(map->getObject(newPos.x/25, newPos.y/25)) {
       case WorldMap::OBJECT_BLUE_FLAG:
          hasBlueFlag = true;

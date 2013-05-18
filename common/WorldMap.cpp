@@ -176,10 +176,10 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                   object = OBJECT_NONE;
                   break;
                case 1:
-                  object = OBJECT_RED_FLAG;
+                  object = OBJECT_BLUE_FLAG;
                   break;
                case 2:
-                  object = OBJECT_BLUE_FLAG;
+                  object = OBJECT_RED_FLAG;
                   break;
                }
 

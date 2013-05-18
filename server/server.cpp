@@ -130,6 +130,8 @@ int main(int argc, char *argv[])
                serverMsg.type = MSG_TYPE_PLAYER;
                it->second.serialize(serverMsg.buffer);
 
+               cout << "(" << it->second.pos.x << "," << it->second.pos.y << ")" << endl;
+
                if (it->second.hasBlueFlag)
                   cout << "Got blue flag" << endl;
                if (it->second.hasRedFlag)
