@@ -522,6 +522,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
    }
 }
 
+// this should probably be in the WorldMap class
 void drawMap(WorldMap* gameMap)
 {
    POSITION mapPos;
@@ -562,10 +563,7 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId
       p = &it->second;
       pos = mapToScreen(p->pos);
 
-      if (p->id == curPlayerId)
-         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
-      else
-         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(191, 0, 0));
+      p->draw(pos, p->id == curPlayerId);
    }
 }
 

@@ -22,7 +22,6 @@ public:
    Player();
    Player(const Player& p);
    Player(string name, string password);
-   Player(string name, sockaddr_in addr); // this will be deleted
 
    ~Player();
 
@@ -32,7 +31,11 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
+   void draw(POSITION pos, bool curPlayer);
    bool move(WorldMap *map);
+
+   void takeFlag(int flag, WorldMap *map);
+   void dropFlag(int flag, WorldMap *map);
 
    int id;
    string name;
@@ -41,6 +44,10 @@ public:
    FLOAT_POSITION pos;
    POSITION target;
    unsigned long long timeLastUpdated;
+
+   int team; // 0 is blue, 1 is red
+      bool hasBlueFlag;
+   bool hasRedFlag;
 };
 
 #endif

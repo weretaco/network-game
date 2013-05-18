@@ -5,6 +5,9 @@
 #include <cstring>
 #include <cmath>
 
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+
 using namespace std;
 
 Player::Player()
@@ -15,6 +18,9 @@ Player::Player()
    this->pos.x = this->target.x = 0;
    this->pos.y = this->target.y = 0;
    this->timeLastUpdated = 0;
+   this->team = 0;   // blue team by default
+   this->hasBlueFlag = false;
+   this->hasRedFlag = false;
 }
 
 Player::Player(const Player& p)
@@ -27,6 +33,9 @@ Player::Player(const Player& p)
    this->target.x = p.target.x;
    this->target.y = p.target.y;
    this->addr = p.addr;
+      this->team = 0;   // blue team by default
+   this->hasBlueFlag = false;
+   this->hasRedFlag = false;
 }
 
 Player::Player(string name, string password)
@@ -36,16 +45,9 @@ Player::Player(string name, string password)
    this->password = password;
    this->pos.x = this->target.x = 200;
    this->pos.y = this->target.y = 200;
-}
-
-Player::Player(string name, sockaddr_in addr)
-{
-   this->id = 0;
-   this->name = name;
-   this->password = "";
-   this->pos.x = this->target.x = 200;
-   this->pos.y = this->target.y = 200;
-   this->addr = addr;
+   this->team = 0;   // blue team by default
+   this->hasBlueFlag = true;
+   this->hasRedFlag = true;
 }
 
 Player::~Player()
@@ -59,7 +61,10 @@ void Player::serialize(char* buffer)
    memcpy(buffer+8, &this->pos.y, 4);
    memcpy(buffer+12, &this->target.x, 4);
    memcpy(buffer+16, &this->target.y, 4);
-   strcpy(buffer+20, this->name.c_str());
+   memcpy(buffer+20, &this->team, 4);
+   memcpy(buffer+24, &this->hasBlueFlag, 1);
+   memcpy(buffer+25, &this->hasRedFlag, 1);
+   strcpy(buffer+26, this->name.c_str());
 }
 
 void Player::deserialize(char* buffer)
@@ -69,7 +74,10 @@ void Player::deserialize(char* buffer)
    memcpy(&this->pos.y, buffer+8, 4);
    memcpy(&this->target.x, buffer+12, 4);
    memcpy(&this->target.y, buffer+16, 4);
-   this->name.assign(buffer+20);
+   memcpy(&this->team, buffer+20, 4);
+   memcpy(&this->hasBlueFlag, buffer+24, 1);
+   memcpy(&this->hasRedFlag, buffer+25, 1);
+   this->name.assign(buffer+26);
 }
 
 void Player::setId(int id)
@@ -80,6 +88,18 @@ void Player::setId(int id)
 void Player::setAddr(sockaddr_in addr)
 {
    this->addr = addr;
+}
+
+void Player::draw(POSITION pos, bool curPlayer) {
+   if (curPlayer)
+      al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
+   else
+      al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(191, 0, 0));
+
+   if (this->hasBlueFlag)
+      al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
+   else if(this->hasRedFlag)
+      al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(255, 0, 0));
 }
 
 bool Player::move(WorldMap *map) {
