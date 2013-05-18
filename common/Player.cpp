@@ -5,9 +5,6 @@
 #include <cstring>
 #include <cmath>
 
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_primitives.h>
-
 using namespace std;
 
 Player::Player()
