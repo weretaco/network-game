@@ -75,25 +75,6 @@ Player *findPlayerByAddr(map<unsigned int, Player> &m, const sockaddr_in &addr)
    return NULL;
 }
 
-void broadcastPlayerPositions(map<unsigned int, Player> &m, int sock)
-{
-   map<unsigned int, Player>::iterator it, it2;
-   NETWORK_MSG serverMsg;
-
-   serverMsg.type = MSG_TYPE_PLAYER;   
-
-   for (it = m.begin(); it != m.end(); it++)
-   {
-      it->second.serialize(serverMsg.buffer);
-
-      for (it2 = m.begin(); it2 != m.end(); it2++)
-      {
-         if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-            error("sendMessage");
-      }
-   }
-}
-
 int main(int argc, char *argv[])
 {
    int sock, length, n;
@@ -128,15 +109,17 @@ int main(int argc, char *argv[])
 
    bool broadcastResponse;
    timespec ts;
-   long timeLastUpdated = 0, curTime = 0, timeLastBroadcast = 0;
+   int timeLastUpdated = 0, curTime = 0, timeLastBroadcast = 0;
    while (true) {
 
       usleep(5000);
 
       clock_gettime(CLOCK_REALTIME, &ts);
-      curTime = ts.tv_sec + ts.tv_nsec*1000000000;
+      // make the number smaller so millis can fit in an int
+      ts.tv_sec = ts.tv_sec & 0x3fffff;
+      curTime = ts.tv_sec*1000 + ts.tv_nsec/1000000;
 
-      if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50000) {
+      if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
          // maybe put this in a separate method
