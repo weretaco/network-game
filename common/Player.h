@@ -45,7 +45,7 @@ public:
    unsigned long long timeLastUpdated;
 
    int team; // 0 is blue, 1 is red
-      bool hasBlueFlag;
+   bool hasBlueFlag;
    bool hasRedFlag;
 };
 

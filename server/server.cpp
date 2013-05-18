@@ -382,32 +382,16 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             {
                cout << "valid terrain" << endl;
 
-               //cout << "orig x: " << mapPlayers[id].pos.x << endl;
-               //cout << "orig y: " << mapPlayers[id].pos.y << endl;
-               // first we get the correct vector
                mapPlayers[id].target.x = x;
                mapPlayers[id].target.y = y;
                int xDiff = mapPlayers[id].target.x - mapPlayers[id].pos.x;
                int yDiff = mapPlayers[id].target.y - mapPlayers[id].pos.y;
-               //cout << "xDiff: " << xDiff << endl;
-               //cout << "yDiff: " << yDiff << endl;
-
-               // then we get the correct angle
-               double angle = atan2(yDiff, xDiff);
-               cout << "angle: " << angle << endl;
-
-               // finally we use the angle to determine
-               // how much the player moves
-               // the player will move 50 pixels in the correct direction
-               //mapPlayers[id].pos.x += cos(angle)*50;
-               //mapPlayers[id].pos.y += sin(angle)*50;
 
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                
                memcpy(serverMsg.buffer, &id, 4);
                memcpy(serverMsg.buffer+4, &mapPlayers[id].target.x, 4);
                memcpy(serverMsg.buffer+8, &mapPlayers[id].target.y, 4);
-               //memcpy(serverMsg.buffer, clientMsg.buffer, 12);
 
                broadcastResponse = true;
             }
