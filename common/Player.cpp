@@ -133,10 +133,12 @@ bool Player::move(WorldMap *map) {
       switch(map->getObject(newPos.x/25, newPos.y/25)) {
       case WorldMap::OBJECT_BLUE_FLAG:
          hasBlueFlag = true;
+         cout << "Player got blue flag" << endl;
          moveCanceled = true;
          break;
       case WorldMap::OBJECT_RED_FLAG:
          hasRedFlag = true;
+         cout << "Player got red flag" << endl;
          moveCanceled = true;
          break;
       }
