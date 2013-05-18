@@ -99,11 +99,6 @@ bool Player::move(WorldMap *map) {
       float dist = sqrt(pow(target.x-pos.x, 2) + pow(target.y-pos.y, 2));
       FLOAT_POSITION newPos;
 
-      //cout << "pos.x: " << pos.x << endl;
-      //cout << "pos.y: " << pos.y << endl;
-      //cout << "target.x: " << target.x << endl;
-      //cout << "target.y: " << target.y << endl;
-
       if (dist <= pixels) {
          newPos.x = target.x;
          newPos.y = target.y;
@@ -116,11 +111,9 @@ bool Player::move(WorldMap *map) {
       case WorldMap::TERRAIN_NONE:
       case WorldMap::TERRAIN_OCEAN:
       case WorldMap::TERRAIN_ROCK:
-         cout << "Encountered invalid terrain" << endl;
          target.x = pos.x;
          target.y = pos.y;
          moveCanceled = true;
-         cout << "move canceled" << endl;
          break;
       default: // if there are no obstacles
          pos.x = newPos.x;
@@ -130,25 +123,19 @@ bool Player::move(WorldMap *map) {
 
       // using moveCanceled in a hacky way just to indicate that the server
       // has updated some player info. Should change the variable name
-      cout << "Object at location: " << map->getObject(newPos.x/25, newPos.y/25) << endl;
       switch(map->getObject(newPos.x/25, newPos.y/25)) {
       case WorldMap::OBJECT_BLUE_FLAG:
          hasBlueFlag = true;
-         cout << "Player got blue flag" << endl;
          moveCanceled = true;
          break;
       case WorldMap::OBJECT_RED_FLAG:
          hasRedFlag = true;
-         cout << "Player got red flag" << endl;
          moveCanceled = true;
          break;
       }
    }
 
    timeLastUpdated = curTime;
-
-   if (moveCanceled)
-      cout << "moveCancled == true" << endl;
 
    return !moveCanceled;
 }
