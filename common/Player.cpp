@@ -90,18 +90,6 @@ void Player::setAddr(sockaddr_in addr)
    this->addr = addr;
 }
 
-void Player::draw(POSITION pos, bool curPlayer) {
-   if (curPlayer)
-      al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
-   else
-      al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(191, 0, 0));
-
-   if (this->hasBlueFlag)
-      al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
-   else if(this->hasRedFlag)
-      al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(255, 0, 0));
-}
-
 bool Player::move(WorldMap *map) {
    int speed = 100; // pixels per second
    unsigned long long curTime = getCurrentMillis();

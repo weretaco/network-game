@@ -31,7 +31,6 @@ public:
    void setId(int id);
    void setAddr(sockaddr_in addr);
 
-   void draw(POSITION pos, bool curPlayer);
    bool move(WorldMap *map);
 
    void takeFlag(int flag, WorldMap *map);

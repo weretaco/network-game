@@ -563,7 +563,15 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId
       p = &it->second;
       pos = mapToScreen(p->pos);
 
-      p->draw(pos, p->id == curPlayerId);
+      if (p->id == curPlayerId)
+         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
+      else
+         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(191, 0, 0));
+
+      if (o->hasBlueFlag)
+         al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
+      else if(o->hasRedFlag)
+         al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(255, 0, 0));
    }
 }
 
