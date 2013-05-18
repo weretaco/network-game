@@ -194,15 +194,13 @@ int main(int argc, char *argv[])
       // it's reasonable and send it out to all other players
 
       // update player positions
-      /*
       map<unsigned int, Player>::iterator it;
       for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
       {
-         it->second.move();
+         it->second.move(gameMap);
       }
 
       broadcastPlayerPositions(mapPlayers, sock);
-      */
    }
 
    return 0;
