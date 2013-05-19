@@ -534,7 +534,7 @@ void drawMap(WorldMap* gameMap)
       for (int y=0; y<12; y++)
       {
          WorldMap::TerrainType el = gameMap->getElement(x, y);
-         WorldMap::ObjectType obj = gameMap->getObject(x, y);
+         WorldMap::StructureType structure = gameMap->getStructure(x, y);
 
          if (el == WorldMap::TERRAIN_GRASS)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 255, 0));
@@ -543,9 +543,9 @@ void drawMap(WorldMap* gameMap)
          else if (el == WorldMap::TERRAIN_ROCK)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
 
-         if (obj == WorldMap::OBJECT_BLUE_FLAG)
+         if (structure == WorldMap::STRUCTURE_BLUE_FLAG)
             al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
-         else if (obj == WorldMap::OBJECT_RED_FLAG)
+         else if (structure == WorldMap::STRUCTURE_RED_FLAG)
             al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
       }
    }
