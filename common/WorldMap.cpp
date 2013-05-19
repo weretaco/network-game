@@ -14,19 +14,20 @@ WorldMap::WorldMap(int width, int height)
    this->height = height;
 
    vctMap = new vector<vector<TerrainType>*>(width);
-   vctObjects = new vector<vector<ObjectType>*>(width);
+   vctStructures = new vector<vector<StructureType>*>(width);
+   vctObjects = new vector<Object>();
 
    for (int x=0; x<width; x++) {
       vector<TerrainType>* newMapVector = new vector<TerrainType>(height);
-      vector<ObjectType>* newObjectVector = new vector<ObjectType>(height);
+      vector<StructureType>* newStructureVector = new vector<StructureType>(height);
 
       for (int y=0; y<height; y++) {
          (*newMapVector)[y] = TERRAIN_NONE;
-         (*newObjectVector)[y] = OBJECT_NONE;
+         (*newStructureVector)[y] = STRUCTURE_NONE;
       }
 
       (*vctMap)[x] = newMapVector;
-      (*vctObjects)[x] = newObjectVector;
+      (*vctStructures)[x] = newStructureVector;
    }
 }
 
@@ -34,10 +35,11 @@ WorldMap::~WorldMap()
 {
    for (int x=0; x<width; x++) {
       delete (*vctMap)[x];
-      delete (*vctObjects)[x];
+      delete (*vctStructures)[x];
    }
 
    delete vctMap;
+   delete vctStructures;
    delete vctObjects;
 }
 
@@ -48,19 +50,29 @@ WorldMap::TerrainType WorldMap::getElement(int x, int y)
 
 void WorldMap::setElement(int x, int y, TerrainType t)
 {
-   cout << "getting element" << endl;
    (*(*vctMap)[x])[y] = t;
 }
 
-WorldMap::ObjectType WorldMap::getObject(int x, int y)
+WorldMap::StructureType WorldMap::getStructure(int x, int y)
 {
-   return (*(*vctObjects)[x])[y];
+   return (*(*vctStructures)[x])[y];
 }
 
-void WorldMap::setObject(int x, int y, ObjectType t)
+void WorldMap::setStructure(int x, int y, StructureType t)
 {
-   cout << "getting object" << endl;
-   (*(*vctObjects)[x])[y] = t;
+   (*(*vctStructures)[x])[y] = t;
+}
+
+vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
+   vector<WorldMap::Object> vctObjectsInRegion;
+
+   return vctObjectsInRegion;
+}
+
+void WorldMap::addObject(int x, int y, WorldMap::ObjectType t) {
+   WorldMap::Object o(t, x, y);
+
+   vctObjects->push_back(o);
 }
 
 WorldMap* WorldMap::createDefaultMap()
@@ -76,7 +88,7 @@ WorldMap* WorldMap::createDefaultMap()
          else
             m->setElement(x, y, TERRAIN_GRASS);
 
-         m->setObject(x, y, OBJECT_NONE);
+         m->setStructure(x, y, STRUCTURE_NONE);
       }
    }
 
@@ -157,7 +169,7 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                // load objects
 
                int x, y, type;
-               ObjectType object;
+               StructureType structure;
 
                getline(iss, token, ',');
                cout << "token(x): " << token << endl;
@@ -173,17 +185,17 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
                switch(type) {
                case 0:
-                  object = OBJECT_NONE;
+                  structure = STRUCTURE_NONE;
                   break;
                case 1:
-                  object = OBJECT_BLUE_FLAG;
+                  structure = STRUCTURE_BLUE_FLAG;
                   break;
                case 2:
-                  object = OBJECT_RED_FLAG;
+                  structure = STRUCTURE_RED_FLAG;
                   break;
                }
 
-               m->setObject(x, y, object);
+               m->setStructure(x, y, structure);
             }
          }
 
@@ -195,4 +207,21 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
       cout << "Could not open the file" << endl;
 
    return m;
+}
+
+
+/*** Functions for Object ***/
+
+WorldMap::Object::Object(ObjectType type, POSITION pos) {
+   this->type = type;
+   this->pos = pos;
+}
+
+WorldMap::Object::Object(ObjectType type, int x, int y) {
+   this->type = type;
+   this->pos.x = x;
+   this->pos.y = y;
+}
+
+WorldMap::Object::~Object() {
 }

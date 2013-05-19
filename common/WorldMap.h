@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "Common.h"
+
 using namespace std;
 
 class WorldMap {
@@ -16,15 +18,33 @@ public:
       TERRAIN_ROCK
    };
 
+   enum StructureType {
+      STRUCTURE_NONE,
+      STRUCTURE_BLUE_FLAG,
+      STRUCTURE_RED_FLAG
+   };
+
    enum ObjectType {
       OBJECT_NONE,
       OBJECT_BLUE_FLAG,
       OBJECT_RED_FLAG
    };
 
+   class Object {
+   public:
+      ObjectType type;
+      POSITION pos;
+
+      Object(ObjectType type, int x, int y);
+      Object(ObjectType type, POSITION pos);
+
+      ~Object();
+   };
+
    int width, height;
    vector<vector<TerrainType>*>* vctMap;
-   vector<vector<ObjectType>*>* vctObjects;
+   vector<vector<StructureType>*>* vctStructures;
+   vector<Object>* vctObjects; 
 
    WorldMap(int width, int height);
 
@@ -33,8 +53,11 @@ public:
    TerrainType getElement(int x, int y);
    void setElement(int x, int y, TerrainType type);
 
-   ObjectType getObject(int x, int y);
-   void setObject(int x, int y, ObjectType type);
+   StructureType getStructure(int x, int y);
+   void setStructure(int x, int y, StructureType type);
+
+   vector<Object> getObjects(int x, int y);
+   void addObject(int x, int y, ObjectType type);
 
    static WorldMap* createDefaultMap();
    static WorldMap* loadMapFromFile(string filename);

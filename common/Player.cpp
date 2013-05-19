@@ -123,12 +123,12 @@ bool Player::move(WorldMap *map) {
 
       // using moveCanceled in a hacky way just to indicate that the server
       // has updated some player info. Should change the variable name
-      switch(map->getObject(newPos.x/25, newPos.y/25)) {
-      case WorldMap::OBJECT_BLUE_FLAG:
+      switch(map->getStructure(newPos.x/25, newPos.y/25)) {
+      case WorldMap::STRUCTURE_BLUE_FLAG:
          hasBlueFlag = true;
          moveCanceled = true;
          break;
-      case WorldMap::OBJECT_RED_FLAG:
+      case WorldMap::STRUCTURE_RED_FLAG:
          hasRedFlag = true;
          moveCanceled = true;
          break;
