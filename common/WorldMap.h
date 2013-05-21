@@ -32,11 +32,12 @@ public:
 
    class Object {
    public:
+      int id;
       ObjectType type;
       POSITION pos;
 
-      Object(ObjectType type, int x, int y);
-      Object(ObjectType type, POSITION pos);
+      Object(ObjectType type, int id, int x, int y);
+      Object(ObjectType type, int id, POSITION pos);
 
       ~Object();
    };
@@ -57,7 +58,8 @@ public:
    void setStructure(int x, int y, StructureType type);
 
    vector<Object> getObjects(int x, int y);
-   void addObject(int x, int y, ObjectType type);
+   void addObject(ObjectType type, int x, int y);
+   void updateObject(int id, WorldMap::ObjectType t, int x, int y);
 
    static WorldMap* createDefaultMap();
    static WorldMap* loadMapFromFile(string filename);

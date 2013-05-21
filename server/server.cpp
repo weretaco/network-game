@@ -94,7 +94,12 @@ int main(int argc, char *argv[])
    }
 
    WorldMap* gameMap = WorldMap::loadMapFromFile("../data/map.txt");
- 
+
+   // add some items to the map. They will be sent out
+   // to players when they login
+   // m->addObject(x*25+12, y*25+12, OBJECT_BLUE_FLAG);
+   // m->addObject(x*25+12, y*25+12, OBJECT_RED_FLAG);
+
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
    length = sizeof(server);

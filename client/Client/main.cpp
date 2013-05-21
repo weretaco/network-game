@@ -529,6 +529,7 @@ void drawMap(WorldMap* gameMap)
    mapPos.x = 0;
    mapPos.y = 0;
    mapPos = mapToScreen(mapPos);
+
    for (int x=0; x<12; x++)
    {
       for (int y=0; y<12; y++)
@@ -543,10 +544,33 @@ void drawMap(WorldMap* gameMap)
          else if (el == WorldMap::TERRAIN_ROCK)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
 
-         if (structure == WorldMap::STRUCTURE_BLUE_FLAG)
-            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
-         else if (structure == WorldMap::STRUCTURE_RED_FLAG)
-            al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
+         if (structure == WorldMap::STRUCTURE_BLUE_FLAG) {
+            al_draw_circle(x*25+12+mapPos.x, y*25+12+mapPos.y, 12, al_map_rgb(0, 0, 0), 3);
+            //al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
+         }else if (structure == WorldMap::STRUCTURE_RED_FLAG) {
+            al_draw_circle(x*25+12+mapPos.x, y*25+12+mapPos.y, 12, al_map_rgb(0, 0, 0), 3);
+            //al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
+         }
+      }
+   }
+
+   for (int x=0; x<12; x++)
+   {
+      for (int y=0; y<12; y++)
+      {
+         vector<WorldMap::Object> vctObjects = gameMap->getObjects(x, y);
+
+         vector<WorldMap::Object>::iterator it;
+         for(it = vctObjects.begin(); it != vctObjects.end(); it++) {
+            switch(it->type) {
+               case WorldMap::OBJECT_BLUE_FLAG:
+                  al_draw_filled_rectangle(it->pos.x-8+mapPos.x, it->pos.y-8+mapPos.y, it->pos.x+8+mapPos.x, it->pos.y+8+mapPos.y, al_map_rgb(0, 0, 255));
+                  break;
+               case WorldMap::OBJECT_RED_FLAG:
+                  al_draw_filled_rectangle(it->pos.x-8+mapPos.x, it->pos.y-8+mapPos.y, it->pos.x+8+mapPos.x, it->pos.y+8+mapPos.y, al_map_rgb(255, 0, 0));
+                  break;
+            }
+         }
       }
    }
 }

@@ -66,13 +66,38 @@ void WorldMap::setStructure(int x, int y, StructureType t)
 vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
    vector<WorldMap::Object> vctObjectsInRegion;
 
+   vector<WorldMap::Object>::iterator it;
+   for(it = vctObjects->begin(); it != vctObjects->end(); it++) {
+      if (it->pos.x/25 == x && it->pos.y/25 == y)
+         vctObjectsInRegion.push_back(*it);
+   }
+
    return vctObjectsInRegion;
 }
 
-void WorldMap::addObject(int x, int y, WorldMap::ObjectType t) {
-   WorldMap::Object o(t, x, y);
-
+// used by the server to create new objects
+void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
+   WorldMap::Object o(t, vctObjects->size(), x, y);
    vctObjects->push_back(o);
+}
+
+// used by the client to update object positions or create objects it has not seen before
+void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
+   vector<WorldMap::Object>::iterator it;
+   bool foundObject = false;
+
+   for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
+      if (it->id == id) {
+         foundObject = true;
+         it->pos.x = x;
+         it->pos.y = y;
+      }
+   }
+
+   if (!foundObject) {
+      WorldMap::Object o(t, id, x, y);
+      vctObjects->push_back(o);
+   }
 }
 
 WorldMap* WorldMap::createDefaultMap()
@@ -189,9 +214,11 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                   break;
                case 1:
                   structure = STRUCTURE_BLUE_FLAG;
+                  cout << "Should have added blue flag object" << endl;
                   break;
                case 2:
                   structure = STRUCTURE_RED_FLAG;
+                  cout << "Should have added red flag object" << endl;
                   break;
                }
 
@@ -212,15 +239,17 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
 /*** Functions for Object ***/
 
-WorldMap::Object::Object(ObjectType type, POSITION pos) {
+WorldMap::Object::Object(ObjectType type, int id, int x, int y) {
    this->type = type;
-   this->pos = pos;
-}
-
-WorldMap::Object::Object(ObjectType type, int x, int y) {
-   this->type = type;
+   this->id = id;
    this->pos.x = x;
    this->pos.y = y;
+}
+
+WorldMap::Object::Object(ObjectType type, int id, POSITION pos) {
+   this->type = type;
+   this->id = id;
+   this->pos = pos;
 }
 
 WorldMap::Object::~Object() {
