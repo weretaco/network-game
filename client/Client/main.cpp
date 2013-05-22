@@ -46,7 +46,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId);
 void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId);
 POSITION screenToMap(POSITION pos);
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
       }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, curPlayerId);
 
       if (redraw)
       {
@@ -380,7 +380,7 @@ POSITION mapToScreen(FLOAT_POSITION pos)
    return p;
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId)
 {
    string response = string(msg.buffer);
 
@@ -439,6 +439,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                cout << "new player id: " << p.id << endl;
                cout << "map size: " << mapPlayers.size() << endl;
+
+               break;
+            }
+            case MSG_TYPE_OBJECT:
+            {
+               cout << "Received object message. Baller Biller!" << endl;
+
+               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
+               o.deserialize(msg.buffer);
+               gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
 
                break;
             }
@@ -508,6 +518,20 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                chatConsole.addLine(response);
 
                break;
+            }
+            case MSG_TYPE_OBJECT:
+            {
+               cout << "Received object message. Baller Biller!" << endl;
+
+               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
+               o.deserialize(msg.buffer);
+               gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
+
+               break;
+            }
+            default:
+            {
+               cout << "Received an unexpected message type: " << msg.type << endl;
             }
          }
 
