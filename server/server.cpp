@@ -97,8 +97,18 @@ int main(int argc, char *argv[])
 
    // add some items to the map. They will be sent out
    // to players when they login
-   // m->addObject(x*25+12, y*25+12, OBJECT_BLUE_FLAG);
-   // m->addObject(x*25+12, y*25+12, OBJECT_RED_FLAG);
+   for (int y=0; y<gameMap->height; y++) {
+      for (int x=0; x<gameMap->width; x++) {
+         switch (gameMap->getStructure(x, y)) {
+            case WorldMap::STRUCTURE_BLUE_FLAG:
+               gameMap->addObject(WorldMap::OBJECT_BLUE_FLAG, x*25+12, y*25+12);
+               break;
+            case WorldMap::STRUCTURE_RED_FLAG:
+               gameMap->addObject(WorldMap::OBJECT_RED_FLAG, x*25+12, y*25+12);
+               break;
+         }
+      }
+   }
 
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
@@ -258,7 +268,20 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
                it->second.serialize(serverMsg.buffer);
 
                cout << "sending info about " << it->second.name  << endl;
-               cout << "sending ind " << it->second.id  << endl;
+               cout << "sending id " << it->second.id  << endl;
+               if ( sendMessage(&serverMsg, sock, &from) < 0 )
+                  error("sendMessage");
+            }
+
+            // tell the new player about all map objects
+            // (currently just the flags)
+            serverMsg.type = MSG_TYPE_OBJECT;
+            vector<WorldMap::Object> vctObjects = gameMap->getObjects();
+            vector<WorldMap::Object>::iterator itObjects;
+            cout << "sending items" << endl;
+            for (itObjects = vctObjects.begin(); itObjects != vctObjects.end(); itObjects++) {
+               itObjects->serialize(serverMsg.buffer);
+               cout << "sending item id " << itObjects->id  << endl;
                if ( sendMessage(&serverMsg, sock, &from) < 0 )
                   error("sendMessage");
             }

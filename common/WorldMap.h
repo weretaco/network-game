@@ -36,10 +36,13 @@ public:
       ObjectType type;
       POSITION pos;
 
-      Object(ObjectType type, int id, int x, int y);
-      Object(ObjectType type, int id, POSITION pos);
+      Object(int id, ObjectType type, int x, int y);
+      Object(int id, ObjectType type, POSITION pos);
 
       ~Object();
+
+      void serialize(char* buffer);
+      void deserialize(char* buffer);
    };
 
    int width, height;
@@ -57,9 +60,12 @@ public:
    StructureType getStructure(int x, int y);
    void setStructure(int x, int y, StructureType type);
 
+   vector<Object> getObjects();
    vector<Object> getObjects(int x, int y);
+
    void addObject(ObjectType type, int x, int y);
    void updateObject(int id, WorldMap::ObjectType t, int x, int y);
+   bool removeObject(int id);
 
    static WorldMap* createDefaultMap();
    static WorldMap* loadMapFromFile(string filename);

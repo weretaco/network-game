@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
@@ -63,6 +64,9 @@ void WorldMap::setStructure(int x, int y, StructureType t)
    (*(*vctStructures)[x])[y] = t;
 }
 
+vector<WorldMap::Object> WorldMap::getObjects() {
+   return *vctObjects;
+}
 vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
    vector<WorldMap::Object> vctObjectsInRegion;
 
@@ -77,7 +81,7 @@ vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
 
 // used by the server to create new objects
 void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
-   WorldMap::Object o(t, vctObjects->size(), x, y);
+   WorldMap::Object o(vctObjects->size(), t, x, y);
    vctObjects->push_back(o);
 }
 
@@ -95,9 +99,22 @@ void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
    }
 
    if (!foundObject) {
-      WorldMap::Object o(t, id, x, y);
+      WorldMap::Object o(id, t, x, y);
       vctObjects->push_back(o);
    }
+}
+
+bool WorldMap::removeObject(int id) {
+   vector<WorldMap::Object>::iterator it;
+
+   for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
+      if (it->id == id) {
+         vctObjects->erase(it);
+         return true;
+      }
+   }
+
+   return false;  // no object with that id was found
 }
 
 WorldMap* WorldMap::createDefaultMap()
@@ -239,18 +256,32 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
 /*** Functions for Object ***/
 
-WorldMap::Object::Object(ObjectType type, int id, int x, int y) {
+WorldMap::Object::Object(int id, ObjectType type, int x, int y) {
    this->type = type;
    this->id = id;
    this->pos.x = x;
    this->pos.y = y;
 }
 
-WorldMap::Object::Object(ObjectType type, int id, POSITION pos) {
+WorldMap::Object::Object(int id, ObjectType type, POSITION pos) {
    this->type = type;
    this->id = id;
    this->pos = pos;
 }
 
 WorldMap::Object::~Object() {
+}
+
+void WorldMap::Object::serialize(char* buffer) {
+   memcpy(buffer, &this->type, 4);
+   memcpy(buffer+4, &this->id, 4);
+   memcpy(buffer+8, &this->pos.x, 4);
+   memcpy(buffer+12, &this->pos.y, 4);
+}
+
+void WorldMap::Object::deserialize(char* buffer) {
+   memcpy(&this->type, buffer, 4);
+   memcpy(&this->id, buffer+4, 4);
+   memcpy(&this->pos.x, buffer+8, 4);
+   memcpy(&this->pos.y, buffer+12, 4);
 }

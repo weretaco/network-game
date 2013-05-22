@@ -1,12 +1,14 @@
 #ifndef _MESSAGE_H
 #define _MESSAGE_H
 
-#define MSG_TYPE_REGISTER     1
-#define MSG_TYPE_LOGIN        2
-#define MSG_TYPE_LOGOUT       3
-#define MSG_TYPE_CHAT         4
-#define MSG_TYPE_PLAYER       5  // server sends this to update player positions
-#define MSG_TYPE_PLAYER_MOVE  6  // client sends this when a player wants to move
+#define MSG_TYPE_REGISTER      1
+#define MSG_TYPE_LOGIN         2
+#define MSG_TYPE_LOGOUT        3
+#define MSG_TYPE_CHAT          4
+#define MSG_TYPE_PLAYER        5  // server sends this to update player positions
+#define MSG_TYPE_PLAYER_MOVE   6  // client sends this when a player wants to move
+#define MSG_TYPE_OBJECT        7
+#define MSG_TYPE_REMOVE_OBJECT 8
 
 typedef struct
 {
