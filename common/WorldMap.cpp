@@ -208,7 +208,7 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                   m->setElement(x, row, terrain);
                }
             }else {
-               // load objects
+               // load structure
 
                int x, y, type;
                StructureType structure;

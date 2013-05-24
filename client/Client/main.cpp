@@ -385,7 +385,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
    string response = string(msg.buffer);
 
    cout << "Processing message" << endl;
-   cout << response << endl;
 
    switch(state)
    {
