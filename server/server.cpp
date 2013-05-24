@@ -138,25 +138,52 @@ int main(int argc, char *argv[])
          timeLastUpdated = curTime;
 
          // maybe put this in a separate method
-         map<unsigned int, Player>::iterator it, it2;
+         map<unsigned int, Player>::iterator it;
+         FLOAT_POSITION oldPos;
+         bool broadcastMove = false;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
-            if (!it->second.move(gameMap)) {
-               cout << "Cenceling move" << endl;
-               serverMsg.type = MSG_TYPE_PLAYER;
-               it->second.serialize(serverMsg.buffer);
+            oldPos = it->second.pos;
+            if (it->second.move(gameMap)) {
 
-               cout << "(" << it->second.pos.x << "," << it->second.pos.y << ")" << endl;
+               // check if the move needs to be canceled
+               switch(gameMap->getElement(it->second.pos.x/25, it->second.pos.y/25)) {
+                  case WorldMap::TERRAIN_NONE:
+                  case WorldMap::TERRAIN_OCEAN:
+                  case WorldMap::TERRAIN_ROCK:
+                     it->second.pos = oldPos;
+                     it->second.target.x = it->second.pos.x;
+                     it->second.target.y = it->second.pos.y;
+                     broadcastMove = true;
+                     break;
+                  default:
+                     // if there are no obstacles, do nothing
+                     break;
+               }
 
-               if (it->second.hasBlueFlag)
-                  cout << "Got blue flag" << endl;
-               if (it->second.hasRedFlag)
-                  cout << "Got red flag" << endl;
+               switch(gameMap->getStructure(it->second.pos.x/25, it->second.pos.y/25)) {
+                  case WorldMap::STRUCTURE_BLUE_FLAG:
+                     cout << "Got blue flag" << endl;
+                     it->second.hasBlueFlag = true;
+                     broadcastMove = true;
+                     break;
+                  case WorldMap::STRUCTURE_RED_FLAG:
+                     cout << "Got red flag" << endl;
+                     it->second.hasRedFlag = true;
+                     broadcastMove = true;
+                     break;
+               }
 
-               cout << "about to send move cencellation" << endl;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
-               {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-                     error("sendMessage");
+               if (broadcastMove) {
+                  serverMsg.type = MSG_TYPE_PLAYER;
+                  it->second.serialize(serverMsg.buffer);
+
+                  cout << "about to broadcast move" << endl;
+                  map<unsigned int, Player>::iterator it, it2;
+                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  {
+                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                        error("sendMessage");
+                  }
                }
             }
          }

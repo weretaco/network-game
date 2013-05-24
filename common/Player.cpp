@@ -88,12 +88,13 @@ void Player::setAddr(sockaddr_in addr)
 }
 
 bool Player::move(WorldMap *map) {
-   int speed = 100; // pixels per second
+   int speed = 100; // pixels per second. should probably be in the constructor
    unsigned long long curTime = getCurrentMillis();
-   bool moveCanceled = false;
 
    // if we're at our target, don't move
-   if (pos.x != target.x || pos.y != target.y) {
+   bool moving = (pos.x != target.x || pos.y != target.y);
+
+   if (moving) {
       float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
       double angle = atan2(target.y-pos.y, target.x-pos.x);
       float dist = sqrt(pow(target.x-pos.x, 2) + pow(target.y-pos.y, 2));
@@ -106,36 +107,9 @@ bool Player::move(WorldMap *map) {
          newPos.x = pos.x + cos(angle)*pixels;
          newPos.y = pos.y + sin(angle)*pixels;
       }
-
-      switch(map->getElement(newPos.x/25, newPos.y/25)) {
-      case WorldMap::TERRAIN_NONE:
-      case WorldMap::TERRAIN_OCEAN:
-      case WorldMap::TERRAIN_ROCK:
-         target.x = pos.x;
-         target.y = pos.y;
-         moveCanceled = true;
-         break;
-      default: // if there are no obstacles
-         pos.x = newPos.x;
-         pos.y = newPos.y;
-         break;
-      }
-
-      // using moveCanceled in a hacky way just to indicate that the server
-      // has updated some player info. Should change the variable name
-      switch(map->getStructure(newPos.x/25, newPos.y/25)) {
-      case WorldMap::STRUCTURE_BLUE_FLAG:
-         hasBlueFlag = true;
-         moveCanceled = true;
-         break;
-      case WorldMap::STRUCTURE_RED_FLAG:
-         hasRedFlag = true;
-         moveCanceled = true;
-         break;
-      }
    }
 
    timeLastUpdated = curTime;
 
-   return !moveCanceled;
+   return moving;
 }
