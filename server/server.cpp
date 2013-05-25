@@ -514,6 +514,18 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
          break;
       }
+      case MSG_TYPE_PICKUP_FLAG:
+      { 
+         // may want to check the id matches the sender, just like for PLAYER_NOVE
+         cout << "PICKUP_FLAG" << endl;
+
+         int id;
+
+         memcpy(&id, clientMsg.buffer, 4);
+         cout << "id: " << id << endl;
+
+         break;
+      }
       case MSG_TYPE_DROP_FLAG:
       {
          // may want to check the id matches the sender, just like for PLAYER_NOVE
