@@ -37,7 +37,7 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg, int sock);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
 
 void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 
@@ -83,6 +83,10 @@ int main(int argc, char *argv[])
    NETWORK_MSG clientMsg, serverMsg;
    map<unsigned int, Player> mapPlayers;
    unsigned int unusedId = 1;
+   int scoreBlue, scoreRed;
+
+   scoreBlue = 0;
+   scoreRed = 0;
 
    //SSL_load_error_strings();
    //ERR_load_BIO_strings();
@@ -175,6 +179,7 @@ int main(int argc, char *argv[])
                         flagType = WorldMap::OBJECT_RED_FLAG;
                         pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
                         flagTurnedIn = true;
+                        scoreBlue++;
                      }
 
                      break;
@@ -187,6 +192,7 @@ int main(int argc, char *argv[])
                         flagType = WorldMap::OBJECT_BLUE_FLAG;
                         pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
                         flagTurnedIn = true;
+                        scoreRed++;
                      }
 
                      break;
@@ -203,6 +209,16 @@ int main(int argc, char *argv[])
                   gameMap->getObjects()->back().serialize(serverMsg.buffer);
 
                   map<unsigned int, Player>::iterator it2;
+                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  {
+                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                        error("sendMessage");
+                  }
+
+                  serverMsg.type = MSG_TYPE_SCORE;
+                  memcpy(serverMsg.buffer, &scoreBlue, 4);
+                  memcpy(serverMsg.buffer+4, &scoreRed, 4);
+
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
                      if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
@@ -232,7 +248,7 @@ int main(int argc, char *argv[])
       n = receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
-         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock);
+         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock, scoreBlue, scoreRed);
 
          // probably replace this with a function that prints based on the
          // message type
@@ -262,7 +278,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg, int sock)
+bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg, int sock, int &scoreBlue, int &scoreRed)
 {
    DataAccess da;
 
@@ -354,6 +370,14 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
                   error("sendMessage");
             }
 
+            // send the current score
+            serverMsg.type = MSG_TYPE_SCORE;
+            memcpy(serverMsg.buffer, &scoreBlue, 4);
+            memcpy(serverMsg.buffer+4, &scoreRed, 4);
+            if ( sendMessage(&serverMsg, sock, &from) < 0 )
+               error("sendMessage");
+
+            serverMsg.type = MSG_TYPE_PLAYER;
             p->serialize(serverMsg.buffer);
             cout << "Should be broadcasting the message" << endl;
 

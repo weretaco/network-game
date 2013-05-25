@@ -11,6 +11,7 @@
 #define MSG_TYPE_REMOVE_OBJECT 8
 #define MSG_TYPE_PICKUP_FLAG   9
 #define MSG_TYPE_DROP_FLAG     10
+#define MSG_TYPE_SCORE         11
 
 typedef struct
 {
