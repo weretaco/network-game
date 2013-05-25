@@ -256,7 +256,8 @@ int main(int argc, char *argv[])
                      }
                   }
 
-                  itObjects++;
+                  if (!gotFlag)
+                     itObjects++;
                }
 
                if (broadcastMove) {
