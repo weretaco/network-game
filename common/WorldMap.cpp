@@ -67,11 +67,12 @@ void WorldMap::setStructure(int x, int y, StructureType t)
 vector<WorldMap::Object>* WorldMap::getObjects() {
    return vctObjects;
 }
+
 vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
    vector<WorldMap::Object> vctObjectsInRegion;
 
    vector<WorldMap::Object>::iterator it;
-   for(it = vctObjects->begin(); it != vctObjects->end(); it++) {
+   for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
       if (it->pos.x/25 == x && it->pos.y/25 == y)
          vctObjectsInRegion.push_back(*it);
    }
@@ -81,7 +82,20 @@ vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
 
 // used by the server to create new objects
 void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
-   WorldMap::Object o(vctObjects->size(), t, x, y);
+   int id;
+   vector<WorldMap::Object>::iterator it;
+
+   for (id = 0; id < vctObjects->size(); id++) {
+      for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
+         if (id == it->id)
+            break;
+      }
+
+      if (it == vctObjects->end())  // if no objects with this id exists
+         break;
+   }
+
+   WorldMap::Object o(id, t, x, y);
    vctObjects->push_back(o);
 }
 
@@ -90,9 +104,28 @@ void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
    vector<WorldMap::Object>::iterator it;
    bool foundObject = false;
 
+   cout << "Searching for obbject to update" << endl;
+   switch (t) {
+   case WorldMap::OBJECT_BLUE_FLAG:
+      cout << "BLUE_FLAG" << endl;
+      break;
+   case WorldMap::OBJECT_RED_FLAG:
+      cout << "RED_FLAG" << endl;
+      break;
+   }
+
    for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
       if (it->id == id) {
          foundObject = true;
+         cout << "Found object with id " << id << endl;
+         switch (it->type) {
+         case WorldMap::OBJECT_BLUE_FLAG:
+            cout << "BLUE_FLAG" << endl;
+            break;
+         case WorldMap::OBJECT_RED_FLAG:
+            cout << "RED_FLAG" << endl;
+            break;
+         }
          it->pos.x = x;
          it->pos.y = y;
       }

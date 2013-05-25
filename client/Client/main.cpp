@@ -452,7 +452,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:   // kind of hacky to put this here
             {
-               cout << "Got MSG_TYPE_PLAYER message in Start" << endl;
+               cout << "Got MSG_TYPE_PLAYER message in STATE_START" << endl;
 
                Player p("", "");
                p.deserialize(msg.buffer);
@@ -466,10 +466,11 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received object message. Baller Biller!" << endl;
+               cout << "Received OBJECT message in STATE_START." << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
+               cout << "object id: " << o.id << endl;
                gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
 
                break;
@@ -510,7 +511,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:
             {
-               cout << "Got MSG_TYPE_PLAYER message in Login" << endl;
+               cout << "Got MSG_TYPE_PLAYER message in STATE_LOGIN" << endl;
 
                Player p("", "");
                p.deserialize(msg.buffer);
@@ -543,7 +544,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received object message. Baller Biller!" << endl;
+               cout << "Received object message in STATE_LOGIN." << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
@@ -553,10 +554,17 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_REMOVE_OBJECT:
             {
+               cout << "Received REMOVE_OBJECT message!" << endl;
+
                int id;
                memcpy(&id, msg.buffer, 4);
+
+               cout << "Removing object with id " << id << endl;
+
                if (!gameMap->removeObject(id))
                   cout << "Did not remove the object" << endl;
+
+               break;
             }
             default:
             {
