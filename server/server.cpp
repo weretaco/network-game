@@ -213,53 +213,6 @@ int main(int argc, char *argv[])
                   broadcastMove = true;
                }
 
-               vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
-               vector<WorldMap::Object>::iterator itObjects;
-
-               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end();) {
-                  POSITION pos = itObjects->pos;
-                  bool gotFlag = false;
-
-                  if (posDistance(it->second.pos, pos.toFloat()) < 10) {
-                     switch (itObjects->type) {
-                        case WorldMap::OBJECT_BLUE_FLAG:
-                           if (it->second.team == 1) {
-                              gotFlag = true;
-                              it->second.hasBlueFlag = true;
-                              broadcastMove = true;
-                           }
-                           break;
-                        case WorldMap::OBJECT_RED_FLAG:
-                           if (it->second.team == 0) {
-                              gotFlag = true;
-                              it->second.hasRedFlag = true;
-                              broadcastMove = true;
-                           }
-                           break;
-                     }
-
-                     if (gotFlag) {
-                        serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
-                        memcpy(serverMsg.buffer, &itObjects->id, 4);
-
-                        map<unsigned int, Player>::iterator it2;
-                        for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
-                        {
-                           if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-                              error("sendMessage");
-                        }
-
-                        // remove the object from the server-side map
-                        cout << "size before: " << gameMap->getObjects()->size() << endl;
-                        itObjects = vctObjects->erase(itObjects);
-                        cout << "size after: " << gameMap->getObjects()->size() << endl;
-                     }
-                  }
-
-                  if (!gotFlag)
-                     itObjects++;
-               }
-
                if (broadcastMove) {
                   serverMsg.type = MSG_TYPE_PLAYER;
                   it->second.serialize(serverMsg.buffer);
@@ -524,6 +477,56 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
          memcpy(&id, clientMsg.buffer, 4);
          cout << "id: " << id << endl;
+
+         vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
+         vector<WorldMap::Object>::iterator itObjects;
+
+         for (itObjects = vctObjects->begin(); itObjects != vctObjects->end();) {
+            POSITION pos = itObjects->pos;
+            bool gotFlag = false;
+
+            if (posDistance(mapPlayers[id].pos, pos.toFloat()) < 10) {
+               switch (itObjects->type) {
+                  case WorldMap::OBJECT_BLUE_FLAG:
+                     if (mapPlayers[id].team == 1) {
+                        gotFlag = true;
+                        mapPlayers[id].hasBlueFlag = true;
+                        broadcastResponse = true;
+                     }
+                     break;
+                  case WorldMap::OBJECT_RED_FLAG:
+                     if (mapPlayers[id].team == 0) {
+                        gotFlag = true;
+                        mapPlayers[id].hasRedFlag = true;
+                        broadcastResponse = true;
+                     }
+                     break;
+               }
+
+               if (gotFlag) {
+                  serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
+                  memcpy(serverMsg.buffer, &itObjects->id, 4);
+
+                  map<unsigned int, Player>::iterator it;
+                  for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+                  {
+                     if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+                        error("sendMessage");
+                  }
+
+                  // remove the object from the server-side map
+                  cout << "size before: " << gameMap->getObjects()->size() << endl;
+                  itObjects = vctObjects->erase(itObjects);
+                  cout << "size after: " << gameMap->getObjects()->size() << endl;
+               }
+            }
+
+            if (!gotFlag)
+               itObjects++;
+         }
+
+         serverMsg.type = MSG_TYPE_PLAYER;
+         mapPlayers[id].serialize(serverMsg.buffer);
 
          break;
       }
