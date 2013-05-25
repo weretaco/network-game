@@ -227,10 +227,6 @@ int main(int argc, char **argv)
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
          doexit = true;
-
-         // perform a check to see if it's time to send an update to the server
-         // need to store num ticks since the lst update for this
-         // also check how often each update actually happens and how much it deviates from 60 times per second
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
       }
@@ -238,6 +234,33 @@ int main(int argc, char **argv)
          switch(ev.keyboard.keycode) {
             case ALLEGRO_KEY_ESCAPE:
                doexit = true;
+               break;
+            case ALLEGRO_KEY_D:  // drop the current item
+               if (state == STATE_LOGIN) {
+                  map<unsigned int, Player>::iterator it;
+                  Player* p = NULL;
+                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+                  {
+                     &it->second;
+                     if (it->second.id == curPlayerId)
+                        p = &it->second;
+                  }
+
+                  if (p != NULL) {
+                     int flagType = WorldMap::OBJECT_NONE;
+
+                     if (p->hasBlueFlag)
+                        flagType = WorldMap::OBJECT_BLUE_FLAG;
+                     else if (p->hasRedFlag)
+                        flagType = WorldMap::OBJECT_RED_FLAG;
+
+                     if (flagType != WorldMap::OBJECT_NONE) {
+                        msgTo.type = MSG_TYPE_DROP_FLAG;
+                        memcpy(msgTo.buffer, &curPlayerId, 4);
+                        sendMessage(&msgTo, sock, &server);
+                     }
+                  }
+               }
                break;
          }
       }

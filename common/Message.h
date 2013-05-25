@@ -9,6 +9,7 @@
 #define MSG_TYPE_PLAYER_MOVE   6  // client sends this when a player wants to move
 #define MSG_TYPE_OBJECT        7
 #define MSG_TYPE_REMOVE_OBJECT 8
+#define MSG_TYPE_DROP_FLAG     9
 
 typedef struct
 {
