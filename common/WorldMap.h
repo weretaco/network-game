@@ -59,6 +59,7 @@ public:
 
    StructureType getStructure(int x, int y);
    void setStructure(int x, int y, StructureType type);
+   POSITION getStructureLocation(StructureType type);
 
    vector<Object>* getObjects();
    vector<Object> getObjects(int x, int y);

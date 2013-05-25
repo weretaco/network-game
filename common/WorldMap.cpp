@@ -64,6 +64,25 @@ void WorldMap::setStructure(int x, int y, StructureType t)
    (*(*vctStructures)[x])[y] = t;
 }
 
+POSITION WorldMap::getStructureLocation(StructureType t)
+{
+   POSITION pos;
+   pos.x = 0;
+   pos.y = 0;
+
+   for (int x=0; x<vctStructures->size(); x++) {
+      for (int y=0; y<(*vctStructures)[x]->size(); y++) {
+        if ((*(*vctStructures)[x])[y] == t) {
+           pos.x = x;
+           pos.y = y;
+           return pos;
+        } 
+      }
+   }
+
+   return pos;
+}
+
 vector<WorldMap::Object>* WorldMap::getObjects() {
    return vctObjects;
 }
