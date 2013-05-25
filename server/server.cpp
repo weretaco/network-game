@@ -164,51 +164,53 @@ int main(int argc, char *argv[])
 
                WorldMap::ObjectType flagType;
                POSITION pos;
+               bool flagTurnedIn = false;
+
                switch(gameMap->getStructure(it->second.pos.x/25, it->second.pos.y/25)) {
                   case WorldMap::STRUCTURE_BLUE_FLAG:
                   {
-                     if (!it->second.team == 0 || !it->second.hasRedFlag)
-                        break;
-                     else {
+                     if (it->second.team == 0 && it->second.hasRedFlag)
+                     {
                         it->second.hasRedFlag = false;
                         flagType = WorldMap::OBJECT_RED_FLAG;
                         pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                        flagTurnedIn = true;
                      }
+
+                     break;
                   }
                   case WorldMap::STRUCTURE_RED_FLAG:
                   {
-                     if (!it->second.team == 1 || !it->second.hasBlueFlag)
-                        break;
-                     else {
+                     if (it->second.team == 1 && it->second.hasBlueFlag)
+                     {
                         it->second.hasBlueFlag = false;
                         flagType = WorldMap::OBJECT_BLUE_FLAG;
                         pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                        flagTurnedIn = true;
                      }
-
-                     // all code from here to the break is executed for both cases of the switch
-
-                     // send an OBJECT message to add the flag back to its spawn point
-                     pos.x = pos.x*25+12;
-                     pos.y = pos.y*25+12;
-                     gameMap->addObject(flagType, pos.x, pos.y);
-
-                     serverMsg.type = MSG_TYPE_OBJECT;
-                     gameMap->getObjects()->back().serialize(serverMsg.buffer);
-
-                     map<unsigned int, Player>::iterator it2;
-                     for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
-                     {
-                        if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-                           error("sendMessage");
-                     }
-
-                     // this means a PLAYER message will be send
-                     broadcastMove = true;
 
                      break;
                   }
-                  default:
-                     break;
+               }
+
+               if (flagTurnedIn) {
+                  // send an OBJECT message to add the flag back to its spawn point
+                  pos.x = pos.x*25+12;
+                  pos.y = pos.y*25+12;
+                  gameMap->addObject(flagType, pos.x, pos.y);
+
+                  serverMsg.type = MSG_TYPE_OBJECT;
+                  gameMap->getObjects()->back().serialize(serverMsg.buffer);
+
+                  map<unsigned int, Player>::iterator it2;
+                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  {
+                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                        error("sendMessage");
+                  }
+
+                  // this means a PLAYER message will be sent
+                  broadcastMove = true;
                }
 
                vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
@@ -216,37 +218,45 @@ int main(int argc, char *argv[])
 
                for (itObjects = vctObjects->begin(); itObjects != vctObjects->end();) {
                   POSITION pos = itObjects->pos;
+                  bool gotFlag = false;
+
                   if (posDistance(it->second.pos, pos.toFloat()) < 10) {
                      switch (itObjects->type) {
                         case WorldMap::OBJECT_BLUE_FLAG:
-                           cout << "Got blue flag" << endl;
-                           it->second.hasBlueFlag = true;
-                           broadcastMove = true;
+                           if (it->second.team == 1) {
+                              gotFlag = true;
+                              it->second.hasBlueFlag = true;
+                              broadcastMove = true;
+                           }
                            break;
                         case WorldMap::OBJECT_RED_FLAG:
-                           cout << "Got red flag" << endl;
-                           it->second.hasRedFlag = true;
-                           broadcastMove = true;
+                           if (it->second.team == 0) {
+                              gotFlag = true;
+                              it->second.hasRedFlag = true;
+                              broadcastMove = true;
+                           }
                            break;
                      }
 
-                     serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
-                     memcpy(serverMsg.buffer, &itObjects->id, 4);
+                     if (gotFlag) {
+                        serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
+                        memcpy(serverMsg.buffer, &itObjects->id, 4);
 
-                     map<unsigned int, Player>::iterator it2;
-                     for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
-                     {
-                        if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
-                           error("sendMessage");
+                        map<unsigned int, Player>::iterator it2;
+                        for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                        {
+                           if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                              error("sendMessage");
+                        }
+
+                        // remove the object from the server-side map
+                        cout << "size before: " << gameMap->getObjects()->size() << endl;
+                        itObjects = vctObjects->erase(itObjects);
+                        cout << "size after: " << gameMap->getObjects()->size() << endl;
                      }
-
-                     // remove the object from the server-side map
-                     cout << "size before: " << gameMap->getObjects()->size() << endl;
-                     itObjects = vctObjects->erase(itObjects);
-                     cout << "size after: " << gameMap->getObjects()->size() << endl;
                   }
-                  else
-                     itObjects++;
+
+                  itObjects++;
                }
 
                if (broadcastMove) {
