@@ -11,19 +11,28 @@
    #include <assert.h>
 #endif
 
-void set_nonblock(int sock);
-unsigned long long getCurrentMillis();
-
-typedef struct
-{
-   int x;
-   int y;
-} POSITION;
-
 typedef struct
 {
    float x;
    float y;
 } FLOAT_POSITION;
+
+typedef struct
+{
+   int x;
+   int y;
+   //FLOAT_POSITION toFloat();
+   FLOAT_POSITION toFloat() {
+      FLOAT_POSITION floatPosition;
+      floatPosition.x = x;
+      floatPosition.y = y;
+
+      return floatPosition;
+   }
+} POSITION;
+
+void set_nonblock(int sock);
+unsigned long long getCurrentMillis();
+float posDistance(FLOAT_POSITION pos1, FLOAT_POSITION pos2);
 
 #endif

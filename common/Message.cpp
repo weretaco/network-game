@@ -18,6 +18,8 @@ int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
 {
    int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
 
+   cout << "Send a message of type " << msg->type << endl;
+
    return ret;
 }
 

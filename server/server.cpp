@@ -160,17 +160,36 @@ int main(int argc, char *argv[])
                      break;
                }
 
-               switch(gameMap->getStructure(it->second.pos.x/25, it->second.pos.y/25)) {
-                  case WorldMap::STRUCTURE_BLUE_FLAG:
-                     cout << "Got blue flag" << endl;
-                     it->second.hasBlueFlag = true;
-                     broadcastMove = true;
-                     break;
-                  case WorldMap::STRUCTURE_RED_FLAG:
-                     cout << "Got red flag" << endl;
-                     it->second.hasRedFlag = true;
-                     broadcastMove = true;
-                     break;
+               vector<WorldMap::Object> vctObjects = gameMap->getObjects();
+               vector<WorldMap::Object>::iterator itObjects;
+
+               for (itObjects = vctObjects.begin(); itObjects != vctObjects.end(); itObjects++) {
+                  POSITION pos = itObjects->pos;
+                  if (posDistance(it->second.pos, pos.toFloat()) < 10) {
+                     switch (itObjects->type) {
+                        case WorldMap::OBJECT_BLUE_FLAG:
+                           cout << "Got blue flag" << endl;
+                           it->second.hasBlueFlag = true;
+                           broadcastMove = true;
+                           break;
+                        case WorldMap::OBJECT_RED_FLAG:
+                           cout << "Got red flag" << endl;
+                           it->second.hasRedFlag = true;
+                           broadcastMove = true;
+                           break;
+                     }
+
+                     // send a MSG_TYPE_REMOVE_OBJECT message
+                     serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
+                     memcpy(serverMsg.buffer, &itObjects->id, 4);
+
+                     map<unsigned int, Player>::iterator it2;
+                     for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                     {
+                        if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                           error("sendMessage");
+                     }
+                  }
                }
 
                if (broadcastMove) {
@@ -178,7 +197,7 @@ int main(int argc, char *argv[])
                   it->second.serialize(serverMsg.buffer);
 
                   cout << "about to broadcast move" << endl;
-                  map<unsigned int, Player>::iterator it, it2;
+                  map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
                      if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
@@ -414,8 +433,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
                mapPlayers[id].target.x = x;
                mapPlayers[id].target.y = y;
-               int xDiff = mapPlayers[id].target.x - mapPlayers[id].pos.x;
-               int yDiff = mapPlayers[id].target.y - mapPlayers[id].pos.y;
 
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                
