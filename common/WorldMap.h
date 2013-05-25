@@ -60,7 +60,7 @@ public:
    StructureType getStructure(int x, int y);
    void setStructure(int x, int y, StructureType type);
 
-   vector<Object> getObjects();
+   vector<Object>* getObjects();
    vector<Object> getObjects(int x, int y);
 
    void addObject(ObjectType type, int x, int y);

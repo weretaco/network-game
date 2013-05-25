@@ -64,8 +64,8 @@ void WorldMap::setStructure(int x, int y, StructureType t)
    (*(*vctStructures)[x])[y] = t;
 }
 
-vector<WorldMap::Object> WorldMap::getObjects() {
-   return *vctObjects;
+vector<WorldMap::Object>* WorldMap::getObjects() {
+   return vctObjects;
 }
 vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
    vector<WorldMap::Object> vctObjectsInRegion;

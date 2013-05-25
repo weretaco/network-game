@@ -160,10 +160,10 @@ int main(int argc, char *argv[])
                      break;
                }
 
-               vector<WorldMap::Object> vctObjects = gameMap->getObjects();
+               vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
                vector<WorldMap::Object>::iterator itObjects;
 
-               for (itObjects = vctObjects.begin(); itObjects != vctObjects.end(); itObjects++) {
+               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end();) {
                   POSITION pos = itObjects->pos;
                   if (posDistance(it->second.pos, pos.toFloat()) < 10) {
                      switch (itObjects->type) {
@@ -179,7 +179,6 @@ int main(int argc, char *argv[])
                            break;
                      }
 
-                     // send a MSG_TYPE_REMOVE_OBJECT message
                      serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
                      memcpy(serverMsg.buffer, &itObjects->id, 4);
 
@@ -189,7 +188,14 @@ int main(int argc, char *argv[])
                         if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                            error("sendMessage");
                      }
+
+                     // remove the object form the server-side map
+                     cout << "size before: " << gameMap->getObjects()->size() << endl;
+                     itObjects = vctObjects->erase(itObjects);
+                     cout << "size after: " << gameMap->getObjects()->size() << endl;
                   }
+                  else
+                     itObjects++;
                }
 
                if (broadcastMove) {
@@ -322,10 +328,10 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             // tell the new player about all map objects
             // (currently just the flags)
             serverMsg.type = MSG_TYPE_OBJECT;
-            vector<WorldMap::Object> vctObjects = gameMap->getObjects();
+            vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
             vector<WorldMap::Object>::iterator itObjects;
             cout << "sending items" << endl;
-            for (itObjects = vctObjects.begin(); itObjects != vctObjects.end(); itObjects++) {
+            for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
                itObjects->serialize(serverMsg.buffer);
                cout << "sending item id " << itObjects->id  << endl;
                if ( sendMessage(&serverMsg, sock, &from) < 0 )
@@ -407,9 +413,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
       }
       case MSG_TYPE_PLAYER_MOVE:
       {
-         istringstream iss;
-         iss.str(clientMsg.buffer);
-
          cout << "PLAYER_MOVE" << endl;
 
          int id, x, y;
@@ -447,6 +450,46 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          }
          else  // nned to send back a message indicating failure
             cout << "Player id (" << id << ") doesn't match sender" << endl;
+
+         break;
+      }
+      case MSG_TYPE_DROP_FLAG:
+      {
+         // may want to check the id matches the sender, just like for PLAYER_NOVE
+         cout << "DROP_FLAG" << endl;
+
+         int id;
+
+         memcpy(&id, clientMsg.buffer, 4);
+         cout << "id: " << id << endl;
+
+         WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+         if (mapPlayers[id].hasBlueFlag)
+            flagType = WorldMap::OBJECT_BLUE_FLAG;
+         else if (mapPlayers[id].hasRedFlag)
+            flagType = WorldMap::OBJECT_RED_FLAG;
+
+         gameMap->addObject(flagType, mapPlayers[id].pos.x, mapPlayers[id].pos.y);
+
+         // need to send the OBJECT message too
+         serverMsg.type = MSG_TYPE_OBJECT;
+         gameMap->getObjects()->back().serialize(serverMsg.buffer);
+
+         map<unsigned int, Player>::iterator it;
+         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+         {
+            if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+               error("sendMessage");
+         }
+
+         mapPlayers[id].hasBlueFlag = false;
+         mapPlayers[id].hasRedFlag = false;
+
+         serverMsg.type = MSG_TYPE_PLAYER;
+         mapPlayers[id].serialize(serverMsg.buffer);
+
+         map<unsigned int, Player>::iterator it2;
+         broadcastResponse = true;
 
          break;
       }
