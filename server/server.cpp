@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
                            error("sendMessage");
                      }
 
-                     // remove the object form the server-side map
+                     // remove the object from the server-side map
                      cout << "size before: " << gameMap->getObjects()->size() << endl;
                      itObjects = vctObjects->erase(itObjects);
                      cout << "size after: " << gameMap->getObjects()->size() << endl;
@@ -217,14 +217,11 @@ int main(int argc, char *argv[])
       n = receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
-         cout << "Got a message" << endl;
-
          broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock);
 
          // probably replace this with a function that prints based on the
          // message type
          cout << "msg: " << serverMsg.buffer << endl;
-         cout << "broadcastResponse: " << broadcastResponse << endl;
          if (broadcastResponse)
          {
             cout << "Should be broadcasting the message" << endl;
@@ -254,6 +251,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 {
    DataAccess da;
 
+   cout << "Received message" << endl;
    cout << "MSG: type: " << clientMsg.type << endl;
    cout << "MSG contents: " << clientMsg.buffer << endl;
 
@@ -380,7 +378,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
                unusedId = p->id;
             mapPlayers.erase(p->id);
             strcpy(serverMsg.buffer, "You have successfully logged out.");
-            cout << "Player logged out successfuly" << endl;
          }
 
          serverMsg.type = MSG_TYPE_LOGOUT;
@@ -502,8 +499,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          break;
       }
    }
-
-   cout << "Got to the end of the switch" << endl;
 
    return broadcastResponse;
 }
