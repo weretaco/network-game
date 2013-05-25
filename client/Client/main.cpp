@@ -528,6 +528,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
+            case MSG_TYPE_REMOVE_OBJECT:
+            {
+               int id;
+               memcpy(&id, msg.buffer, 4);
+               if (!gameMap->removeObject(id))
+                  cout << "Did not remove the object" << endl;
+            }
             default:
             {
                cout << "Received an unexpected message type: " << msg.type << endl;
