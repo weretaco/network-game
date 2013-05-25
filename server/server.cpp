@@ -304,10 +304,13 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          {
             serverMsg.type = MSG_TYPE_PLAYER;
 
-            p->setAddr(from);
             updateUnusedId(unusedId, mapPlayers);
             p->id = unusedId;
             cout << "new player id: " << p->id << endl;
+            p->setAddr(from);
+
+            // choose a random team (either 0 or 1)
+            p->team = rand() % 2;
 
             // tell the new player about all the existing players
             cout << "Sending other players to new player" << endl;

@@ -30,9 +30,9 @@ Player::Player(const Player& p)
    this->target.x = p.target.x;
    this->target.y = p.target.y;
    this->addr = p.addr;
-      this->team = 0;   // blue team by default
-   this->hasBlueFlag = false;
-   this->hasRedFlag = false;
+   this->team = p.team;
+   this->hasBlueFlag = p.hasBlueFlag;
+   this->hasRedFlag = p.hasRedFlag;
 }
 
 Player::Player(string name, string password)
