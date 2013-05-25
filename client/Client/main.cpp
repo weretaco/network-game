@@ -235,8 +235,16 @@ int main(int argc, char **argv)
             case ALLEGRO_KEY_ESCAPE:
                doexit = true;
                break;
+            case ALLEGRO_KEY_S:  // pickup an item next to you
+               if (state == STATE_LOGIN) {
+                  msgTo.type = MSG_TYPE_PICKUP_FLAG;
+                  memcpy(msgTo.buffer, &curPlayerId, 4);
+                  sendMessage(&msgTo, sock, &server);
+               }
+               break;
             case ALLEGRO_KEY_D:  // drop the current item
                if (state == STATE_LOGIN) {
+                  // find the current player in the player list
                   map<unsigned int, Player>::iterator it;
                   Player* p = NULL;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
