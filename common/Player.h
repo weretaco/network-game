@@ -19,6 +19,19 @@ using namespace std;
 
 class Player {
 public:
+
+   enum PlayerClass {
+      CLASS_NONE,
+      CLASS_WARRIOR,
+      CLASS_RANGER
+   };
+
+   enum AttackType {
+      ATTACK_NONE,
+      ATTACK_MELEE,
+      ATTACK_RANGED
+   };
+
    Player();
    Player(const Player& p);
    Player(string name, string password);
@@ -27,6 +40,7 @@ public:
 
    void serialize(char* buffer);
    void deserialize(char* buffer);
+   void setClass(PlayerClass c);
 
    void setId(int id);
    void setAddr(sockaddr_in addr);
@@ -44,6 +58,11 @@ public:
    POSITION target;
    unsigned long long timeLastUpdated;
 
+   int playerClass;
+   int maxHealth;
+   int health;
+   int attackType;
+   int damage;
    int team; // 0 is blue, 1 is red
    bool hasBlueFlag;
    bool hasRedFlag;
