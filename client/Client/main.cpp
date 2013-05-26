@@ -253,7 +253,6 @@ int main(int argc, char **argv)
                   Player* p = NULL;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
-                     &it->second;
                      if (it->second.id == curPlayerId)
                         p = &it->second;
                   }
@@ -278,23 +277,47 @@ int main(int argc, char **argv)
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
          if(wndCurrent == wndMain) {
-            msgTo.type = MSG_TYPE_PLAYER_MOVE;
+            if (ev.mouse.button == 1) {   // left click
+               msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
-            POSITION pos;
-            pos.x = ev.mouse.x;
-            pos.y = ev.mouse.y;
-            pos = screenToMap(pos);
+               POSITION pos;
+               pos.x = ev.mouse.x;
+               pos.y = ev.mouse.y;
+               pos = screenToMap(pos);
 
-            if (pos.x != -1)
-            {
-               memcpy(msgTo.buffer, &curPlayerId, 4);
-               memcpy(msgTo.buffer+4, &pos.x, 4);
-               memcpy(msgTo.buffer+8, &pos.y, 4);
+               if (pos.x != -1)
+               {
+                  memcpy(msgTo.buffer, &curPlayerId, 4);
+                  memcpy(msgTo.buffer+4, &pos.x, 4);
+                  memcpy(msgTo.buffer+8, &pos.y, 4);
 
-               sendMessage(&msgTo, sock, &server);
+                  sendMessage(&msgTo, sock, &server);
+               }
+               else
+                  cout << "Invalid point: User did not click on the map" << endl;
+            }else if (ev.mouse.button == 2) {   // right click
+                  map<unsigned int, Player>::iterator it;
+
+                  Player* curPlayer;
+                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+                  {
+                     if (it->second.id == curPlayerId)
+                        curPlayer = &it->second;
+                  }
+
+                  Player* target;
+                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+                  {
+                     target = &it->second;
+                     if (target->id != curPlayerId && target->team != curPlayer->team) {
+                        msgTo.type = MSG_TYPE_START_ATTACK;
+                        memcpy(msgTo.buffer, &curPlayerId, 4);
+                        memcpy(msgTo.buffer+4, &target->id, 4);
+
+                        sendMessage(&msgTo, sock, &server);
+                     }
+                  }
             }
-            else
-               cout << "Invalid point: User did not click on the map" << endl;
          }
       }
 
@@ -709,7 +732,7 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
       // draw player health
       al_draw_filled_rectangle(pos.x-12, pos.y-24, pos.x+12, pos.y-16, al_map_rgb(0, 0, 0));
       if (it->second.maxHealth != 0)
-         al_draw_filled_rectangle(pos.x-11, pos.y-19, pos.x-11+(22*it->second.health)/it->second.maxHealth, pos.y-15, al_map_rgb(255, 0, 0));
+         al_draw_filled_rectangle(pos.x-11, pos.y-23, pos.x-11+(22*it->second.health)/it->second.maxHealth, pos.y-17, al_map_rgb(255, 0, 0));
 
       if (p->hasBlueFlag)
          al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));

@@ -12,6 +12,8 @@
 #define MSG_TYPE_PICKUP_FLAG   9
 #define MSG_TYPE_DROP_FLAG     10
 #define MSG_TYPE_SCORE         11
+#define MSG_TYPE_START_ATTACK  12
+#define MSG_TYPE_ATTACK        13
 
 typedef struct
 {
