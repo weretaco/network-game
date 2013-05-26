@@ -324,9 +324,6 @@ int main(int argc, char *argv[])
       if (n >= 0) {
          broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock, scoreBlue, scoreRed);
 
-         // probably replace this with a function that prints based on the
-         // message type
-         cout << "msg: " << serverMsg.buffer << endl;
          if (broadcastResponse)
          {
             cout << "Should be broadcasting the message" << endl;
@@ -683,15 +680,29 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
       {
          cout << "Received a START_ATTACK message" << endl;
 
+         int id, targetId;
+
+         memcpy(&id, clientMsg.buffer, 4);
+         memcpy(&targetId, clientMsg.buffer+4, 4);
+
          serverMsg.type = MSG_TYPE_START_ATTACK;
          broadcastResponse = true;
+
+         break;
       }
       case MSG_TYPE_ATTACK:
       {
          cout << "Received am ATTACK message" << endl;
 
+         int id, targetId;
+
+         memcpy(&id, clientMsg.buffer, 4);
+         memcpy(&targetId, clientMsg.buffer+4, 4);
+
          serverMsg.type = MSG_TYPE_ATTACK;
          broadcastResponse = true;
+
+         break;
       }
       default:
       {
