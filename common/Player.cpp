@@ -71,6 +71,40 @@ Player::~Player()
 {
 }
 
+void Player::setId(int id)
+{
+   this->id = id;
+}
+
+void Player::setAddr(sockaddr_in addr)
+{
+   this->addr = addr;
+}
+
+void Player::setClass(PlayerClass c)
+{
+   switch (c) {
+      case CLASS_WARRIOR:
+         this->playerClass = CLASS_WARRIOR;
+         this->maxHealth = this->health = 100;
+         this->attackType = ATTACK_MELEE;
+         this->damage = 10;
+         break;
+      case CLASS_RANGER:
+         this->playerClass = CLASS_RANGER;
+         this->maxHealth = this->health = 60;
+         this->attackType = ATTACK_RANGED;
+         this->damage = 6;
+         break;
+      case CLASS_NONE:
+         cout << "No clas" << endl;
+         break;
+      dafault:
+         cout << "nvalid class" << endl;
+         break;
+   }
+}
+
 void Player::serialize(char* buffer)
 {
    memcpy(buffer, &this->id, 4);
@@ -109,40 +143,6 @@ void Player::deserialize(char* buffer)
    memcpy(&this->hasRedFlag, buffer+45, 1);
 
    this->name.assign(buffer+46);
-}
-
-void Player::setId(int id)
-{
-   this->id = id;
-}
-
-void Player::setAddr(sockaddr_in addr)
-{
-   this->addr = addr;
-}
-
-void Player::setClass(PlayerClass c)
-{
-   switch (c) {
-      case CLASS_WARRIOR:
-         this->playerClass = CLASS_WARRIOR;
-         this->maxHealth = this->health = 100;
-         this->attackType = ATTACK_MELEE;
-         this->damage = 10;
-         break;
-      case CLASS_RANGER:
-         this->playerClass = CLASS_RANGER;
-         this->maxHealth = this->health = 60;
-         this->attackType = ATTACK_RANGED;
-         this->damage = 6;
-         break;
-      case CLASS_NONE:
-         cout << "No clas" << endl;
-         break;
-      dafault:
-         cout << "nvalid class" << endl;
-         break;
-   }
 }
 
 bool Player::move(WorldMap *map) {

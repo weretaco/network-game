@@ -38,12 +38,12 @@ public:
 
    ~Player();
 
-   void serialize(char* buffer);
-   void deserialize(char* buffer);
-   void setClass(PlayerClass c);
-
    void setId(int id);
    void setAddr(sockaddr_in addr);
+   void setClass(PlayerClass c);
+
+   void serialize(char* buffer);
+   void deserialize(char* buffer);
 
    bool move(WorldMap *map);
 

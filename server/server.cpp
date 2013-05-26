@@ -417,6 +417,17 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             // choose a random team (either 0 or 1)
             p->team = rand() % 2;
 
+            // choose a random class
+            int intClass = rand() % 2;
+            switch (intClass) {
+               case 0:
+                  p->setClass(Player::CLASS_WARRIOR);
+                  break;
+               case 1:
+                  p->setClass(Player::CLASS_RANGER);
+                  break;
+            }
+
             // tell the new player about all the existing players
             cout << "Sending other players to new player" << endl;
 
