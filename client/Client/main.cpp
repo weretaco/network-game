@@ -46,7 +46,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId);
 POSITION screenToMap(POSITION pos);
@@ -99,6 +99,10 @@ int main(int argc, char **argv)
    doexit = false;
    map<unsigned int, Player> mapPlayers;
    unsigned int curPlayerId = -1;
+   int scoreBlue, scoreRed;
+
+   scoreBlue = 0;
+   scoreRed = 0;
 
    state = STATE_START;
 
@@ -295,7 +299,7 @@ int main(int argc, char **argv)
       }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
@@ -311,6 +315,14 @@ int main(int argc, char **argv)
          }
          else if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
+
+            ostringstream ossScoreBlue, ossScoreRed;
+
+            ossScoreBlue << "Blue: " << scoreBlue << endl;
+            ossScoreRed << "Red: " << scoreRed << endl;
+
+            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
 
             // update player positions
             map<unsigned int, Player>::iterator it;
@@ -411,7 +423,7 @@ POSITION mapToScreen(FLOAT_POSITION pos)
    return p;
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
 {
    string response = string(msg.buffer);
 
@@ -572,6 +584,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                if (!gameMap->removeObject(id))
                   cout << "Did not remove the object" << endl;
 
+               break;
+            }
+            case MSG_TYPE_SCORE:
+            {
+               memcpy(&scoreBlue, msg.buffer, 4);
+               memcpy(&scoreRed, msg.buffer+4, 4);
+ 
                break;
             }
             default:
