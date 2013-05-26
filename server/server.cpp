@@ -679,6 +679,20 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
          break;
       }
+      case MSG_TYPE_START_ATTACK:
+      {
+         cout << "Received a START_ATTACK message" << endl;
+
+         serverMsg.type = MSG_TYPE_START_ATTACK;
+         broadcastResponse = true;
+      }
+      case MSG_TYPE_ATTACK:
+      {
+         cout << "Received am ATTACK message" << endl;
+
+         serverMsg.type = MSG_TYPE_ATTACK;
+         broadcastResponse = true;
+      }
       default:
       {
          strcpy(serverMsg.buffer, "Server error occured. Report this please.");
