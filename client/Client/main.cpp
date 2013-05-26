@@ -48,7 +48,7 @@ void initWinSock();
 void shutdownWinSock();
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 void drawMap(WorldMap* gameMap);
-void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId);
+void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
 POSITION screenToMap(POSITION pos);
 POSITION mapToScreen(POSITION pos);
 
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
             }
 
             drawMap(gameMap);
-            drawPlayers(mapPlayers, curPlayerId);
+            drawPlayers(mapPlayers, font, curPlayerId);
          }
 
          al_flip_display();
@@ -663,12 +663,13 @@ void drawMap(WorldMap* gameMap)
    }
 }
 
-void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId)
+void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId)
 {
    map<unsigned int, Player>::iterator it;
 
    Player* p;
    POSITION pos;
+   ALLEGRO_COLOR color;
 
    for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
    {
@@ -679,9 +680,36 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, unsigned int curPlayerId
          al_draw_filled_circle(pos.x, pos.y, 14, al_map_rgb(0, 0, 0));
       
       if (p->team == 0)
-         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(0, 0, 255));
+         color = al_map_rgb(0, 0, 255);
       else if (p->team == 1)
-         al_draw_filled_circle(pos.x, pos.y, 12, al_map_rgb(255, 0, 0));
+         color = al_map_rgb(255, 0, 0);
+      
+      al_draw_filled_circle(pos.x, pos.y, 12, color);
+
+      // draw player class
+      int fontHeight = al_get_font_line_height(font);
+
+      string strClass;
+      switch (p->playerClass) {
+      case Player::CLASS_WARRIOR:
+         strClass = "W";
+         break;
+      case Player::CLASS_RANGER:
+         strClass = "R";
+         break;
+      case Player::CLASS_NONE:
+         strClass = "";
+         break;
+      default:
+         strClass = "";
+         break;
+      }
+      al_draw_text(font, al_map_rgb(0, 0, 0), pos.x, pos.y-fontHeight/2, ALLEGRO_ALIGN_CENTRE, strClass.c_str());
+
+      // draw player health
+      al_draw_filled_rectangle(pos.x-12, pos.y-24, pos.x+12, pos.y-16, al_map_rgb(0, 0, 0));
+      if (it->second.maxHealth != 0)
+         al_draw_filled_rectangle(pos.x-11, pos.y-19, pos.x-11+(22*it->second.health)/it->second.maxHealth, pos.y-15, al_map_rgb(255, 0, 0));
 
       if (p->hasBlueFlag)
          al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
