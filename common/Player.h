@@ -57,12 +57,16 @@ public:
    FLOAT_POSITION pos;
    POSITION target;
    unsigned long long timeLastUpdated;
+   unsigned long long timeAttackStarted;
+   bool isAttacking;
+   int targetPlayer;
 
    int playerClass;
    int maxHealth;
    int health;
    int attackType;
    int damage;
+   unsigned long long attackCooldown;
    int team; // 0 is blue, 1 is red
    bool hasBlueFlag;
    bool hasRedFlag;

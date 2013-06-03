@@ -15,12 +15,15 @@ Player::Player()
    this->pos.x = this->target.x = 0;
    this->pos.y = this->target.y = 0;
    this->timeLastUpdated = 0;
+   this->timeAttackStarted = 0;
+   this->isAttacking = false;
 
    this->playerClass = CLASS_NONE;
    this->maxHealth = 0;
    this->health = 0;
    this->attackType = ATTACK_NONE;
    this->damage = 0;
+   this->attackCooldown = 0;
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
@@ -37,12 +40,15 @@ Player::Player(const Player& p)
    this->target.x = p.target.x;
    this->target.y = p.target.y;
    this->timeLastUpdated = p.timeLastUpdated;
+   this->timeAttackStarted = p.timeAttackStarted;
+   this->isAttacking = p.isAttacking;
 
    this->playerClass = p.playerClass;
    this->maxHealth = p.maxHealth;
    this->health = p.health;
    this->attackType = p.attackType;
    this->damage = p.damage;
+   this->attackCooldown = p.attackCooldown;
    this->team = p.team;
    this->hasBlueFlag = p.hasBlueFlag;
    this->hasRedFlag = p.hasRedFlag;
@@ -56,12 +62,16 @@ Player::Player(string name, string password)
    this->password = password;
    this->pos.x = this->target.x = 200;
    this->pos.y = this->target.y = 200;
+   this->timeLastUpdated = 0;
+   this->timeAttackStarted = 0;
+   this->isAttacking = false;
 
    this->playerClass = CLASS_NONE;
    this->maxHealth = 0;
    this->health = 0;
    this->attackType = ATTACK_NONE;
    this->damage = 0;
+   this->attackCooldown = 0;
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
@@ -86,15 +96,17 @@ void Player::setClass(PlayerClass c)
    switch (c) {
       case CLASS_WARRIOR:
          this->playerClass = CLASS_WARRIOR;
-         this->maxHealth = this->health = 100;
+         this->maxHealth = this->health = 120;
          this->attackType = ATTACK_MELEE;
          this->damage = 10;
+         this->attackCooldown = 800;
          break;
       case CLASS_RANGER:
          this->playerClass = CLASS_RANGER;
          this->maxHealth = this->health = 60;
          this->attackType = ATTACK_RANGED;
          this->damage = 6;
+         this->attackCooldown = 1000;
          break;
       case CLASS_NONE:
          cout << "No clas" << endl;

@@ -30,6 +30,7 @@
 #include "../common/Message.h"
 #include "../common/WorldMap.h"
 #include "../common/Player.h"
+#include "../common/Projectile.h"
 
 #include "DataAccess.h"
 
@@ -37,9 +38,10 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
 
-void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
+void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
+void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -82,7 +84,8 @@ int main(int argc, char *argv[])
    struct sockaddr_in from; // info of client sending the message
    NETWORK_MSG clientMsg, serverMsg;
    map<unsigned int, Player> mapPlayers;
-   unsigned int unusedId = 1;
+   map<unsigned int, Projectile> mapProjectiles;
+   unsigned int unusedPlayerId = 1, unusedProjectileId = 1;
    int scoreBlue, scoreRed;
 
    scoreBlue = 0;
@@ -141,6 +144,7 @@ int main(int argc, char *argv[])
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
+         // move all players
          // maybe put this in a separate method
          map<unsigned int, Player>::iterator it;
          FLOAT_POSITION oldPos;
@@ -316,13 +320,96 @@ int main(int argc, char *argv[])
                   }
                }
             }
+
+            // check if the player's attack animation is complete
+            if (it->second.isAttacking && it->second.timeAttackStarted+it->second.attackCooldown <= getCurrentMillis()) {
+               it->second.isAttacking = false;
+
+               //send everyone an ATTACK message
+               cout << "about to broadcast attack" << endl;
+
+               serverMsg.type = MSG_TYPE_ATTACK; 
+               memcpy(serverMsg.buffer, &it->second.id, 4);
+               memcpy(serverMsg.buffer+4, &it->second.targetPlayer, 4);
+
+               map<unsigned int, Player>::iterator it2;
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
+               }
+
+               if (it->second.attackType == Player::ATTACK_MELEE) {
+                  Player* target = &mapPlayers[it->second.targetPlayer];
+
+                  target->health -= it->second.damage;
+                  if (target->health < 0)
+                     target->health = 0;
+
+                  serverMsg.type = MSG_TYPE_PLAYER;
+                  target->serialize(serverMsg.buffer);
+               }else if (it->second.attackType == Player::ATTACK_RANGED) {
+                  Projectile proj(it->second.pos.x, it->second.pos.y, it->second.targetPlayer, it->second.damage);
+                  proj.id = unusedProjectileId;
+                  updateUnusedProjectileId(unusedProjectileId, mapProjectiles);
+                  mapProjectiles[proj.id] = proj;
+
+                  serverMsg.type = MSG_TYPE_PROJECTILE;
+                  memcpy(serverMsg.buffer, &it->second.pos.x, 4);
+                  memcpy(serverMsg.buffer+4, &it->second.pos.y, 4);
+                  memcpy(serverMsg.buffer+8, &it->second.targetPlayer, 4);
+               }else {
+                  cout << "Invalid attack type: " << it->second.attackType << endl;
+               }
+
+               // broadcast either a PLAYER or PROJECTILE message
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
+               }
+            }
+         }
+
+         // move all projectiles
+         map<unsigned int, Projectile>::iterator itProj;
+         for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++) {
+            if (itProj->second.move(mapPlayers)) {
+               // send a REMOVE_PROJECTILE message
+               serverMsg.type = MSG_TYPE_REMOVE_PROJECTILE;
+               memcpy(serverMsg.buffer, &itProj->second.id, 4);
+               mapProjectiles.erase(itProj->second.id);
+
+               map<unsigned int, Player>::iterator it2;
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
+               }
+
+               // send a PLAYER message after dealing damage
+               Player* target = &mapPlayers[it->second.targetPlayer];
+
+               target->health -= itProj->second.damage;
+               if (target->health < 0)
+                  target->health = 0;
+
+               serverMsg.type = MSG_TYPE_PLAYER;
+               target->serialize(serverMsg.buffer);
+
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
+               }
+            }
          }
       }
 
       n = receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
-         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedId, serverMsg, sock, scoreBlue, scoreRed);
+         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed);
 
          if (broadcastResponse)
          {
@@ -349,7 +436,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedId, NETWORK_MSG& serverMsg, int sock, int &scoreBlue, int &scoreRed)
+bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG& serverMsg, int sock, int &scoreBlue, int &scoreRed)
 {
    DataAccess da;
 
@@ -406,8 +493,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          {
             serverMsg.type = MSG_TYPE_PLAYER;
 
-            updateUnusedId(unusedId, mapPlayers);
-            p->id = unusedId;
+            updateUnusedPlayerId(unusedPlayerId, mapPlayers);
+            p->id = unusedPlayerId;
             cout << "new player id: " << p->id << endl;
             p->setAddr(from);
 
@@ -471,7 +558,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             }
 
             serverMsg.type = MSG_TYPE_LOGIN;
-            mapPlayers[unusedId] = *p;
+            mapPlayers[unusedPlayerId] = *p;
          }
 
          delete(p);
@@ -498,8 +585,8 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          }
          else
          {
-            if (p->id < unusedId)
-               unusedId = p->id;
+            if (p->id < unusedPlayerId)
+               unusedPlayerId = p->id;
             mapPlayers.erase(p->id);
             strcpy(serverMsg.buffer, "You have successfully logged out.");
          }
@@ -671,7 +758,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          serverMsg.type = MSG_TYPE_PLAYER;
          mapPlayers[id].serialize(serverMsg.buffer);
 
-         map<unsigned int, Player>::iterator it2;
          broadcastResponse = true;
 
          break;
@@ -685,7 +771,13 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          memcpy(&id, clientMsg.buffer, 4);
          memcpy(&targetId, clientMsg.buffer+4, 4);
 
+         Player* source = &mapPlayers[id];
+         source->timeAttackStarted = getCurrentMillis();
+         source->targetPlayer = targetId;
+
          serverMsg.type = MSG_TYPE_START_ATTACK;
+         memcpy(serverMsg.buffer, &id, 4);
+         memcpy(serverMsg.buffer+4, &targetId, 4);
          broadcastResponse = true;
 
          break;
@@ -693,14 +785,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
       case MSG_TYPE_ATTACK:
       {
          cout << "Received am ATTACK message" << endl;
-
-         int id, targetId;
-
-         memcpy(&id, clientMsg.buffer, 4);
-         memcpy(&targetId, clientMsg.buffer+4, 4);
-
-         serverMsg.type = MSG_TYPE_ATTACK;
-         broadcastResponse = true;
+         cout << "ERROR: Clients should not send ATTACK messages" << endl;
 
          break;
       }
@@ -717,8 +802,14 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
    return broadcastResponse;
 }
 
-void updateUnusedId(unsigned int& id, map<unsigned int, Player>& mapPlayers)
+void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers)
 {
    while (mapPlayers.find(id) != mapPlayers.end())
+      id++;
+}
+
+void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles)
+{
+   while (mapProjectiles.find(id) != mapProjectiles.end())
       id++;
 }

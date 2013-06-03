@@ -2,7 +2,7 @@ CC = g++
 LIB_FLAGS = -lssl -lmysqlclient -lcrypt -lrt
 FLAGS = $(LIB_FLAGS)
 COMMON_PATH = ../common
-DEPENDENCIES = Common.o Message.o Player.o WorldMap.o DataAccess.o
+DEPENDENCIES = Common.o Message.o Player.o WorldMap.o DataAccess.o Projectile.o
 
 server : server.cpp $(DEPENDENCIES)
 	$(CC) -o $@ $+ $(FLAGS)
@@ -17,6 +17,9 @@ Player.o : $(COMMON_PATH)/Player.cpp
 	$(CC) -c -o $@ $?
 
 WorldMap.o : $(COMMON_PATH)/WorldMap.cpp
+	$(CC) -c -o $@ $?
+
+Projectile.o : $(COMMON_PATH)/Projectile.cpp
 	$(CC) -c -o $@ $?
 
 %.o : %.cpp
