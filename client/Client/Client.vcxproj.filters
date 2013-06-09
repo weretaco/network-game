@@ -57,6 +57,9 @@
     <ClCompile Include="..\..\common\WorldMap.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\Projectile.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chat.h">
@@ -87,6 +90,9 @@
       <Filter>Header Files\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\WorldMap.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Projectile.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>

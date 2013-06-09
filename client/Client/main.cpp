@@ -32,6 +32,7 @@
 #include "../../common/Common.h"
 #include "../../common/WorldMap.h"
 #include "../../common/Player.h"
+#include "../../common/Projectile.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -46,7 +47,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
 POSITION screenToMap(POSITION pos);
@@ -98,6 +99,7 @@ int main(int argc, char **argv)
    bool redraw = true;
    doexit = false;
    map<unsigned int, Player> mapPlayers;
+   map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
    int scoreBlue, scoreRed;
 
@@ -298,6 +300,8 @@ int main(int argc, char **argv)
             }else if (ev.mouse.button == 2) {   // right click
                   map<unsigned int, Player>::iterator it;
 
+                  cout << "Detected a right-click" << endl;
+
                   Player* curPlayer;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
@@ -308,6 +312,7 @@ int main(int argc, char **argv)
                   Player* target;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
+                     // need to check if the right-click was actually on this player
                      target = &it->second;
                      if (target->id != curPlayerId && target->team != curPlayer->team) {
                         msgTo.type = MSG_TYPE_START_ATTACK;
@@ -322,7 +327,7 @@ int main(int argc, char **argv)
       }
 
       if (receiveMessage(&msgFrom, sock, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, curPlayerId, scoreBlue, scoreRed);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
@@ -446,7 +451,7 @@ POSITION mapToScreen(FLOAT_POSITION pos)
    return p;
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
 {
    string response = string(msg.buffer);
 
@@ -622,6 +627,20 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PROJECTILE:
             {
+               cout << "Received a prjectile message" << endl;
+
+               int id, x, y, targetId;
+
+               memcpy(&id, msg.buffer, 4);
+               memcpy(&x, msg.buffer+4, 4);
+               memcpy(&y, msg.buffer+8, 4);
+               memcpy(&targetId, msg.buffer+12, 4);
+
+               cout << "id" << id << endl;
+               cout << "x" << x << endl;
+               cout << "y" << y << endl;
+               cout << "Target" << targetId << endl;
+
                break;
             }
             case MSG_TYPE_REMOVE_PROJECTILE:
