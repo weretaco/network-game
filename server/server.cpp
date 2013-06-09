@@ -324,6 +324,7 @@ int main(int argc, char *argv[])
             // check if the player's attack animation is complete
             if (it->second.isAttacking && it->second.timeAttackStarted+it->second.attackCooldown <= getCurrentMillis()) {
                it->second.isAttacking = false;
+               cout << "Attack animation is complete" << endl;
 
                //send everyone an ATTACK message
                cout << "about to broadcast attack" << endl;
@@ -354,10 +355,14 @@ int main(int argc, char *argv[])
                   updateUnusedProjectileId(unusedProjectileId, mapProjectiles);
                   mapProjectiles[proj.id] = proj;
 
+                  int x = it->second.pos.x;
+                  int y = it->second.pos.y;
+
                   serverMsg.type = MSG_TYPE_PROJECTILE;
-                  memcpy(serverMsg.buffer, &it->second.pos.x, 4);
-                  memcpy(serverMsg.buffer+4, &it->second.pos.y, 4);
-                  memcpy(serverMsg.buffer+8, &it->second.targetPlayer, 4);
+                  memcpy(serverMsg.buffer, &proj.id, 4);
+                  memcpy(serverMsg.buffer+4, &x, 4);
+                  memcpy(serverMsg.buffer+8, &y, 4);
+                  memcpy(serverMsg.buffer+12, &it->second.targetPlayer, 4);
                }else {
                   cout << "Invalid attack type: " << it->second.attackType << endl;
                }
@@ -388,7 +393,7 @@ int main(int argc, char *argv[])
                }
 
                // send a PLAYER message after dealing damage
-               Player* target = &mapPlayers[it->second.targetPlayer];
+               Player* target = &mapPlayers[itProj->second.target];
 
                target->health -= itProj->second.damage;
                if (target->health < 0)
@@ -774,6 +779,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          Player* source = &mapPlayers[id];
          source->timeAttackStarted = getCurrentMillis();
          source->targetPlayer = targetId;
+         source->isAttacking = true;
 
          serverMsg.type = MSG_TYPE_START_ATTACK;
          memcpy(serverMsg.buffer, &id, 4);
