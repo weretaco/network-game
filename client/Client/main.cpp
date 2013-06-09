@@ -12,15 +12,13 @@
    #include <cstring>
 #endif
 
-#include <sys/types.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
+#include <sys/types.h>
 #include <string>
 #include <iostream>
 #include <sstream>
-
-#include <map>
-
 #include <map>
 
 #include <allegro5/allegro.h>
@@ -359,8 +357,38 @@ int main(int argc, char **argv)
                it->second.move(gameMap);   // ignore return value
             }
 
+            // update projectile positions
+            map<unsigned int, Projectile>::iterator it2;
+            for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
+            {
+               cout << "Update projectile position" << endl;
+               it2->second.move(mapPlayers);
+            }
+
             drawMap(gameMap);
             drawPlayers(mapPlayers, font, curPlayerId);
+
+            // draw projectiles
+            for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
+            {
+               cout << "Draw projectile" << endl;
+
+               Projectile proj = it2->second;
+
+               FLOAT_POSITION target = mapPlayers[proj.target].pos;
+               float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
+
+               POSITION start, end;
+               start.x = cos(angle)*15+proj.pos.x;
+               start.y = sin(angle)*15+proj.pos.y;
+               end.x = proj.pos.x;
+               end.y = proj.pos.y;
+
+               start = mapToScreen(start);
+               end = mapToScreen(end);
+
+               al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
+            }
          }
 
          al_flip_display();
@@ -627,7 +655,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PROJECTILE:
             {
-               cout << "Received a prjectile message" << endl;
+               cout << "Received a PROJECTILE message" << endl;
 
                int id, x, y, targetId;
 
@@ -636,15 +664,28 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                memcpy(&y, msg.buffer+8, 4);
                memcpy(&targetId, msg.buffer+12, 4);
 
-               cout << "id" << id << endl;
-               cout << "x" << x << endl;
-               cout << "y" << y << endl;
-               cout << "Target" << targetId << endl;
+               cout << "id: " << id << endl;
+               cout << "x: " << x << endl;
+               cout << "y: " << y << endl;
+               cout << "Target: " << targetId << endl;
+
+               Projectile proj(x, y, targetId, 0);
+               proj.setId(id);
+
+               mapProjectiles[id] = proj;
 
                break;
             }
             case MSG_TYPE_REMOVE_PROJECTILE:
             {
+                cout << "Received a REMOVE_PROJECTILE message" << endl;
+
+               int id;
+
+               memcpy(&id, msg.buffer, 4);
+               
+               mapProjectiles.erase(id);
+
                break;
             }
             default:
