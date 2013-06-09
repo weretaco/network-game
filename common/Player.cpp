@@ -16,6 +16,7 @@ Player::Player()
    this->pos.y = this->target.y = 0;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
+   this->isChasing = false;
    this->isAttacking = false;
 
    this->playerClass = CLASS_NONE;
@@ -23,6 +24,7 @@ Player::Player()
    this->health = 0;
    this->attackType = ATTACK_NONE;
    this->damage = 0;
+   this->range = 0;
    this->attackCooldown = 0;
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
@@ -41,6 +43,7 @@ Player::Player(const Player& p)
    this->target.y = p.target.y;
    this->timeLastUpdated = p.timeLastUpdated;
    this->timeAttackStarted = p.timeAttackStarted;
+   this->isChasing = p.isChasing;
    this->isAttacking = p.isAttacking;
 
    this->playerClass = p.playerClass;
@@ -48,6 +51,7 @@ Player::Player(const Player& p)
    this->health = p.health;
    this->attackType = p.attackType;
    this->damage = p.damage;
+   this->range = p.range;
    this->attackCooldown = p.attackCooldown;
    this->team = p.team;
    this->hasBlueFlag = p.hasBlueFlag;
@@ -64,6 +68,7 @@ Player::Player(string name, string password)
    this->pos.y = this->target.y = 200;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
+   this->isChasing = false;
    this->isAttacking = false;
 
    this->playerClass = CLASS_NONE;
@@ -71,6 +76,7 @@ Player::Player(string name, string password)
    this->health = 0;
    this->attackType = ATTACK_NONE;
    this->damage = 0;
+   this->range = 0;
    this->attackCooldown = 0;
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
@@ -99,6 +105,7 @@ void Player::setClass(PlayerClass c)
          this->maxHealth = this->health = 120;
          this->attackType = ATTACK_MELEE;
          this->damage = 10;
+         this->range = 30;
          this->attackCooldown = 800;
          break;
       case CLASS_RANGER:
@@ -106,6 +113,7 @@ void Player::setClass(PlayerClass c)
          this->maxHealth = this->health = 60;
          this->attackType = ATTACK_RANGED;
          this->damage = 6;
+         this->range = 100;
          this->attackCooldown = 1000;
          break;
       case CLASS_NONE:

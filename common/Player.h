@@ -58,6 +58,7 @@ public:
    POSITION target;
    unsigned long long timeLastUpdated;
    unsigned long long timeAttackStarted;
+   bool isChasing;
    bool isAttacking;
    int targetPlayer;
 
@@ -66,6 +67,7 @@ public:
    int health;
    int attackType;
    int damage;
+   int range;
    unsigned long long attackCooldown;
    int team; // 0 is blue, 1 is red
    bool hasBlueFlag;

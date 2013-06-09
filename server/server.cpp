@@ -144,9 +144,29 @@ int main(int argc, char *argv[])
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
+         map<unsigned int, Player>::iterator it;
+
+         // set targets for all chasing players (or make them attack if they're close enough)
+         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+            Player* p = &it->second;
+
+            if (p->isChasing) {
+               p->target.x = mapPlayers[p->targetPlayer].pos.x;
+               p->target.y = mapPlayers[p->targetPlayer].pos.y;
+
+               if (posDistance(p->pos, p->target.toFloat()) <= p->range) {
+                  p->target.x = p->pos.x;
+                  p->target.y = p->pos.y;
+
+                  p->isChasing = false;
+                  p->isAttacking = true;
+                  p->timeAttackStarted = getCurrentMillis();
+               }
+            }
+         }
+
          // move all players
          // maybe put this in a separate method
-         map<unsigned int, Player>::iterator it;
          FLOAT_POSITION oldPos;
          bool broadcastMove = false;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
@@ -777,10 +797,14 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          memcpy(&targetId, clientMsg.buffer+4, 4);
 
          Player* source = &mapPlayers[id];
-         source->timeAttackStarted = getCurrentMillis();
          source->targetPlayer = targetId;
-         source->isAttacking = true;
+         source->isChasing = true;
 
+         // this is irrelevant since the client doesn't even listen for START_ATTACK messages
+         // actually, the client should not ignore this and should instead perform the same movement
+         // algorithm on its end (following the target player until in range) that the server does.
+         // Once the attacker is in range, the client should stop movement and wait for messages
+         // from the server
          serverMsg.type = MSG_TYPE_START_ATTACK;
          memcpy(serverMsg.buffer, &id, 4);
          memcpy(serverMsg.buffer+4, &targetId, 4);
