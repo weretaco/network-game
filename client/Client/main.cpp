@@ -616,6 +616,18 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
  
                break;
             }
+            case MSG_TYPE_ATTACK:
+            {
+               break;
+            }
+            case MSG_TYPE_PROJECTILE:
+            {
+               break;
+            }
+            case MSG_TYPE_REMOVE_PROJECTILE:
+            {
+               break;
+            }
             default:
             {
                cout << "Received an unexpected message type: " << msg.type << endl;

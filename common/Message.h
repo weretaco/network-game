@@ -15,7 +15,7 @@
 #define MSG_TYPE_START_ATTACK      12
 #define MSG_TYPE_ATTACK            13
 #define MSG_TYPE_PROJECTILE        14
-#define MSG_TYPE_REMOVE_PROJECTILE 14
+#define MSG_TYPE_REMOVE_PROJECTILE 15
 
 typedef struct
 {
