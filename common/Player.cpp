@@ -190,3 +190,19 @@ bool Player::move(WorldMap *map) {
 
    return moving;
 }
+
+void Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
+   if (this->isChasing) {
+      this->target.x = mapPlayers[this->targetPlayer].pos.x;
+      this->target.y = mapPlayers[this->targetPlayer].pos.y;
+
+      if (posDistance(this->pos, this->target.toFloat()) <= this->range) {
+         this->target.x = this->pos.x;
+         this->target.y = this->pos.y;
+
+         this->isChasing = false;
+         this->isAttacking = true;
+         this->timeAttackStarted = getCurrentMillis();
+      }
+   }
+}

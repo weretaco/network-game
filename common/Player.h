@@ -11,6 +11,7 @@
 #endif
 
 #include <string>
+#include <map>
 
 #include "Common.h"
 #include "WorldMap.h"
@@ -45,10 +46,11 @@ public:
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
+   void updateTarget(map<unsigned int, Player>& mapPlayers);
    bool move(WorldMap *map);
 
-   void takeFlag(int flag, WorldMap *map);
-   void dropFlag(int flag, WorldMap *map);
+   void takeFlag(int flag, WorldMap* map);
+   void dropFlag(int flag, WorldMap* map);
 
    int id;
    string name;

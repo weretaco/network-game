@@ -148,8 +148,10 @@ int main(int argc, char *argv[])
 
          // set targets for all chasing players (or make them attack if they're close enough)
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
-            Player* p = &it->second;
+            //Player* p = &it->second;
+            it->second.updateTarget(mapPlayers);
 
+            /*
             if (p->isChasing) {
                p->target.x = mapPlayers[p->targetPlayer].pos.x;
                p->target.y = mapPlayers[p->targetPlayer].pos.y;
@@ -163,6 +165,7 @@ int main(int argc, char *argv[])
                   p->timeAttackStarted = getCurrentMillis();
                }
             }
+            */
          }
 
          // move all players
@@ -170,6 +173,7 @@ int main(int argc, char *argv[])
          FLOAT_POSITION oldPos;
          bool broadcastMove = false;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+            cout << "Starting new for loop iteration" << endl;
             oldPos = it->second.pos;
             if (it->second.move(gameMap)) {
 
@@ -361,6 +365,8 @@ int main(int argc, char *argv[])
                }
 
                if (it->second.attackType == Player::ATTACK_MELEE) {
+                  cout << "Melee attack" << endl;
+
                   Player* target = &mapPlayers[it->second.targetPlayer];
 
                   target->health -= it->second.damage;
@@ -370,6 +376,8 @@ int main(int argc, char *argv[])
                   serverMsg.type = MSG_TYPE_PLAYER;
                   target->serialize(serverMsg.buffer);
                }else if (it->second.attackType == Player::ATTACK_RANGED) {
+                  cout << "Ranged attack" << endl;
+
                   Projectile proj(it->second.pos.x, it->second.pos.y, it->second.targetPlayer, it->second.damage);
                   proj.id = unusedProjectileId;
                   updateUnusedProjectileId(unusedProjectileId, mapProjectiles);
@@ -388,30 +396,38 @@ int main(int argc, char *argv[])
                }
 
                // broadcast either a PLAYER or PROJECTILE message
+               cout << "Broadcasting player or projectile message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if (sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
+               cout << "Done broadcasting" << endl;
             }
          }
 
+         cout << "Done with the for loop" << endl;
+
          // move all projectiles
+         cout << "Moving projectiles" << endl;
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++) {
             if (itProj->second.move(mapPlayers)) {
                // send a REMOVE_PROJECTILE message
+               cout << "send a REMOVE_PROJECTILE message" << endl;
                serverMsg.type = MSG_TYPE_REMOVE_PROJECTILE;
                memcpy(serverMsg.buffer, &itProj->second.id, 4);
                mapProjectiles.erase(itProj->second.id);
 
                map<unsigned int, Player>::iterator it2;
+               cout << "Broadcasting REMOVE_PROJECTILE" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
                   if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
 
+               cout << "send a PLAYER message after dealing damage" << endl;
                // send a PLAYER message after dealing damage
                Player* target = &mapPlayers[itProj->second.target];
 
@@ -422,6 +438,7 @@ int main(int argc, char *argv[])
                serverMsg.type = MSG_TYPE_PLAYER;
                target->serialize(serverMsg.buffer);
 
+               cout << "Sending a PLAYER message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
                   if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
@@ -430,6 +447,7 @@ int main(int argc, char *argv[])
             }
          }
       }
+      cout << "Done moving projectiles" << endl;
 
       n = receiveMessage(&clientMsg, sock, &from);
 
