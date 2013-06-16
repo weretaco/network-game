@@ -118,7 +118,8 @@ int main(int argc, char *argv[])
    }
 
    sock = socket(AF_INET, SOCK_DGRAM, 0);
-   if (sock < 0) error("Opening socket");
+   if (sock < 0)
+      error("Opening socket");
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
@@ -148,24 +149,17 @@ int main(int argc, char *argv[])
 
          // set targets for all chasing players (or make them attack if they're close enough)
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
-            //Player* p = &it->second;
-            it->second.updateTarget(mapPlayers);
+            if (it->second.updateTarget(mapPlayers)) {
+               serverMsg.type = MSG_TYPE_PLAYER;
+               it->second.serialize(serverMsg.buffer);
 
-            /*
-            if (p->isChasing) {
-               p->target.x = mapPlayers[p->targetPlayer].pos.x;
-               p->target.y = mapPlayers[p->targetPlayer].pos.y;
-
-               if (posDistance(p->pos, p->target.toFloat()) <= p->range) {
-                  p->target.x = p->pos.x;
-                  p->target.y = p->pos.y;
-
-                  p->isChasing = false;
-                  p->isAttacking = true;
-                  p->timeAttackStarted = getCurrentMillis();
+               map<unsigned int, Player>::iterator it2;
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               {
+                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     error("sendMessage");
                }
             }
-            */
          }
 
          // move all players
@@ -186,6 +180,7 @@ int main(int argc, char *argv[])
                      it->second.pos = oldPos;
                      it->second.target.x = it->second.pos.x;
                      it->second.target.y = it->second.pos.y;
+                     it->second.isChasing = false;
                      broadcastMove = true;
                      break;
                   }
@@ -687,6 +682,9 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
                mapPlayers[id].target.x = x;
                mapPlayers[id].target.y = y;
+
+               mapPlayers[id].isChasing = false;
+               mapPlayers[id].isAttacking = false;
 
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                

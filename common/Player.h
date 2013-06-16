@@ -46,7 +46,7 @@ public:
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
-   void updateTarget(map<unsigned int, Player>& mapPlayers);
+   bool updateTarget(map<unsigned int, Player>& mapPlayers);
    bool move(WorldMap *map);
 
    void takeFlag(int flag, WorldMap* map);

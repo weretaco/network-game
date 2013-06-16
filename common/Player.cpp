@@ -141,6 +141,7 @@ void Player::serialize(char* buffer)
    memcpy(buffer+40, &this->team, 4);
    memcpy(buffer+44, &this->hasBlueFlag, 1);
    memcpy(buffer+45, &this->hasRedFlag, 1);
+   memcpy(buffer+46, &this->range, 4);
 
    strcpy(buffer+46, this->name.c_str());
 }
@@ -161,6 +162,7 @@ void Player::deserialize(char* buffer)
    memcpy(&this->team, buffer+40, 4);
    memcpy(&this->hasBlueFlag, buffer+44, 1);
    memcpy(&this->hasRedFlag, buffer+45, 1);
+   memcpy(&this->range, buffer+46, 4);
 
    this->name.assign(buffer+46);
 }
@@ -191,7 +193,7 @@ bool Player::move(WorldMap *map) {
    return moving;
 }
 
-void Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
+bool Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
    if (this->isChasing) {
       this->target.x = mapPlayers[this->targetPlayer].pos.x;
       this->target.y = mapPlayers[this->targetPlayer].pos.y;
@@ -203,6 +205,10 @@ void Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
          this->isChasing = false;
          this->isAttacking = true;
          this->timeAttackStarted = getCurrentMillis();
+
+         return true;
       }
    }
+
+   return false;
 }
