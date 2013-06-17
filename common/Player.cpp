@@ -143,7 +143,7 @@ void Player::serialize(char* buffer)
    memcpy(buffer+45, &this->hasRedFlag, 1);
    memcpy(buffer+46, &this->range, 4);
 
-   strcpy(buffer+46, this->name.c_str());
+   strcpy(buffer+50, this->name.c_str());
 }
 
 void Player::deserialize(char* buffer)
@@ -164,7 +164,7 @@ void Player::deserialize(char* buffer)
    memcpy(&this->hasRedFlag, buffer+45, 1);
    memcpy(&this->range, buffer+46, 4);
 
-   this->name.assign(buffer+46);
+   this->name.assign(buffer+50);
 }
 
 bool Player::move(WorldMap *map) {
