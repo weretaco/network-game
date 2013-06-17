@@ -198,6 +198,14 @@ bool Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
       this->target.x = mapPlayers[this->targetPlayer].pos.x;
       this->target.y = mapPlayers[this->targetPlayer].pos.y;
 
+      cout << "this->pos.x: " << this->pos.x << endl;
+      cout << "this->pos.x: " << this->pos.x << endl;
+      cout << "this->target.y: " << this->target.y << endl;
+      cout << "this->target.y: " << this->target.y << endl;
+      cout << "this->target.toFloat().x: " << this->target.toFloat().y << endl;
+      cout << "this->target.toFloat().y: " << this->target.toFloat().y << endl;
+      cout << "posDistance: " << posDistance(this->pos, this->target.toFloat()) << endl;
+
       if (posDistance(this->pos, this->target.toFloat()) <= this->range) {
          this->target.x = this->pos.x;
          this->target.y = this->pos.y;
