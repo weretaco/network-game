@@ -350,8 +350,13 @@ int main(int argc, char **argv)
             al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
 
-            // update player positions
+            // update players
             map<unsigned int, Player>::iterator it;
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+            {
+               it->second.updateTarget(mapPlayers);
+            }
+
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                it->second.move(gameMap);   // ignore return value
@@ -483,8 +488,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 {
    string response = string(msg.buffer);
 
-   cout << "Processing message" << endl;
-
    switch(state)
    {
       case STATE_START:
@@ -587,11 +590,12 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:
             {
-               cout << "Got MSG_TYPE_PLAYER message in STATE_LOGIN" << endl;
+               //cout << "Got MSG_TYPE_PLAYER message in STATE_LOGIN" << endl;
 
                Player p("", "");
                p.deserialize(msg.buffer);
                p.timeLastUpdated = getCurrentMillis();
+               p.isChasing = false;
                mapPlayers[p.id] = p;
 
                break;
@@ -651,6 +655,25 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_ATTACK:
             {
+               cout << "Received ATTACK message" << endl;
+
+               break;
+            }
+            case MSG_TYPE_START_ATTACK:
+            {
+               cout << "Received START_ATTACK message" << endl;
+
+               unsigned int id, targetID;
+               memcpy(&id, msg.buffer, 4);
+               memcpy(&targetID, msg.buffer+4, 4);
+
+               cout << "source id: " << id << endl;
+               cout << "target id: " << targetID << endl;
+
+               Player* source = &mapPlayers[id];
+               source->targetPlayer = targetID;
+               source->isChasing = true;
+
                break;
             }
             case MSG_TYPE_PROJECTILE:

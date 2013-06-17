@@ -198,7 +198,13 @@ bool Player::updateTarget(map<unsigned int, Player>& mapPlayers) {
       this->target.x = mapPlayers[this->targetPlayer].pos.x;
       this->target.y = mapPlayers[this->targetPlayer].pos.y;
 
+      cout << "Setting target" << endl;
+      cout << "target id: " << mapPlayers[this->targetPlayer].id << endl;
+      cout << "cur player id: " << this->id << endl;
+
       if (posDistance(this->pos, this->target.toFloat()) <= this->range) {
+         cout << "Stopped chasing" << endl;
+
          this->target.x = this->pos.x;
          this->target.y = this->pos.y;
 
