@@ -83,6 +83,7 @@ Player *DataAccess::getPlayer(string username)
    if ( ( row = mysql_fetch_row(result)) != NULL ) {
       cout << "Creating a new player" << endl;
       p = new Player(string(row[1]), string(row[2]));
+      cout << "Created new player" << endl;
    }else {
       cout << "Returned no results for some reason" << endl;
       p = NULL;

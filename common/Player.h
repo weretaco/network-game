@@ -60,9 +60,11 @@ public:
    POSITION target;
    unsigned long long timeLastUpdated;
    unsigned long long timeAttackStarted;
+   unsigned long long timeDied;
    bool isChasing;
    bool isAttacking;
    int targetPlayer;
+   bool isDead;
 
    int playerClass;
    int maxHealth;

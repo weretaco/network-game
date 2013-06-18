@@ -42,6 +42,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
+void damagePlayer(Player *p, int damage);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -149,6 +150,46 @@ int main(int argc, char *argv[])
 
          // set targets for all chasing players (or make them attack if they're close enough)
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+            // check if it's time to revive dead players
+            if (it->second.isDead) {
+               if (getCurrentMillis() - it->second.timeDied >= 10000) {
+                  it->second.isDead = false;
+
+                  POSITION spawnPos;
+ 
+                  switch (it->second.team) {
+                  case 0:// blue team
+                     spawnPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                     break;
+                  case 1:// red team
+                     spawnPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                     break;
+                  default:
+                     // should never go here
+                     cout << "Error: Invalid team" << endl;
+                     break;
+                  }
+
+                  // spawn the player to the right of their flag location
+                  spawnPos.x = (spawnPos.x+1) * 25 + 12;
+                  spawnPos.y = spawnPos.y * 25 + 12;
+
+                  it->second.pos = spawnPos.toFloat();
+
+                  serverMsg.type = MSG_TYPE_PLAYER;
+                  it->second.serialize(serverMsg.buffer);
+
+                  map<unsigned int, Player>::iterator it2;
+                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  {
+                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                        error("sendMessage");
+                  }
+               }
+
+               continue;
+            }
+
             if (it->second.updateTarget(mapPlayers)) {
                serverMsg.type = MSG_TYPE_PLAYER;
                it->second.serialize(serverMsg.buffer);
@@ -363,10 +404,7 @@ int main(int argc, char *argv[])
                   cout << "Melee attack" << endl;
 
                   Player* target = &mapPlayers[it->second.targetPlayer];
-
-                  target->health -= it->second.damage;
-                  if (target->health < 0)
-                     target->health = 0;
+                  damagePlayer(target, it->second.damage);
 
                   serverMsg.type = MSG_TYPE_PLAYER;
                   target->serialize(serverMsg.buffer);
@@ -407,6 +445,7 @@ int main(int argc, char *argv[])
          cout << "Moving projectiles" << endl;
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++) {
+            cout << "About to call projectile move" << endl;
             if (itProj->second.move(mapPlayers)) {
                // send a REMOVE_PROJECTILE message
                cout << "send a REMOVE_PROJECTILE message" << endl;
@@ -426,9 +465,7 @@ int main(int argc, char *argv[])
                // send a PLAYER message after dealing damage
                Player* target = &mapPlayers[itProj->second.target];
 
-               target->health -= itProj->second.damage;
-               if (target->health < 0)
-                  target->health = 0;
+               damagePlayer(target, itProj->second.damage);
 
                serverMsg.type = MSG_TYPE_PLAYER;
                target->serialize(serverMsg.buffer);
@@ -440,6 +477,7 @@ int main(int argc, char *argv[])
                      error("sendMessage");
                }
             }
+            cout << "Projectile was not moved" << endl;
          }
       }
       cout << "Done moving projectiles" << endl;
@@ -858,4 +896,14 @@ void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& m
 {
    while (mapProjectiles.find(id) != mapProjectiles.end())
       id++;
+}
+
+void damagePlayer(Player *p, int damage) {
+   p->health -= damage;
+   if (p->health < 0)
+      p->health = 0;
+   if (p->health == 0) {
+      p->isDead = true;
+      p->timeDied = getCurrentMillis();
+   }
 }

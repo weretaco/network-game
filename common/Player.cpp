@@ -16,8 +16,10 @@ Player::Player()
    this->pos.y = this->target.y = 0;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
+   this->timeDied = 0;
    this->isChasing = false;
    this->isAttacking = false;
+   this->isDead = false;
 
    this->playerClass = CLASS_NONE;
    this->maxHealth = 0;
@@ -43,8 +45,10 @@ Player::Player(const Player& p)
    this->target.y = p.target.y;
    this->timeLastUpdated = p.timeLastUpdated;
    this->timeAttackStarted = p.timeAttackStarted;
+   this->timeDied = p.timeDied;
    this->isChasing = p.isChasing;
    this->isAttacking = p.isAttacking;
+   this->isDead = p.isDead;
 
    this->playerClass = p.playerClass;
    this->maxHealth = p.maxHealth;
@@ -68,8 +72,10 @@ Player::Player(string name, string password)
    this->pos.y = this->target.y = 200;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
+   this->timeDied = 0;
    this->isChasing = false;
    this->isAttacking = false;
+   this->isDead = false;
 
    this->playerClass = CLASS_NONE;
    this->maxHealth = 0;
