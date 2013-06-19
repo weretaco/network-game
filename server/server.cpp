@@ -175,6 +175,8 @@ int main(int argc, char *argv[])
                   spawnPos.y = spawnPos.y * 25 + 12;
 
                   it->second.pos = spawnPos.toFloat();
+                  it->second.target = spawnPos;
+                  it->second.health = it->second.maxHealth;
 
                   serverMsg.type = MSG_TYPE_PLAYER;
                   it->second.serialize(serverMsg.buffer);
@@ -208,7 +210,6 @@ int main(int argc, char *argv[])
          FLOAT_POSITION oldPos;
          bool broadcastMove = false;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
-            cout << "Starting new for loop iteration" << endl;
             oldPos = it->second.pos;
             if (it->second.move(gameMap)) {
 
@@ -439,10 +440,7 @@ int main(int argc, char *argv[])
             }
          }
 
-         cout << "Done with the for loop" << endl;
-
          // move all projectiles
-         cout << "Moving projectiles" << endl;
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++) {
             cout << "About to call projectile move" << endl;
@@ -480,7 +478,6 @@ int main(int argc, char *argv[])
             cout << "Projectile was not moved" << endl;
          }
       }
-      cout << "Done moving projectiles" << endl;
 
       n = receiveMessage(&clientMsg, sock, &from);
 
@@ -903,6 +900,7 @@ void damagePlayer(Player *p, int damage) {
    if (p->health < 0)
       p->health = 0;
    if (p->health == 0) {
+      cout << "Player died" << endl;
       p->isDead = true;
       p->timeDied = getCurrentMillis();
    }
