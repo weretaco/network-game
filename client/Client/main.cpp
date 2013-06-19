@@ -366,7 +366,6 @@ int main(int argc, char **argv)
             map<unsigned int, Projectile>::iterator it2;
             for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
             {
-               cout << "Update projectile position" << endl;
                it2->second.move(mapPlayers);
             }
 
@@ -376,8 +375,6 @@ int main(int argc, char **argv)
             // draw projectiles
             for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
             {
-               cout << "Draw projectile" << endl;
-
                Projectile proj = it2->second;
 
                FLOAT_POSITION target = mapPlayers[proj.target].pos;
@@ -531,22 +528,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:   // kind of hacky to put this here
             {
-               cout << "Got MSG_TYPE_PLAYER message in STATE_START" << endl;
-
                Player p("", "");
                p.deserialize(msg.buffer);
                p.timeLastUpdated = getCurrentMillis();
-               mapPlayers[p.id] = p;
 
-               cout << "new player id: " << p.id << endl;
-               cout << "map size: " << mapPlayers.size() << endl;
+               mapPlayers[p.id] = p;
 
                break;
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received OBJECT message in STATE_START." << endl;
-
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
                cout << "object id: " << o.id << endl;
@@ -590,20 +581,21 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:
             {
-               //cout << "Got MSG_TYPE_PLAYER message in STATE_LOGIN" << endl;
-
                Player p("", "");
                p.deserialize(msg.buffer);
                p.timeLastUpdated = getCurrentMillis();
                p.isChasing = false;
+               if (p.health <= 0)
+                  p.isDead = true;
+               else
+                  p.isDead = false;
+
                mapPlayers[p.id] = p;
 
                break;
             }
             case MSG_TYPE_PLAYER_MOVE:
             {
-               cout << "Got a player move message" << endl;
-
                unsigned int id;
                int x, y;
 
@@ -792,6 +784,10 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
    for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
    {
       p = &it->second;
+
+      if (p->isDead)
+         continue;
+
       pos = mapToScreen(p->pos);
 
       if (p->id == curPlayerId)

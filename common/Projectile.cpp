@@ -73,13 +73,9 @@ void Projectile::deserialize(char* buffer)
 bool Projectile::move(map<unsigned int, Player>& mapPlayers) {
    // if the current target logs off, this method will run into problems
 
-   cout << "Inside projectile move" << endl;
-
    unsigned long long curTime = getCurrentMillis();
-   cout << "Got current time" << endl;
 
    Player targetP = mapPlayers[target];
-   cout << "Got target" << endl;
 
    if (timeLastUpdated == 0) {
       timeLastUpdated = curTime;
@@ -90,8 +86,6 @@ bool Projectile::move(map<unsigned int, Player>& mapPlayers) {
    float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
    double angle = atan2(targetP.pos.y-pos.y, targetP.pos.x-pos.x);
    float dist = sqrt(pow(targetP.pos.x-pos.x, 2) + pow(targetP.pos.y-pos.y, 2));
-
-   cout << "About to finish projectile move" << endl;
 
    if (dist <= pixels) {
       pos.x = targetP.pos.x;
