@@ -35,6 +35,7 @@
 #include "Window.h"
 #include "Textbox.h"
 #include "Button.h"
+#include "RadioButtonList.h"
 #include "chat.h"
 
 #ifdef WINDOWS
@@ -52,6 +53,8 @@ POSITION screenToMap(POSITION pos);
 POSITION mapToScreen(POSITION pos);
 
 // callbacks
+void goToLoginScreen();
+void goToRegisterScreen();
 void registerAccount();
 void login();
 void logout();
@@ -74,11 +77,20 @@ int state;
 bool doexit;
 
 Window* wndLogin;
+Window* wndRegister;
 Window* wndMain;
 Window* wndCurrent;
 
+// wndLogin
 Textbox* txtUsername;
 Textbox* txtPassword;
+
+// wndRegister
+Textbox* txtUsernameRegister;
+Textbox* txtPasswordRegister;
+RadioButtonList* rblClasses;
+
+// wndMain
 Textbox* txtChat;
 
 int sock;
@@ -159,12 +171,27 @@ int main(int argc, char **argv)
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));
    wndLogin->addComponent(new Textbox(104, 70, 100, 20, font));
-   wndLogin->addComponent(new Button(22, 100, 90, 20, font, "Register", registerAccount));
+   wndLogin->addComponent(new Button(22, 100, 90, 20, font, "Create an Account", goToRegisterScreen));
    wndLogin->addComponent(new Button(122, 100, 60, 20, font, "Login", login));
    wndLogin->addComponent(new Button(540, 10, 80, 20, font, "Quit", quit));
 
    txtUsername = (Textbox*)wndLogin->getComponent(0);
    txtPassword = (Textbox*)wndLogin->getComponent(1);
+
+   wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndRegister->addComponent(new Textbox(104, 40, 100, 20, font));
+   wndRegister->addComponent(new Textbox(104, 70, 100, 20, font));
+   wndRegister->addComponent(new Button(22, 100, 90, 20, font, "Back", goToLoginScreen));
+   wndRegister->addComponent(new Button(122, 100, 60, 20, font, "Submit", registerAccount));
+   wndRegister->addComponent(new Button(540, 10, 80, 20, font, "Quit", quit));
+   wndRegister->addComponent(new RadioButtonList(20, 130, "Pick a class", font));
+
+   txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
+   txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
+
+   rblClasses = (RadioButtonList*)wndRegister->getComponent(5);
+   rblClasses->addRadioButton("Warrior");
+   rblClasses->addRadioButton("Ranger");
 
    wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndMain->addComponent(new Textbox(95, 40, 525, 20, font));
@@ -832,18 +859,51 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
    }
 }
 
-void registerAccount()
+void goToRegisterScreen()
 {
-   string username = txtUsername->getStr();
-   string password = txtPassword->getStr();
+   wndCurrent = wndRegister;
+
+   txtUsernameRegister->clear();
+   txtPasswordRegister->clear();
+}
+
+void goToLoginScreen()
+{
+   wndCurrent = wndLogin;
 
    txtUsername->clear();
    txtPassword->clear();
+}
+
+void registerAccount()
+{
+   string username = txtUsernameRegister->getStr();
+   string password = txtPasswordRegister->getStr();
+
+   txtUsernameRegister->clear();
+   txtPasswordRegister->clear();
+   // maybe clear rblClasses as well (add a method to RadioButtonList to enable this)
+
+   Player::PlayerClass playerClass;
+
+   switch (rblClasses->getSelectedButton()) {
+   case 0:
+      playerClass = Player::CLASS_WARRIOR;
+      break;
+   case 1:
+      playerClass = Player::CLASS_RANGER;
+      break;
+   default:
+      cout << "Invalid class selection" << endl;
+      playerClass = Player::CLASS_NONE;
+      break;
+   }
 
    msgTo.type = MSG_TYPE_REGISTER;
 
    strcpy(msgTo.buffer, username.c_str());
    strcpy(msgTo.buffer+username.size()+1, password.c_str());
+   memcpy(msgTo.buffer+username.size()+password.size()+2, &playerClass, 4);
 
    sendMessage(&msgTo, sock, &server);
 }

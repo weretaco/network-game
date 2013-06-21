@@ -60,6 +60,9 @@
     <ClCompile Include="..\..\common\Projectile.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="RadioButtonList.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chat.h">
@@ -94,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="..\..\common\Projectile.h">
       <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="RadioButtonList.h">
+      <Filter>Header Files\gui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
