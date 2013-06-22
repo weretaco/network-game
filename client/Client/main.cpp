@@ -362,7 +362,8 @@ int main(int argc, char **argv)
 
          chatConsole.draw(font, al_map_rgb(255,255,255));
 
-         if(wndCurrent == wndLogin) {
+         // There should be label gui components that show these or each textbox should have a label
+         if(wndCurrent == wndLogin || wndCurrent == wndRegister) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Username:");
             al_draw_text(font, al_map_rgb(0, 255, 0), 1, 73, ALLEGRO_ALIGN_LEFT, "Password:");
          }
