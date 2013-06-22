@@ -123,7 +123,7 @@ void Player::setClass(PlayerClass c)
          this->attackCooldown = 1000;
          break;
       case CLASS_NONE:
-         cout << "No clas" << endl;
+         cout << "No class" << endl;
          break;
       dafault:
          cout << "nvalid class" << endl;

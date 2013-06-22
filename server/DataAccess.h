@@ -15,7 +15,7 @@ public:
    DataAccess();
    ~DataAccess();
 
-   int insertPlayer(string username, string password);
+   int insertPlayer(string username, string password, Player::PlayerClass playerClass);
    int updatePlayer(string username, string password);
 
    Player* getPlayer(string username);

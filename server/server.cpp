@@ -528,11 +528,21 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
       {
          string username(clientMsg.buffer);
          string password(strchr(clientMsg.buffer, '\0')+1);
+         Player::PlayerClass playerClass;
+
+         memcpy(&playerClass, clientMsg.buffer+username.length()+password.length()+2, 4);
 
          cout << "username: " << username << endl;
          cout << "password: " << password << endl;
 
-         int error = da.insertPlayer(username, password);
+         if (playerClass == Player::CLASS_WARRIOR)
+            cout << "class: WARRIOR" << endl;
+         else if (playerClass == Player::CLASS_RANGER)
+            cout << "class: RANGER" << endl;
+         else
+            cout << "Unknown player class detected" << endl;
+
+         int error = da.insertPlayer(username, password, playerClass);
 
          if (!error)
             strcpy(serverMsg.buffer, "Registration successful.");
@@ -573,17 +583,6 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
             // choose a random team (either 0 or 1)
             p->team = rand() % 2;
-
-            // choose a random class
-            int intClass = rand() % 2;
-            switch (intClass) {
-               case 0:
-                  p->setClass(Player::CLASS_WARRIOR);
-                  break;
-               case 1:
-                  p->setClass(Player::CLASS_RANGER);
-                  break;
-            }
 
             // tell the new player about all the existing players
             cout << "Sending other players to new player" << endl;

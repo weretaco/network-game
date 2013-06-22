@@ -23,7 +23,7 @@ DataAccess::~DataAccess()
    mysql_close(&mysql);
 }
 
-int DataAccess::insertPlayer(string username, string password)
+int DataAccess::insertPlayer(string username, string password, Player::PlayerClass playerClass)
 {
    ostringstream oss;
 
@@ -45,9 +45,9 @@ int DataAccess::insertPlayer(string username, string password)
 
    string encrypted(crypt(password.c_str(), salt.c_str()));
 
-   oss << "'" << username << "', '" << encrypted << "'";
+   oss << "'" << username << "', '" << encrypted << "', " << playerClass;
 
-   return insert("users", "name, password", oss.str());
+   return insert("users", "name, password, class", oss.str());
 }
 
 int DataAccess::updatePlayer(string username, string password)
@@ -83,6 +83,9 @@ Player *DataAccess::getPlayer(string username)
    if ( ( row = mysql_fetch_row(result)) != NULL ) {
       cout << "Creating a new player" << endl;
       p = new Player(string(row[1]), string(row[2]));
+      p->setClass((Player::PlayerClass)atoi(row[3]));
+      cout << "Class from db: " << atoi(row[3]) << endl;
+      cout << "Player class: " << p->playerClass << endl;
       cout << "Created new player" << endl;
    }else {
       cout << "Returned no results for some reason" << endl;
