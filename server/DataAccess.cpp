@@ -83,8 +83,13 @@ Player *DataAccess::getPlayer(string username)
    if ( ( row = mysql_fetch_row(result)) != NULL ) {
       cout << "Creating a new player" << endl;
       p = new Player(string(row[1]), string(row[2]));
-      p->setClass((Player::PlayerClass)atoi(row[3]));
-      cout << "Class from db: " << atoi(row[3]) << endl;
+      if (row[3] == NULL) {
+         p->setClass(Player::CLASS_NONE);
+         cout << "Class from db was NULL" << endl;
+      }else {
+         p->setClass((Player::PlayerClass)atoi(row[3]));
+         cout << "Class from db: " << atoi(row[3]) << endl;
+      }
       cout << "Player class: " << p->playerClass << endl;
       cout << "Created new player" << endl;
    }else {
