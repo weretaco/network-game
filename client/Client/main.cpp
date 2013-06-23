@@ -756,9 +756,9 @@ void drawMap(WorldMap* gameMap)
    mapPos.y = 0;
    mapPos = mapToScreen(mapPos);
 
-   for (int x=0; x<12; x++)
+   for (int x=0; x<gameMap->width; x++)
    {
-      for (int y=0; y<12; y++)
+      for (int y=0; y<gameMap->height; y++)
       {
          WorldMap::TerrainType el = gameMap->getElement(x, y);
          WorldMap::StructureType structure = gameMap->getStructure(x, y);
