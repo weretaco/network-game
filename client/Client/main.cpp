@@ -64,8 +64,8 @@ void sendChatMessage();
 void error(const char *);
 
 const float FPS = 60;
-const int SCREEN_W = 640;
-const int SCREEN_H = 480;
+const int SCREEN_W = 1024;
+const int SCREEN_H = 768;
 
 enum STATE {
    STATE_START,
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
       return -1;
    }
  
-   display = al_create_display(SCREEN_W, SCREEN_H);
+  display = al_create_display(SCREEN_W, SCREEN_H);
    if(!display) {
       fprintf(stderr, "failed to create display!\n");
       al_destroy_timer(timer);
@@ -169,22 +169,22 @@ int main(int argc, char **argv)
    WorldMap* gameMap = WorldMap::loadMapFromFile("../../data/map.txt");
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndLogin->addComponent(new Textbox(104, 40, 100, 20, font));
-   wndLogin->addComponent(new Textbox(104, 70, 100, 20, font));
-   wndLogin->addComponent(new Button(22, 100, 90, 20, font, "Create an Account", goToRegisterScreen));
-   wndLogin->addComponent(new Button(122, 100, 60, 20, font, "Login", login));
-   wndLogin->addComponent(new Button(540, 10, 80, 20, font, "Quit", quit));
+   wndLogin->addComponent(new Textbox(516, 40, 100, 20, font));
+   wndLogin->addComponent(new Textbox(516, 70, 100, 20, font));
+   wndLogin->addComponent(new Button(330, 100, 194, 20, font, "Create an Account", goToRegisterScreen));
+   wndLogin->addComponent(new Button(534, 100, 60, 20, font, "Login", login));
+   wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
 
    txtUsername = (Textbox*)wndLogin->getComponent(0);
    txtPassword = (Textbox*)wndLogin->getComponent(1);
 
    wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndRegister->addComponent(new Textbox(104, 40, 100, 20, font));
-   wndRegister->addComponent(new Textbox(104, 70, 100, 20, font));
-   wndRegister->addComponent(new Button(22, 100, 90, 20, font, "Back", goToLoginScreen));
-   wndRegister->addComponent(new Button(122, 100, 60, 20, font, "Submit", registerAccount));
-   wndRegister->addComponent(new Button(540, 10, 80, 20, font, "Quit", quit));
-   wndRegister->addComponent(new RadioButtonList(20, 130, "Pick a class", font));
+   wndRegister->addComponent(new Textbox(516, 40, 100, 20, font));
+   wndRegister->addComponent(new Textbox(516, 70, 100, 20, font));
+   wndRegister->addComponent(new Button(468, 100, 56, 20, font, "Back", goToLoginScreen));
+   wndRegister->addComponent(new Button(534, 100, 70, 20, font, "Submit", registerAccount));
+   wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
+   wndRegister->addComponent(new RadioButtonList(432, 130, "Pick a class", font));
 
    txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
    txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
@@ -194,9 +194,9 @@ int main(int argc, char **argv)
    rblClasses->addRadioButton("Ranger");
 
    wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndMain->addComponent(new Textbox(95, 40, 525, 20, font));
-   wndMain->addComponent(new Button(95, 70, 160, 20, font, "Send Message", sendChatMessage));
-   wndMain->addComponent(new Button(540, 10, 80, 20, font, "Logout", logout));
+   wndMain->addComponent(new Textbox(95, 40, 300, 20, font));
+   wndMain->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
+   wndMain->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
 
    txtChat = (Textbox*)wndMain->getComponent(0);
 
@@ -364,8 +364,8 @@ int main(int argc, char **argv)
 
          // There should be label gui components that show these or each textbox should have a label
          if(wndCurrent == wndLogin || wndCurrent == wndRegister) {
-            al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Username:");
-            al_draw_text(font, al_map_rgb(0, 255, 0), 1, 73, ALLEGRO_ALIGN_LEFT, "Password:");
+            al_draw_text(font, al_map_rgb(0, 255, 0), 416, 43, ALLEGRO_ALIGN_LEFT, "Username:");
+            al_draw_text(font, al_map_rgb(0, 255, 0), 413, 73, ALLEGRO_ALIGN_LEFT, "Password:");
          }
          else if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");

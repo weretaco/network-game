@@ -18,9 +18,10 @@ string chat::getInput()
 void chat::draw(ALLEGRO_FONT *font, ALLEGRO_COLOR color)
 {
    for(unsigned int x=0; x<vctChat.size(); x++)
-      al_draw_text(font, color, 10, 140+x*15, ALLEGRO_ALIGN_LEFT, vctChat[x].c_str());
+      al_draw_text(font, color, 5, 100+x*15, ALLEGRO_ALIGN_LEFT, vctChat[x].c_str());
 
-   al_draw_text(font, color, 10, 460, ALLEGRO_ALIGN_LEFT, strPrompt.c_str());
+   // I think this might never be used
+   al_draw_text(font, color, 5, 460, ALLEGRO_ALIGN_LEFT, strPrompt.c_str());
 }
 
 void chat::addLine(string s)
