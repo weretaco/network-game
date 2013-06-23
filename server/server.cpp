@@ -709,7 +709,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
               mapPlayers[id].addr.sin_port == from.sin_port )
          {
             // we need to make sure the player can move here
-            if (0 <= x && x < 300 && 0 <= y && y < 300 &&
+            if (0 <= x && x < gameMap->width*25 && 0 <= y && y < gameMap->height*25 &&
                gameMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
             {
                cout << "valid terrain" << endl;
