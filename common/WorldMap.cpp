@@ -193,7 +193,7 @@ WorldMap* WorldMap::createDefaultMap()
 
 WorldMap* WorldMap::loadMapFromFile(string filename)
 {
-   WorldMap* m = new WorldMap(12l, 12);
+    WorldMap* m = NULL;
 
    ifstream file(filename.c_str());
 
@@ -216,6 +216,8 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
       cout << "width: " << width << endl;
       cout << "height: " << height << endl;
+
+      m = new WorldMap(width, height);
 
       // read the map contents
       int row = 0;
@@ -283,11 +285,9 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                   break;
                case 1:
                   structure = STRUCTURE_BLUE_FLAG;
-                  cout << "Should have added blue flag object" << endl;
                   break;
                case 2:
                   structure = STRUCTURE_RED_FLAG;
-                  cout << "Should have added red flag object" << endl;
                   break;
                }
 
