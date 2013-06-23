@@ -338,6 +338,7 @@ int main(int argc, char **argv)
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
                      // need to check if the right-click was actually on this player
+                     // right now, this code will target all players other than the current one
                      target = &it->second;
                      if (target->id != curPlayerId && target->team != curPlayer->team) {
                         msgTo.type = MSG_TYPE_START_ATTACK;
@@ -780,9 +781,9 @@ void drawMap(WorldMap* gameMap)
       }
    }
 
-   for (int x=0; x<12; x++)
+   for (int x=0; x<gameMap->width; x++)
    {
-      for (int y=0; y<12; y++)
+      for (int y=0; y<gameMap->height; y++)
       {
          vector<WorldMap::Object> vctObjects = gameMap->getObjects(x, y);
 
