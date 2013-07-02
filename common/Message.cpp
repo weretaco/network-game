@@ -23,12 +23,12 @@ int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
    return ret;
 }
 
-int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
+int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source)
 {
    socklen_t socklen = sizeof(struct sockaddr_in);
 
    // assume we don't care about the value of socklen
-   int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, &socklen);
+   int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, &socklen);
 
    return ret;
 }
