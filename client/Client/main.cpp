@@ -51,6 +51,7 @@ void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
 POSITION screenToMap(POSITION pos);
 POSITION mapToScreen(POSITION pos);
+int getRefreshRate(int width, int height);
 
 // callbacks
 void goToLoginScreen();
@@ -99,7 +100,7 @@ struct hostent *hp;
 NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole;
- 
+
 int main(int argc, char **argv)
 {
    ALLEGRO_DISPLAY *display = NULL;
@@ -112,6 +113,7 @@ int main(int argc, char **argv)
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
    int scoreBlue, scoreRed;
+   bool fullscreen = false;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -159,7 +161,13 @@ int main(int argc, char **argv)
       return -1;
    }
  
-  display = al_create_display(SCREEN_W, SCREEN_H);
+   int refreshRate = getRefreshRate(SCREEN_W, SCREEN_H);
+   // if the computer doesn't support this resolution, just use windowed mode
+   if (refreshRate > 0 && fullscreen) {
+      al_set_new_display_flags(ALLEGRO_FULLSCREEN);
+      al_set_new_display_refresh_rate(refreshRate);
+   }
+   display = al_create_display(SCREEN_W, SCREEN_H);
    if(!display) {
       fprintf(stderr, "failed to create display!\n");
       al_destroy_timer(timer);
@@ -446,6 +454,8 @@ int main(int argc, char **argv)
    return 0;
 }
 
+
+
 // need to make a function like this that works on windows
 void error(const char *msg)
 {
@@ -549,7 +559,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                   curPlayerId = p.id;
 
                   cout << "Got a valid login response with the player" << endl;
-                  cout << "Player id: " << curPlayerId << endl; 
+                  cout << "Player id: " << curPlayerId << endl;
+                  cout << "Player health: " << p.health << endl;
                   cout << "map size: " << mapPlayers.size() << endl;
                }
 
@@ -610,6 +621,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_PLAYER:
             {
+               cout << "Received MSG_TYPE_PLAYER" << endl;
+
                Player p("", "");
                p.deserialize(msg.buffer);
                p.timeLastUpdated = getCurrentMillis();
@@ -619,7 +632,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                else
                   p.isDead = false;
 
+               cout << mapPlayers[p.id].pos.x << ", " << mapPlayers[p.id].pos.y << endl;
+               cout << "health:" << mapPlayers[p.id].health << endl;
+               cout << "is dead?:" << mapPlayers[p.id].isDead << endl;
                mapPlayers[p.id] = p;
+               cout << mapPlayers[p.id].pos.x << ", " << mapPlayers[p.id].pos.y << endl;
+               cout << "health:" << mapPlayers[p.id].health << endl;
+               cout << "is dead?:" << mapPlayers[p.id].isDead << endl;
 
                break;
             }
@@ -954,4 +973,18 @@ void sendChatMessage()
    strcpy(msgTo.buffer, msg.c_str());
 
    sendMessage(&msgTo, sock, &server);
+}
+
+int getRefreshRate(int width, int height) {
+   int numRefreshRates = al_get_num_display_modes();
+   ALLEGRO_DISPLAY_MODE displayMode;
+
+   for(int i=0; i<numRefreshRates; i++) {
+      al_get_display_mode(i, &displayMode);
+
+      if (displayMode.width == width && displayMode.height == height)
+         return displayMode.refresh_rate;
+   }
+
+   return 0;
 }
