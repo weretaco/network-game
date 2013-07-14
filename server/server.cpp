@@ -28,6 +28,7 @@
 #include "../common/Compiler.h"
 #include "../common/Common.h"
 #include "../common/Message.h"
+#include "../common/MessageProcessor.h"
 #include "../common/WorldMap.h"
 #include "../common/Player.h"
 #include "../common/Projectile.h"
@@ -38,7 +39,7 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
@@ -84,6 +85,7 @@ int main(int argc, char *argv[])
    struct sockaddr_in server;
    struct sockaddr_in from; // info of client sending the message
    NETWORK_MSG clientMsg, serverMsg;
+   MessageProcessor msgProcessor;
    map<unsigned int, Player> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int unusedPlayerId = 1, unusedProjectileId = 1;
@@ -146,6 +148,8 @@ int main(int argc, char *argv[])
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
+         msgProcessor.resendUnackedMessages(sock);
+
          map<unsigned int, Player>::iterator it;
 
          // set targets for all chasing players (or make them attack if they're close enough)
@@ -184,7 +188,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                         error("sendMessage");
                   }
                }
@@ -199,7 +203,7 @@ int main(int argc, char *argv[])
                map<unsigned int, Player>::iterator it2;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
             }
@@ -312,7 +316,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                         error("sendMessage");
                   }
 
@@ -322,7 +326,7 @@ int main(int argc, char *argv[])
 
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                         error("sendMessage");
                   }
 
@@ -363,7 +367,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                         error("sendMessage");
                   }
                }
@@ -376,7 +380,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                         error("sendMessage");
                   }
                }
@@ -397,7 +401,7 @@ int main(int argc, char *argv[])
                map<unsigned int, Player>::iterator it2;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
 
@@ -433,7 +437,7 @@ int main(int argc, char *argv[])
                cout << "Broadcasting player or projectile message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if (sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
                cout << "Done broadcasting" << endl;
@@ -455,7 +459,7 @@ int main(int argc, char *argv[])
                cout << "Broadcasting REMOVE_PROJECTILE" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
 
@@ -471,7 +475,7 @@ int main(int argc, char *argv[])
                cout << "Sending a PLAYER message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
                      error("sendMessage");
                }
             }
@@ -479,7 +483,7 @@ int main(int argc, char *argv[])
          }
       }
 
-      n = receiveMessage(&clientMsg, sock, &from);
+      n = msgProcessor.receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
          broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed);
@@ -492,7 +496,7 @@ int main(int argc, char *argv[])
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                cout << "Sent message back to " << it->second.name << endl;
-               if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                   error("sendMessage");
             }
          }
@@ -500,7 +504,7 @@ int main(int argc, char *argv[])
          {
             cout << "Should be sending back the message" << endl;
 
-            if ( sendMessage(&serverMsg, sock, &from) < 0 )
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
                error("sendMessage");
          }
       }
@@ -509,7 +513,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG& serverMsg, int sock, int &scoreBlue, int &scoreRed)
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed)
 {
    DataAccess da;
 
@@ -594,7 +598,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
 
                cout << "sending info about " << it->second.name  << endl;
                cout << "sending id " << it->second.id  << endl;
-               if ( sendMessage(&serverMsg, sock, &from) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
                   error("sendMessage");
             }
 
@@ -607,7 +611,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
                itObjects->serialize(serverMsg.buffer);
                cout << "sending item id " << itObjects->id  << endl;
-               if ( sendMessage(&serverMsg, sock, &from) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
                   error("sendMessage");
             }
 
@@ -615,7 +619,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             serverMsg.type = MSG_TYPE_SCORE;
             memcpy(serverMsg.buffer, &scoreBlue, 4);
             memcpy(serverMsg.buffer+4, &scoreRed, 4);
-            if ( sendMessage(&serverMsg, sock, &from) < 0 )
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
                error("sendMessage");
 
             serverMsg.type = MSG_TYPE_PLAYER;
@@ -625,7 +629,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                cout << "Sent message back to " << it->second.name << endl;
-               if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                   error("sendMessage");
             }
 
@@ -778,7 +782,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
                   map<unsigned int, Player>::iterator it;
                   for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
-                     if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                         error("sendMessage");
                   }
 
@@ -823,7 +827,7 @@ bool processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, map<
          map<unsigned int, Player>::iterator it;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
          {
-            if ( sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
                error("sendMessage");
          }
 

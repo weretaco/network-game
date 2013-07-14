@@ -25,8 +25,8 @@ typedef struct
    char buffer[256];
 } NETWORK_MSG;
 
-int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
+//int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
 
-int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source);
+//int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source);
 
 #endif

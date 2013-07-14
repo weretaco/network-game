@@ -58,10 +58,8 @@ private:
       }
 
       MessageContainer(const MessageContainer& mc) {
-         this->id = mc.id;
-         this->clientAddr = mc.clientAddr;
          this->msg = mc.msg;
-         this->ackReceived = mc.ackReceived;
+         this->clientAddr = mc.clientAddr;
       }
 
       MessageContainer(NETWORK_MSG msg, struct sockaddr_in clientAddr) {
@@ -72,10 +70,8 @@ private:
       ~MessageContainer() {
       }
 
-      int id;
-      struct sockaddr_in clientAddr;
       NETWORK_MSG msg;
-      bool ackReceived;
+      struct sockaddr_in clientAddr;
    };
 
    int lastUsedId;

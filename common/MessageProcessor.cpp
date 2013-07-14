@@ -10,9 +10,9 @@ MessageProcessor::~MessageProcessor() {
 }
 
 int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest) {
+   msg->id = ++lastUsedId;
    MessageContainer message(*msg, *dest);
-   message.id = ++lastUsedId;
-   sentMessages[message.id] = message;
+   sentMessages[msg->id] = message;
 
    int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
 

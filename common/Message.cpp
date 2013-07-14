@@ -14,6 +14,7 @@
 
 using namespace std;
 
+/*
 int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest)
 {
    int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
@@ -32,3 +33,4 @@ int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source)
 
    return ret;
 }
+*/
