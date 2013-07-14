@@ -67,6 +67,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\Common.cpp" />
+    <ClCompile Include="..\..\common\MessageProcessor.cpp" />
     <ClCompile Include="..\..\common\Projectile.cpp" />
     <ClCompile Include="..\..\common\WorldMap.cpp" />
     <ClCompile Include="..\..\common\Message.cpp" />
@@ -82,6 +83,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\common\Common.h" />
     <ClInclude Include="..\..\common\Compiler.h" />
+    <ClInclude Include="..\..\common\MessageProcessor.h" />
     <ClInclude Include="..\..\common\Projectile.h" />
     <ClInclude Include="..\..\common\WorldMap.h" />
     <ClInclude Include="..\..\common\Message.h" />

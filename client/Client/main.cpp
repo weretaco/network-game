@@ -26,8 +26,9 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 
-#include "../../common/Message.h"
 #include "../../common/Common.h"
+#include "../../common/Message.h"
+#include "../../common/MessageProcessor.h"
 #include "../../common/WorldMap.h"
 #include "../../common/Player.h"
 #include "../../common/Projectile.h"
@@ -100,6 +101,8 @@ struct hostent *hp;
 NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole;
+
+MessageProcessor msgProcessor;
 
 int main(int argc, char **argv)
 {
@@ -278,7 +281,7 @@ int main(int argc, char **argv)
                if (state == STATE_LOGIN) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
-                  sendMessage(&msgTo, sock, &server);
+                  msgProcessor.sendMessage(&msgTo, sock, &server);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
@@ -303,7 +306,7 @@ int main(int argc, char **argv)
                      if (flagType != WorldMap::OBJECT_NONE) {
                         msgTo.type = MSG_TYPE_DROP_FLAG;
                         memcpy(msgTo.buffer, &curPlayerId, 4);
-                        sendMessage(&msgTo, sock, &server);
+                        msgProcessor.sendMessage(&msgTo, sock, &server);
                      }
                   }
                }
@@ -326,7 +329,7 @@ int main(int argc, char **argv)
                   memcpy(msgTo.buffer+4, &pos.x, 4);
                   memcpy(msgTo.buffer+8, &pos.y, 4);
 
-                  sendMessage(&msgTo, sock, &server);
+                  msgProcessor.sendMessage(&msgTo, sock, &server);
                }
                else
                   cout << "Invalid point: User did not click on the map" << endl;
@@ -353,19 +356,21 @@ int main(int argc, char **argv)
                         memcpy(msgTo.buffer, &curPlayerId, 4);
                         memcpy(msgTo.buffer+4, &target->id, 4);
 
-                        sendMessage(&msgTo, sock, &server);
+                        msgProcessor.sendMessage(&msgTo, sock, &server);
                      }
                   }
             }
          }
       }
 
-      if (receiveMessage(&msgFrom, sock, &from) >= 0)
+      if (msgProcessor.receiveMessage(&msgFrom, sock, &from) >= 0)
          processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
          redraw = false;
+
+         msgProcessor.resendUnackedMessages(sock);
 
          wndCurrent->draw(display);
 
@@ -926,7 +931,7 @@ void registerAccount()
    strcpy(msgTo.buffer+username.size()+1, password.c_str());
    memcpy(msgTo.buffer+username.size()+password.size()+2, &playerClass, 4);
 
-   sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server);
 }
 
 void login()
@@ -943,7 +948,7 @@ void login()
    strcpy(msgTo.buffer, strUsername.c_str());
    strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
 
-   sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server);
 }
 
 void logout()
@@ -954,7 +959,7 @@ void logout()
 
    strcpy(msgTo.buffer, username.c_str());
 
-   sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server);
 }
 
 void quit()
@@ -972,7 +977,7 @@ void sendChatMessage()
 
    strcpy(msgTo.buffer, msg.c_str());
 
-   sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server);
 }
 
 int getRefreshRate(int width, int height) {
