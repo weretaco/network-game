@@ -1,7 +1,18 @@
 #ifndef _MESSAGE_PROCESSOR_H
 #define _MESSAGE_PROCESSOR_H
 
+#include <map>
+
+#include "Compiler.h"
+
 #include "Message.h"
+
+#if defined WINDOWS
+   #include <winsock2.h>
+   #include <WS2tcpip.h>
+#elif defined LINUX
+   #include <netinet/in.h>
+#endif
 
 /*
 #define MSG_TYPE_REGISTER          1
@@ -27,14 +38,48 @@ typedef struct
 } NETWORK_MSG;
 */
 
+using namespace std;
+
 class MessageProcessor {
 public:
+   MessageProcessor();
+   ~MessageProcessor();
+
    int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
    int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
-   void resendUnackedMessages();
+   void resendUnackedMessages(int sock);
    void cleanAckedMessages();
 
 private:
+   // this should eventually just replace the Message struct
+   class MessageContainer {
+   public:
+      MessageContainer() {
+      }
+
+      MessageContainer(const MessageContainer& mc) {
+         this->id = mc.id;
+         this->clientAddr = mc.clientAddr;
+         this->msg = mc.msg;
+         this->ackReceived = mc.ackReceived;
+      }
+
+      MessageContainer(NETWORK_MSG msg, struct sockaddr_in clientAddr) {
+         this->clientAddr = clientAddr;
+         this->msg = msg;
+      }
+
+      ~MessageContainer() {
+      }
+
+      int id;
+      struct sockaddr_in clientAddr;
+      NETWORK_MSG msg;
+      bool ackReceived;
+   };
+
+   int lastUsedId;
+   map<int, MessageContainer> sentMessages;
 };
 
 #endif

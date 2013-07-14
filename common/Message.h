@@ -20,7 +20,8 @@
 
 typedef struct
 {
-   short type;
+   unsigned int id;
+   unsigned short type;
    char buffer[256];
 } NETWORK_MSG;
 
