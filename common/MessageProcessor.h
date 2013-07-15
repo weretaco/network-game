@@ -72,6 +72,8 @@ private:
 
       NETWORK_MSG msg;
       struct sockaddr_in clientAddr;
+      bool isAcked;
+      unsigned long long timeAcked;
    };
 
    int lastUsedId;

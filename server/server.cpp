@@ -148,6 +148,7 @@ int main(int argc, char *argv[])
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
+         msgProcessor.cleanAckedMessages();
          msgProcessor.resendUnackedMessages(sock);
 
          map<unsigned int, Player>::iterator it;
@@ -486,7 +487,7 @@ int main(int argc, char *argv[])
       n = msgProcessor.receiveMessage(&clientMsg, sock, &from);
 
       if (n >= 0) {
-         broadcastResponse = processMessage(clientMsg, from, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed);
+         broadcastResponse = processMessage(clientMsg, from, msgProcessor, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed);
 
          if (broadcastResponse)
          {

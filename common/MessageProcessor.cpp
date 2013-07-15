@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Common.h"
+
 MessageProcessor::MessageProcessor() {
    lastUsedId = 0;
 }
@@ -29,7 +31,12 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
 
    // add id to the NETWORK_MSG struct
    if (msg->type == MSG_TYPE_ACK) {
-      sentMessages.erase(msg->id);
+      if (!sentMessages[msg->id].isAcked) {
+         sentMessages[msg->id].isAcked = true;
+         sentMessages[msg->id].timeAcked = getCurrentMillis();
+      }
+
+      return -1; // don't do any further processing
    }else {
       NETWORK_MSG ack;
       ack.id = msg->id;
@@ -49,5 +56,10 @@ void MessageProcessor::resendUnackedMessages(int sock) {
 }
 
 void MessageProcessor::cleanAckedMessages() {
-   // shouldn't be needed since I can just remove messages when I get their ACKs
+   map<int, MessageContainer>::iterator it;
+
+   for(it = sentMessages.begin(); it != sentMessages.end(); it++) {
+      if (it->second.isAcked && (getCurrentMillis() - it->second.timeAcked) > 1000)
+         sentMessages.erase(it);
+   }
 }
