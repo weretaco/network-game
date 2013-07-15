@@ -371,6 +371,7 @@ int main(int argc, char **argv)
          redraw = false;
 
          msgProcessor.resendUnackedMessages(sock);
+         msgProcessor.cleanAckedMessages();
 
          wndCurrent->draw(display);
 
