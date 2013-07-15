@@ -56,10 +56,12 @@ void MessageProcessor::resendUnackedMessages(int sock) {
 }
 
 void MessageProcessor::cleanAckedMessages() {
-   map<int, MessageContainer>::iterator it;
+   map<int, MessageContainer>::iterator it = sentMessages.begin();
 
-   for(it = sentMessages.begin(); it != sentMessages.end(); it++) {
+   while (it != sentMessages.end()) {
       if (it->second.isAcked && (getCurrentMillis() - it->second.timeAcked) > 1000)
-         sentMessages.erase(it);
+         it = sentMessages.erase(it);
+      else
+         it++;
    }
 }
