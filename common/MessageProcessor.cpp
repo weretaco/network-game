@@ -60,7 +60,7 @@ void MessageProcessor::cleanAckedMessages() {
 
    while (it != sentMessages.end()) {
       if (it->second.isAcked && (getCurrentMillis() - it->second.timeAcked) > 1000)
-         it = sentMessages.erase(it);
+         sentMessages.erase(it++);
       else
          it++;
    }
