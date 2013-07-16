@@ -37,9 +37,11 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    // add id to the NETWORK_MSG struct
    if (msg->type == MSG_TYPE_ACK) {
       if (!sentMessages[msg->id].isAcked) {
+         cout << "Received new ack" << endl;
          sentMessages[msg->id].isAcked = true;
          sentMessages[msg->id].timeAcked = getCurrentMillis();
-      }
+      }else
+         cout << "Received old ack" << endl;
 
       return -1; // don't do any further processing
    }else {
@@ -52,8 +54,9 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
 
       NETWORK_MSG ack;
       ack.id = msg->id;
+      ack.type = MSG_TYPE_ACK;
 
-      //sendto(sock, (char*)&ack, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, sizeof(struct sockaddr_in));
+      sendto(sock, (char*)&ack, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, sizeof(struct sockaddr_in));
    }
 
    return ret;
