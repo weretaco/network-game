@@ -16,6 +16,11 @@ int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in
    MessageContainer message(*msg, *dest);
    sentMessages[msg->id] = message;
 
+   cout << "Sending message" << endl;
+   cout << "id: " << msg->id << endl;
+   cout << "type: " << msg->type << endl;
+   cout << "buffer: " << msg->buffer << endl;
+
    int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
 
    cout << "Send a message of type " << msg->type << endl;
@@ -38,6 +43,11 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
 
       return -1; // don't do any further processing
    }else {
+      cout << "Received message" << endl;
+      cout << "id: " << msg->id << endl;
+      cout << "type: " << msg->type << endl;
+      cout << "buffer: " << msg->buffer << endl;
+
       NETWORK_MSG ack;
       ack.id = msg->id;
 
