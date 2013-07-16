@@ -34,14 +34,16 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    // assume we don't care about the value of socklen
    int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, &socklen);
 
+   if (ret == -1)
+      return ret;
+
    // add id to the NETWORK_MSG struct
    if (msg->type == MSG_TYPE_ACK) {
       if (!sentMessages[msg->id].isAcked) {
          cout << "Received new ack" << endl;
          sentMessages[msg->id].isAcked = true;
          sentMessages[msg->id].timeAcked = getCurrentMillis();
-      }else
-         cout << "Received old ack" << endl;
+      }
 
       return -1; // don't do any further processing
    }else {
@@ -74,9 +76,18 @@ void MessageProcessor::cleanAckedMessages() {
    map<int, MessageContainer>::iterator it = sentMessages.begin();
 
    while (it != sentMessages.end()) {
-      if (it->second.isAcked && (getCurrentMillis() - it->second.timeAcked) > 1000)
-         sentMessages.erase(it++);
-      else
+      if (it->second.isAcked) {
+//         cout << "Found acked message" << endl;
+//         cout << "time acked" << it->second.timeAcked << endl;
+//         cout << "cur time" << getCurrentMillis() << endl;
+         if ((getCurrentMillis() - it->second.timeAcked) > 1000) {
+            cout << "Message was acked. time to delete it" << endl;
+            cout << "old map size" << sentMessages.size() << endl;
+            sentMessages.erase(it++);
+            cout << "new map size" << sentMessages.size() << endl;
+         }else
+            it++;
+      }else
          it++;
    }
 }
