@@ -43,15 +43,17 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
 
       return -1; // don't do any further processing
    }else {
-      cout << "Received message" << endl;
-      cout << "id: " << msg->id << endl;
-      cout << "type: " << msg->type << endl;
-      cout << "buffer: " << msg->buffer << endl;
+      if (ret > -1) {
+         cout << "Received message" << endl;
+         cout << "id: " << msg->id << endl;
+         cout << "type: " << msg->type << endl;
+         cout << "buffer: " << msg->buffer << endl;
+      }
 
       NETWORK_MSG ack;
       ack.id = msg->id;
 
-      sendto(sock, (char*)&ack, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, sizeof(struct sockaddr_in));
+      //sendto(sock, (char*)&ack, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, sizeof(struct sockaddr_in));
    }
 
    return ret;
