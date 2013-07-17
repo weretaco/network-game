@@ -53,6 +53,8 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       cout << "buffer: " << msg->buffer << endl;
 
       if (ackedMessages.find(msg->id) != ackedMessages.end()) {
+         cout << "Not a duplicate" << endl;
+
          ackedMessages[msg->id] = getCurrentMillis();
 
          NETWORK_MSG ack;
@@ -97,9 +99,10 @@ void MessageProcessor::cleanAckedMessages() {
    map<unsigned int, unsigned long long>::iterator it2 = ackedMessages.begin();
 
    while (it2 != ackedMessages.end()) {
-      if ((getCurrentMillis() - it2->second) > 500)
+      if ((getCurrentMillis() - it2->second) > 5000) {
          ackedMessages.erase(it2++);
-      else
+         cout << "Deleting ack record" << endl;
+      }else
          it2++;
    }
 }
