@@ -78,6 +78,7 @@ private:
 
    int lastUsedId;
    map<int, MessageContainer> sentMessages;
+   map<unsigned int, unsigned long long> ackedMessages;
 };
 
 #endif
