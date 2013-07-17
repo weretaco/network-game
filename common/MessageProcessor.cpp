@@ -62,8 +62,10 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
          ack.type = MSG_TYPE_ACK;
 
          sendto(sock, (char*)&ack, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, sizeof(struct sockaddr_in));
-      }else
+      }else {
          cout << "Got duplicate ack" << endl;
+         return -1;
+      }
    }
 
    return ret;
@@ -99,7 +101,7 @@ void MessageProcessor::cleanAckedMessages() {
    map<unsigned int, unsigned long long>::iterator it2 = ackedMessages.begin();
 
    while (it2 != ackedMessages.end()) {
-      if ((getCurrentMillis() - it2->second) > 5000) {
+      if ((getCurrentMillis() - it2->second) > 500) {
          ackedMessages.erase(it2++);
          cout << "Deleting ack record" << endl;
       }else
