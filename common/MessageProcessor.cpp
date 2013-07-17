@@ -52,7 +52,7 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       cout << "type: " << msg->type << endl;
       cout << "buffer: " << msg->buffer << endl;
 
-      if (ackedMessages.find(msg->id) != ackedMessages.end()) {
+      if (ackedMessages.find(msg->id) == ackedMessages.end()) {
          cout << "Not a duplicate" << endl;
 
          ackedMessages[msg->id] = getCurrentMillis();
