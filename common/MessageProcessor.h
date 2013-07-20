@@ -77,7 +77,11 @@ private:
    };
 
    int lastUsedId;
-   map<int, MessageContainer> sentMessages;
+
+   // map from message ids to maps from player addresses to message info
+   map<int, map<unsigned long, MessageContainer> > sentMessages;
+
+   // map from message ids to the time each mesage was acked
    map<unsigned int, unsigned long long> ackedMessages;
 };
 
