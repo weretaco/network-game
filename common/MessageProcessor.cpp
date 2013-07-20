@@ -37,8 +37,11 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    if (ret == -1)
       return ret;
 
+   cout << "Received message" << endl;
+
    // add id to the NETWORK_MSG struct
    if (msg->type == MSG_TYPE_ACK) {
+      cout << "Received ack" << endl;
       if (!sentMessages[msg->id][source->sin_addr.s_addr].isAcked) {
          cout << "Received new ack" << endl;
          sentMessages[msg->id][source->sin_addr.s_addr].isAcked = true;
@@ -49,7 +52,7 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    }else {
       bool isDuplicate = false;
 
-      cout << "Received message" << endl;
+      cout << "Received real message" << endl;
       cout << "id: " << msg->id << endl;
       cout << "type: " << msg->type << endl;
       cout << "buffer: " << msg->buffer << endl;
