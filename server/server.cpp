@@ -518,6 +518,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 {
    DataAccess da;
 
+   cout << "Inside processMessage" << endl;
+
    cout << "Received message" << endl;
    cout << "MSG: type: " << clientMsg.type << endl;
    cout << "MSG contents: " << clientMsg.buffer << endl;
