@@ -78,6 +78,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RadioButtonList.cpp" />
     <ClCompile Include="Textbox.cpp" />
+    <ClCompile Include="TextLabel.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +94,7 @@
     <ClInclude Include="GuiComponent.h" />
     <ClInclude Include="RadioButtonList.h" />
     <ClInclude Include="Textbox.h" />
+    <ClInclude Include="TextLabel.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

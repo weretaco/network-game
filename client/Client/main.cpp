@@ -37,6 +37,7 @@
 #include "Textbox.h"
 #include "Button.h"
 #include "RadioButtonList.h"
+#include "TextLabel.h"
 #include "chat.h"
 
 #ifdef WINDOWS
@@ -86,11 +87,13 @@ Window* wndCurrent;
 // wndLogin
 Textbox* txtUsername;
 Textbox* txtPassword;
+TextLabel* lblLoginStatus;
 
 // wndRegister
 Textbox* txtUsernameRegister;
 Textbox* txtPasswordRegister;
 RadioButtonList* rblClasses;
+TextLabel* lblRegisterStatus;
 
 // wndMain
 Textbox* txtChat;
@@ -179,30 +182,45 @@ int main(int argc, char **argv)
 
    WorldMap* gameMap = WorldMap::loadMapFromFile("../../data/map.txt");
 
+   cout << "Loaded map" << endl;
+
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(516, 40, 100, 20, font));
    wndLogin->addComponent(new Textbox(516, 70, 100, 20, font));
-   wndLogin->addComponent(new Button(330, 100, 194, 20, font, "Create an Account", goToRegisterScreen));
-   wndLogin->addComponent(new Button(534, 100, 60, 20, font, "Login", login));
+   wndLogin->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT));
+   wndLogin->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT));
+   wndLogin->addComponent(new TextLabel((SCREEN_W-600)/2, 100, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE));
+   wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen));
+   wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login));
    wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
 
    txtUsername = (Textbox*)wndLogin->getComponent(0);
    txtPassword = (Textbox*)wndLogin->getComponent(1);
+   lblLoginStatus = (TextLabel*)wndLogin->getComponent(4);
+
+   cout << "Created login screen" << endl;
 
    wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndRegister->addComponent(new Textbox(516, 40, 100, 20, font));
    wndRegister->addComponent(new Textbox(516, 70, 100, 20, font));
-   wndRegister->addComponent(new Button(468, 100, 56, 20, font, "Back", goToLoginScreen));
-   wndRegister->addComponent(new Button(534, 100, 70, 20, font, "Submit", registerAccount));
+   wndRegister->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT));
+   wndRegister->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT));
+   wndRegister->addComponent(new RadioButtonList(432, 100, "Pick a class", font));
+   wndRegister->addComponent(new TextLabel((SCREEN_W-600)/2, 190, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE));
+   wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen));
+   wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount));
    wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
-   wndRegister->addComponent(new RadioButtonList(432, 130, "Pick a class", font));
 
    txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
    txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
 
-   rblClasses = (RadioButtonList*)wndRegister->getComponent(5);
+   rblClasses = (RadioButtonList*)wndRegister->getComponent(4);
    rblClasses->addRadioButton("Warrior");
    rblClasses->addRadioButton("Ranger");
+
+   lblRegisterStatus = (TextLabel*)wndRegister->getComponent(5);
+
+   cout << "Created register screen" << endl;
 
    wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndMain->addComponent(new Textbox(95, 40, 300, 20, font));
@@ -210,6 +228,8 @@ int main(int argc, char **argv)
    wndMain->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
 
    txtChat = (Textbox*)wndMain->getComponent(0);
+
+   cout << "Created main screen" << endl;
 
    wndCurrent = wndLogin;
  
@@ -379,8 +399,8 @@ int main(int argc, char **argv)
 
          // There should be label gui components that show these or each textbox should have a label
          if(wndCurrent == wndLogin || wndCurrent == wndRegister) {
-            al_draw_text(font, al_map_rgb(0, 255, 0), 416, 43, ALLEGRO_ALIGN_LEFT, "Username:");
-            al_draw_text(font, al_map_rgb(0, 255, 0), 413, 73, ALLEGRO_ALIGN_LEFT, "Password:");
+            //al_draw_text(font, al_map_rgb(0, 255, 0), 416, 43, ALLEGRO_ALIGN_LEFT, "Username:");
+            //al_draw_text(font, al_map_rgb(0, 255, 0), 413, 73, ALLEGRO_ALIGN_LEFT, "Password:");
          }
          else if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
@@ -540,6 +560,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
          {
             case MSG_TYPE_REGISTER:
             {
+               lblRegisterStatus->setText(response);
                break;
             }
             case MSG_TYPE_LOGIN:
@@ -548,11 +569,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                {
                   username.clear();
                   cout << "User login failed" << endl;
+                  lblLoginStatus->setText(response);
                }
                else if (response.compare("Incorrect username or password") == 0)
                {
                   username.clear();
                   cout << "User login failed" << endl;
+                  lblLoginStatus->setText(response);
                }
                else
                {
@@ -572,7 +595,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
-            case MSG_TYPE_PLAYER:   // kind of hacky to put this here
+            case MSG_TYPE_PLAYER:
             {
                Player p("", "");
                p.deserialize(msg.buffer);
@@ -591,6 +614,11 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
+            default:
+            {
+               cout << "(STATE_REGISTER) Received invlaid message of type " << msg.type << endl;
+               break;
+            }
          }
 
          break;
@@ -599,10 +627,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
       {
          switch(msg.type)
          {
-            case MSG_TYPE_REGISTER:
-            {
-               break;
-            }
             case MSG_TYPE_LOGIN:
             {
                cout << "Got a login message" << endl;
@@ -759,7 +783,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             default:
             {
-               cout << "Received an unexpected message type: " << msg.type << endl;
+               cout << "(STATE_LOGIN) Received invlaid message of type " << msg.type << endl;
+               break;
             }
          }
 
