@@ -27,7 +27,6 @@
 #include <allegro5/allegro_primitives.h>
 
 #include "../../common/Common.h"
-#include "../../common/Message.h"
 #include "../../common/MessageProcessor.h"
 #include "../../common/WorldMap.h"
 #include "../../common/Player.h"

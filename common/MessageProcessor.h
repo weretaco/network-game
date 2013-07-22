@@ -5,8 +5,6 @@
 
 #include "Compiler.h"
 
-#include "Message.h"
-
 #if defined WINDOWS
    #include <winsock2.h>
    #include <WS2tcpip.h>
