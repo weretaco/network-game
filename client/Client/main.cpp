@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
    cout << "Created main screen" << endl;
 
-   wndCurrent = wndLogin;
+   goToLoginScreen();
  
    event_queue = al_create_event_queue();
    if(!event_queue) {
@@ -397,12 +397,7 @@ int main(int argc, char **argv)
 
          chatConsole.draw(font, al_map_rgb(255,255,255));
 
-         // There should be label gui components that show these or each textbox should have a label
-         if(wndCurrent == wndLogin || wndCurrent == wndRegister) {
-            //al_draw_text(font, al_map_rgb(0, 255, 0), 416, 43, ALLEGRO_ALIGN_LEFT, "Username:");
-            //al_draw_text(font, al_map_rgb(0, 255, 0), 413, 73, ALLEGRO_ALIGN_LEFT, "Password:");
-         }
-         else if(wndCurrent == wndMain) {
+         if(wndCurrent == wndMain) {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
 
             ostringstream ossScoreBlue, ossScoreRed;
@@ -644,7 +639,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                {
                   cout << "Logged out" << endl;
                   state = STATE_START;
-                  wndCurrent = wndLogin;
+                  goToLoginScreen();
                }
 
                break;
@@ -913,18 +908,21 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
 
 void goToRegisterScreen()
 {
-   wndCurrent = wndRegister;
-
    txtUsernameRegister->clear();
    txtPasswordRegister->clear();
+   lblRegisterStatus->setText("");
+   rblClasses->setSelectedButton(-1);
+
+   wndCurrent = wndRegister;
 }
 
 void goToLoginScreen()
 {
-   wndCurrent = wndLogin;
-
    txtUsername->clear();
    txtPassword->clear();
+   lblLoginStatus->setText("");
+
+   wndCurrent = wndLogin;
 }
 
 void registerAccount()

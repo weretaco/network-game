@@ -70,7 +70,6 @@
     <ClCompile Include="..\..\common\MessageProcessor.cpp" />
     <ClCompile Include="..\..\common\Projectile.cpp" />
     <ClCompile Include="..\..\common\WorldMap.cpp" />
-    <ClCompile Include="..\..\common\Message.cpp" />
     <ClCompile Include="..\..\common\Player.cpp" />
     <ClCompile Include="chat.cpp" />
     <ClCompile Include="Button.cpp" />
@@ -87,7 +86,6 @@
     <ClInclude Include="..\..\common\MessageProcessor.h" />
     <ClInclude Include="..\..\common\Projectile.h" />
     <ClInclude Include="..\..\common\WorldMap.h" />
-    <ClInclude Include="..\..\common\Message.h" />
     <ClInclude Include="..\..\common\Player.h" />
     <ClInclude Include="chat.h" />
     <ClInclude Include="Button.h" />

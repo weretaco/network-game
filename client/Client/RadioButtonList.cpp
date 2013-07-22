@@ -64,3 +64,7 @@ void RadioButtonList::addRadioButton(string s) {
 int RadioButtonList::getSelectedButton() {
    return this->selectedButton;
 }
+
+void RadioButtonList::setSelectedButton(int b) {
+   this->selectedButton = b;
+}

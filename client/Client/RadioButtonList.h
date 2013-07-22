@@ -25,6 +25,7 @@ public:
 
    void addRadioButton(string s);
    int getSelectedButton();
+   void setSelectedButton(int b);
 };
 
 #endif
