@@ -44,6 +44,8 @@ void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayer
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
 void damagePlayer(Player *p, int damage);
 
+void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock);
+
 // this should probably go somewhere in the common folder
 void error(const char *msg)
 {
@@ -411,6 +413,18 @@ int main(int argc, char *argv[])
                   Player* target = &mapPlayers[it->second.targetPlayer];
                   damagePlayer(target, it->second.damage);
 
+                  if (target->isDead) {
+                     WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+                     if (target->hasBlueFlag)
+                        flagType = WorldMap::OBJECT_BLUE_FLAG;
+                     else if (target->hasRedFlag)
+                        flagType = WorldMap::OBJECT_RED_FLAG;
+
+                     if (flagType != WorldMap::OBJECT_NONE) {
+                        addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+                     }
+                  }
+
                   serverMsg.type = MSG_TYPE_PLAYER;
                   target->serialize(serverMsg.buffer);
                }else if (it->second.attackType == Player::ATTACK_RANGED) {
@@ -468,6 +482,18 @@ int main(int argc, char *argv[])
                Player* target = &mapPlayers[itProj->second.target];
 
                damagePlayer(target, itProj->second.damage);
+
+               if (target->isDead) {
+                  WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+                  if (target->hasBlueFlag)
+                     flagType = WorldMap::OBJECT_BLUE_FLAG;
+                  else if (target->hasRedFlag)
+                     flagType = WorldMap::OBJECT_RED_FLAG;
+
+                  if (flagType != WorldMap::OBJECT_NONE) {
+                     addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+                  }
+               }
 
                serverMsg.type = MSG_TYPE_PLAYER;
                target->serialize(serverMsg.buffer);
@@ -663,6 +689,18 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
          else
          {
+            if (!p->isDead) {
+               WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+               if (p->hasBlueFlag)
+                  flagType = WorldMap::OBJECT_BLUE_FLAG;
+               else if (p->hasRedFlag)
+                  flagType = WorldMap::OBJECT_RED_FLAG;
+
+               if (flagType != WorldMap::OBJECT_NONE) {
+                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+               }
+            }
+
             if (p->id < unusedPlayerId)
                unusedPlayerId = p->id;
             mapPlayers.erase(p->id);
@@ -820,18 +858,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          else if (mapPlayers[id].hasRedFlag)
             flagType = WorldMap::OBJECT_RED_FLAG;
 
-         gameMap->addObject(flagType, mapPlayers[id].pos.x, mapPlayers[id].pos.y);
-
-         // need to send the OBJECT message too
-         serverMsg.type = MSG_TYPE_OBJECT;
-         gameMap->getObjects()->back().serialize(serverMsg.buffer);
-
-         map<unsigned int, Player>::iterator it;
-         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-         {
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
-               error("sendMessage");
-         }
+         addObjectToMap(flagType, mapPlayers[id].pos.x, mapPlayers[id].pos.y, gameMap, mapPlayers, msgProcessor, sock);
 
          mapPlayers[id].hasBlueFlag = false;
          mapPlayers[id].hasRedFlag = false;
@@ -908,5 +935,22 @@ void damagePlayer(Player *p, int damage) {
       cout << "Player died" << endl;
       p->isDead = true;
       p->timeDied = getCurrentMillis();
+   }
+}
+
+void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock) {
+   NETWORK_MSG serverMsg;
+
+   gameMap->addObject(objectType, x, y);
+
+   // need to send the OBJECT message too
+   serverMsg.type = MSG_TYPE_OBJECT;
+   gameMap->getObjects()->back().serialize(serverMsg.buffer);
+
+   map<unsigned int, Player>::iterator it;
+   for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+   {
+      if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+         error("sendMessage");
    }
 }
