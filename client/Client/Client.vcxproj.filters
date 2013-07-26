@@ -66,6 +66,9 @@
     <ClCompile Include="TextLabel.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\MessageContainer.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chat.h">
@@ -106,6 +109,9 @@
     </ClInclude>
     <ClInclude Include="TextLabel.h">
       <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\MessageContainer.h">
+      <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

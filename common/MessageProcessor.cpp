@@ -72,7 +72,7 @@ void MessageProcessor::resendUnackedMessages(int sock) {
       sentMsg = it->second;
       for (it2 = sentMsg.begin(); it2 != sentMsg.end(); it2++) {
          if (!(it2->second.getAcked())) {
-            sendto(sock, it2->second.getMessage(), sizeof(NETWORK_MSG), 0, (struct sockaddr *)&it2->first, sizeof(struct sockaddr_in));
+            sendto(sock, (const char*)it2->second.getMessage(), sizeof(NETWORK_MSG), 0, (struct sockaddr *)&it2->first, sizeof(struct sockaddr_in));
          }
       }
    }
