@@ -12,18 +12,15 @@ MessageProcessor::~MessageProcessor() {
 }
 
 int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest) {
+   cout << "Sending message of type " << msg->type << endl;
+
    msg->id = ++lastUsedId;
    MessageContainer message(*msg, *dest);
    sentMessages[msg->id][dest->sin_addr.s_addr] = message;
 
-   cout << "Sending message" << endl;
-   cout << "id: " << msg->id << endl;
-   cout << "type: " << msg->type << endl;
-   cout << "buffer: " << msg->buffer << endl;
+   sentMessages[msg->id][dest->sin_addr.s_addr] = message;
 
    int ret =  sendto(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)dest, sizeof(struct sockaddr_in));
-
-   cout << "Send a message of type " << msg->type << endl;
 
    return ret;
 }
@@ -37,25 +34,16 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    if (ret == -1)
       return ret;
 
-   cout << "Received message" << endl;
-
    // add id to the NETWORK_MSG struct
    if (msg->type == MSG_TYPE_ACK) {
-      cout << "Received ack" << endl;
-      if (!sentMessages[msg->id][source->sin_addr.s_addr].isAcked) {
-         cout << "Received new ack" << endl;
-         sentMessages[msg->id][source->sin_addr.s_addr].isAcked = true;
-         sentMessages[msg->id][source->sin_addr.s_addr].timeAcked = getCurrentMillis();
+      if (!sentMessages[msg->id][source->sin_addr.s_addr].getAcked()) {
+         sentMessages[msg->id][source->sin_addr.s_addr].setAcked(true);
+         sentMessages[msg->id][source->sin_addr.s_addr].setTimeAcked(getCurrentMillis());
       }
 
       return -1; // don't do any further processing
    }else {
       bool isDuplicate = false;
-
-      cout << "Received real message" << endl;
-      cout << "id: " << msg->id << endl;
-      cout << "type: " << msg->type << endl;
-      cout << "buffer: " << msg->buffer << endl;
 
       if (ackedMessages.find(msg->id) != ackedMessages.end())
          isDuplicate = true;
@@ -83,7 +71,9 @@ void MessageProcessor::resendUnackedMessages(int sock) {
    for (it = sentMessages.begin(); it != sentMessages.end(); it++) {
       sentMsg = it->second;
       for (it2 = sentMsg.begin(); it2 != sentMsg.end(); it2++) {
-         sendto(sock, (char*)&it2->second.msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)&it2->first, sizeof(struct sockaddr_in));
+         if (!(it2->second.getAcked())) {
+            sendto(sock, it2->second.getMessage(), sizeof(NETWORK_MSG), 0, (struct sockaddr *)&it2->first, sizeof(struct sockaddr_in));
+         }
       }
    }
 }
@@ -94,9 +84,9 @@ void MessageProcessor::cleanAckedMessages() {
 
    while (it != sentMessages.end()) {
       it2 = it->second.begin();
-      while (it2 != it->second.begin()) {
-         if (it2->second.isAcked) {
-            if ((getCurrentMillis() - it2->second.timeAcked) > 1000)
+      while (it2 != it->second.end()) {
+         if (it2->second.getAcked()) {
+            if ((getCurrentMillis() - it2->second.getTimeAcked()) > 1000)
                it->second.erase(it2++);
             else
                it2++;
@@ -113,10 +103,9 @@ void MessageProcessor::cleanAckedMessages() {
    map<unsigned int, unsigned long long>::iterator it3 = ackedMessages.begin();
 
    while (it3 != ackedMessages.end()) {
-      if ((getCurrentMillis() - it3->second) > 500) {
+      if ((getCurrentMillis() - it3->second) > 500)
          ackedMessages.erase(it3++);
-         cout << "Deleting ack record" << endl;
-      }else
+      else
          it3++;
    }
 }
