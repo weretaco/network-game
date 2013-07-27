@@ -29,6 +29,10 @@ void chat::addLine(string s)
    vctChat.push_back(s);
 }
 
+void chat::clear() {
+   vctChat.clear();
+}
+
 // returns true if the event was consumed, false if it should be passed on
 bool chat::handleEvent(ALLEGRO_EVENT e)
 {

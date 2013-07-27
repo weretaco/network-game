@@ -22,6 +22,7 @@ public:
 
    void draw(ALLEGRO_FONT *font, ALLEGRO_COLOR color);
    void addLine(string s);
+   void clear();
 
    bool handleEvent(ALLEGRO_EVENT e);
 };

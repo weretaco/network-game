@@ -394,9 +394,9 @@ int main(int argc, char **argv)
 
          wndCurrent->draw(display);
 
-         chatConsole.draw(font, al_map_rgb(255,255,255));
-
          if(wndCurrent == wndMain) {
+            chatConsole.draw(font, al_map_rgb(255,255,255));
+
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
 
             ostringstream ossScoreBlue, ossScoreRed;
@@ -557,60 +557,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                lblRegisterStatus->setText(response);
                break;
             }
-            case MSG_TYPE_LOGIN:
-            {
-               if (response.compare("Player has already logged in.") == 0)
-               {
-                  username.clear();
-                  cout << "User login failed" << endl;
-                  lblLoginStatus->setText(response);
-               }
-               else if (response.compare("Incorrect username or password") == 0)
-               {
-                  username.clear();
-                  cout << "User login failed" << endl;
-                  lblLoginStatus->setText(response);
-               }
-               else
-               {
-                  state = STATE_LOGIN;
-                  wndCurrent = wndMain;
-                  
-                  Player p("", "");
-                  p.deserialize(msg.buffer);
-                  mapPlayers[p.id] = p;
-                  curPlayerId = p.id;
-
-                  cout << "Got a valid login response with the player" << endl;
-                  cout << "Player id: " << curPlayerId << endl;
-                  cout << "Player health: " << p.health << endl;
-                  cout << "map size: " << mapPlayers.size() << endl;
-               }
-
-               break;
-            }
-            case MSG_TYPE_PLAYER:
-            {
-               Player p("", "");
-               p.deserialize(msg.buffer);
-               p.timeLastUpdated = getCurrentMillis();
-
-               mapPlayers[p.id] = p;
-
-               break;
-            }
-            case MSG_TYPE_OBJECT:
-            {
-               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
-               o.deserialize(msg.buffer);
-               cout << "object id: " << o.id << endl;
-               gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
-
-               break;
-            }
             default:
             {
-               cout << "(STATE_REGISTER) Received invlaid message of type " << msg.type << endl;
+               cout << "(STATE_REGISTER) Received invalid message of type " << msg.type << endl;
                break;
             }
          }
@@ -623,10 +572,34 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
          {
             case MSG_TYPE_LOGIN:
             {
-               cout << "Got a login message" << endl;
-               
-               chatConsole.addLine(response);
-               cout << "Added new line" << endl;
+               if (response.compare("Player has already logged in.") == 0)
+               {
+                  goToLoginScreen();
+                  state = STATE_START;
+
+                  lblLoginStatus->setText(response);
+               }
+               else if (response.compare("Incorrect username or password") == 0)
+               {
+                  goToLoginScreen();
+                  state = STATE_START;
+
+                  lblLoginStatus->setText(response);
+               }
+               else
+               {
+                  wndCurrent = wndMain;
+                  
+                  Player p("", "");
+                  p.deserialize(msg.buffer);
+                  mapPlayers[p.id] = p;
+                  curPlayerId = p.id;
+
+                  cout << "Got a valid login response with the player" << endl;
+                  cout << "Player id: " << curPlayerId << endl;
+                  cout << "Player health: " << p.health << endl;
+                  cout << "player map size: " << mapPlayers.size() << endl;
+               }
 
                break;
             }
@@ -638,6 +611,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                {
                   cout << "Logged out" << endl;
                   state = STATE_START;
+                  chatConsole.clear();
                   goToLoginScreen();
                }
 
@@ -656,13 +630,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                else
                   p.isDead = false;
 
-               cout << mapPlayers[p.id].pos.x << ", " << mapPlayers[p.id].pos.y << endl;
-               cout << "health:" << mapPlayers[p.id].health << endl;
-               cout << "is dead?:" << mapPlayers[p.id].isDead << endl;
                mapPlayers[p.id] = p;
-               cout << mapPlayers[p.id].pos.x << ", " << mapPlayers[p.id].pos.y << endl;
-               cout << "health:" << mapPlayers[p.id].health << endl;
-               cout << "is dead?:" << mapPlayers[p.id].isDead << endl;
 
                break;
             }
@@ -692,6 +660,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
+               cout << "object id: " << o.id << endl;
                gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
 
                break;
@@ -924,6 +893,8 @@ void goToLoginScreen()
    wndCurrent = wndLogin;
 }
 
+// maybe need a goToGameScreen function as well and add state changes to these functions as well
+
 void registerAccount()
 {
    string username = txtUsernameRegister->getStr();
@@ -972,6 +943,8 @@ void login()
    strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
 
    msgProcessor.sendMessage(&msgTo, sock, &server);
+
+   state = STATE_LOGIN;
 }
 
 void logout()
