@@ -563,6 +563,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          Player::PlayerClass playerClass;
 
          memcpy(&playerClass, clientMsg.buffer+username.length()+password.length()+2, 4);
+         serverMsg.type = MSG_TYPE_REGISTER;
+
 
          cout << "username: " << username << endl;
          cout << "password: " << password << endl;
@@ -571,17 +573,18 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             cout << "class: WARRIOR" << endl;
          else if (playerClass == Player::CLASS_RANGER)
             cout << "class: RANGER" << endl;
-         else
+         else {
             cout << "Unknown player class detected" << endl;
+            strcpy(serverMsg.buffer, "You didn't select a class");
+            break;
+         }
 
          int error = da.insertPlayer(username, password, playerClass);
 
-         if (!error)
-            strcpy(serverMsg.buffer, "Registration successful.");
-         else
+         if (error)
             strcpy(serverMsg.buffer, "Registration failed. Please try again.");
-
-         serverMsg.type = MSG_TYPE_REGISTER;
+         else
+            strcpy(serverMsg.buffer, "Registration successful.");
 
          break;
       }
