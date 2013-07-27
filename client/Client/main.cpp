@@ -611,7 +611,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                {
                   cout << "Logged out" << endl;
                   state = STATE_START;
-                  chatConsole.clear();
                   goToLoginScreen();
                }
 
@@ -950,6 +949,7 @@ void login()
 void logout()
 {
    txtChat->clear();
+   chatConsole.clear();
 
    msgTo.type = MSG_TYPE_LOGOUT;
 
