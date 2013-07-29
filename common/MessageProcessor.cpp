@@ -51,7 +51,9 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       }else
          cout << "Got message of type " << msg->type << endl;
 
-      ackedMessages[msg->id] = getCurrentMillis();
+      ackedMessages[msg->id] = MessageContainer(*msg, *source);
+      ackedMessages[msg->id].setAcked(true);
+      ackedMessages[msg->id].setTimeAcked(getCurrentMillis());
 
       NETWORK_MSG ack;
       ack.id = msg->id;
@@ -67,7 +69,7 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
 }
 
 void MessageProcessor::resendUnackedMessages(int sock) {
-   map<int, map<unsigned long, MessageContainer> >::iterator it;
+   map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
    map<unsigned long, MessageContainer>::iterator it2;
    map<unsigned long, MessageContainer> sentMsg;
 
@@ -82,7 +84,7 @@ void MessageProcessor::resendUnackedMessages(int sock) {
 }
 
 void MessageProcessor::cleanAckedMessages() {
-   map<int, map<unsigned long, MessageContainer> >::iterator it = sentMessages.begin();
+   map<unsigned int, map<unsigned long, MessageContainer> >::iterator it = sentMessages.begin();
    map<unsigned long, MessageContainer>::iterator it2;
 
    while (it != sentMessages.end()) {
@@ -103,6 +105,7 @@ void MessageProcessor::cleanAckedMessages() {
          it++;
    }
 
+   /*
    map<unsigned int, unsigned long long>::iterator it3 = ackedMessages.begin();
 
    while (it3 != ackedMessages.end()) {
@@ -111,4 +114,13 @@ void MessageProcessor::cleanAckedMessages() {
       else
          it3++;
    }
+   */
+}
+
+map<unsigned int, map<unsigned long, MessageContainer> >& MessageProcessor::getSentMessages() {
+   return this->sentMessages;
+}
+
+map<unsigned int, MessageContainer>& MessageProcessor::getAckedMessages() {
+   return this->ackedMessages;
 }

@@ -3,12 +3,16 @@
 
 #include "Compiler.h"
 
+#include <string>
+
 #if defined WINDOWS
    #include <winsock2.h>
    #include <WS2tcpip.h>
 #elif defined LINUX
    #include <netinet/in.h>
 #endif
+
+using namespace std;
 
 #define MSG_TYPE_ACK               1
 #define MSG_TYPE_REGISTER          2
@@ -53,6 +57,28 @@ public:
 
    void setAcked(bool acked);
    void setTimeAcked(unsigned long long time);
+
+   static string getMsgTypeString(int msgType) {
+      switch(msgType) {
+         case MSG_TYPE_ACK: return "MSG_TYPE_ACK";
+         case MSG_TYPE_REGISTER: return "MSG_TYPE_REGISTER";
+         case MSG_TYPE_LOGIN: return "MSG_TYPE_LOGIN";
+         case MSG_TYPE_LOGOUT: return "MSG_TYPE_LOGOUT";
+         case MSG_TYPE_CHAT: return "MSG_TYPE_CHAT";
+         case MSG_TYPE_PLAYER: return "MSG_TYPE_PLAYER";
+         case MSG_TYPE_PLAYER_MOVE: return "MSG_TYPE_PLAYER_MOVE";
+         case MSG_TYPE_OBJECT: return "MSG_TYPE_OBJECT";
+         case MSG_TYPE_REMOVE_OBJECT: return "MSG_TYPE_REMOVE_OBJECT";
+         case MSG_TYPE_PICKUP_FLAG: return "MSG_TYPE_PICKUP_FLAG";
+         case MSG_TYPE_DROP_FLAG: return "MSG_TYPE_DROP_FLAG";
+         case MSG_TYPE_SCORE: return "MSG_TYPE_SCORE";
+         case MSG_TYPE_START_ATTACK: return "MSG_TYPE_START_ATACK";
+         case MSG_TYPE_ATTACK: return "MSG_TYPE_ATTACK";
+         case MSG_TYPE_PROJECTILE: return "MSG_TYPE_PROJECTILE";
+         case MSG_TYPE_REMOVE_PROJECTILE: return "MSG_TYPE_REMOVE_PROJECTILE";
+         default: return "Unknown";
+      }
+   }
 };
 
 #endif

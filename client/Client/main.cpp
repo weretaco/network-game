@@ -27,6 +27,7 @@
 #include <allegro5/allegro_primitives.h>
 
 #include "../../common/Common.h"
+#include "../../common/MessageContainer.h"
 #include "../../common/MessageProcessor.h"
 #include "../../common/WorldMap.h"
 #include "../../common/Player.h"
@@ -62,6 +63,8 @@ void login();
 void logout();
 void quit();
 void sendChatMessage();
+void toggleDebugging();
+void drawMessageStatus(ALLEGRO_FONT* font);
 
 void error(const char *);
 
@@ -81,6 +84,7 @@ bool doexit;
 Window* wndLogin;
 Window* wndRegister;
 Window* wndMain;
+Window* wndMainDebug;
 Window* wndCurrent;
 
 // wndLogin
@@ -102,7 +106,8 @@ struct sockaddr_in server, from;
 struct hostent *hp;
 NETWORK_MSG msgTo, msgFrom;
 string username;
-chat chatConsole;
+chat chatConsole, debugConsole;
+bool debugging;
 
 MessageProcessor msgProcessor;
 
@@ -119,6 +124,7 @@ int main(int argc, char **argv)
    unsigned int curPlayerId = -1;
    int scoreBlue, scoreRed;
    bool fullscreen = false;
+   debugging = false;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -183,6 +189,9 @@ int main(int argc, char **argv)
 
    cout << "Loaded map" << endl;
 
+   debugConsole.addLine("Debug console:");
+   debugConsole.addLine("");
+
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLogin->addComponent(new Textbox(516, 40, 100, 20, font));
    wndLogin->addComponent(new Textbox(516, 70, 100, 20, font));
@@ -192,6 +201,7 @@ int main(int argc, char **argv)
    wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen));
    wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login));
    wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
+   wndLogin->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
 
    txtUsername = (Textbox*)wndLogin->getComponent(0);
    txtPassword = (Textbox*)wndLogin->getComponent(1);
@@ -209,6 +219,7 @@ int main(int argc, char **argv)
    wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen));
    wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount));
    wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
+   wndRegister->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
 
    txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
    txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
@@ -224,9 +235,14 @@ int main(int argc, char **argv)
    wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndMain->addComponent(new Textbox(95, 40, 300, 20, font));
    wndMain->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
+   wndMain->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
    wndMain->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
 
    txtChat = (Textbox*)wndMain->getComponent(0);
+
+   wndMainDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndMainDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
+   wndMainDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
 
    cout << "Created main screen" << endl;
 
@@ -390,12 +406,16 @@ int main(int argc, char **argv)
          redraw = false;
 
          msgProcessor.resendUnackedMessages(sock);
-         msgProcessor.cleanAckedMessages();
+         //msgProcessor.cleanAckedMessages();
 
-         wndCurrent->draw(display);
+         if (debugging && wndCurrent == wndMain)
+            wndMainDebug->draw(display);
+         else
+            wndCurrent->draw(display);
 
          if(wndCurrent == wndMain) {
-            chatConsole.draw(font, al_map_rgb(255,255,255));
+            if (!debugging)
+               chatConsole.draw(font, al_map_rgb(255,255,255));
 
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
 
@@ -448,6 +468,11 @@ int main(int argc, char **argv)
 
                al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
             }
+         }
+
+         if (debugging) {
+            //debugConsole.draw(font, al_map_rgb(255,255,255));
+            drawMessageStatus(font);
          }
 
          al_flip_display();
@@ -976,7 +1001,13 @@ void sendChatMessage()
    msgProcessor.sendMessage(&msgTo, sock, &server);
 }
 
-int getRefreshRate(int width, int height) {
+void toggleDebugging()
+{
+   debugging = !debugging;
+}
+
+int getRefreshRate(int width, int height)
+{
    int numRefreshRates = al_get_num_display_modes();
    ALLEGRO_DISPLAY_MODE displayMode;
 
@@ -988,4 +1019,65 @@ int getRefreshRate(int width, int height) {
    }
 
    return 0;
+}
+
+void drawMessageStatus(ALLEGRO_FONT* font)
+{
+   int clientMsgOffset = 0;
+   int serverMsgOffset = 650;
+
+   al_draw_text(font, al_map_rgb(0, 255, 255), 5, 43, ALLEGRO_ALIGN_LEFT, "ID");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 25, 43, ALLEGRO_ALIGN_LEFT, "Type");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 245, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
+
+   al_draw_text(font, al_map_rgb(0, 255, 255), 5+serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 25+serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
+
+   map<unsigned int, map<unsigned long, MessageContainer> >& sentMessages = msgProcessor.getSentMessages();
+   int id, type;
+   bool acked;
+   ostringstream ossId, ossAcked;
+
+   map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
+
+   int msgCount = 0;
+   for (it = sentMessages.begin(); it != sentMessages.end(); it++) {
+      map<unsigned long, MessageContainer> playerMessage = it->second;
+      map<unsigned long, MessageContainer>::iterator it2;
+      for (it2 = playerMessage.begin(); it2 !=  playerMessage.end(); it2++) {
+
+         id = it->first;
+         ossId.str("");;
+         ossId << id;
+
+         type = it2->second.getMessage()->type;
+         string typeStr = MessageContainer::getMsgTypeString(type);
+
+         acked = it2->second.getAcked();
+         ossAcked.str("");;
+         ossAcked << boolalpha << acked;
+
+         al_draw_text(font, al_map_rgb(0, 255, 0), 5, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 25, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 245, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossAcked.str().c_str());
+
+         msgCount++;
+      }
+   }
+
+   map<unsigned int, MessageContainer>& ackedMessages = msgProcessor.getAckedMessages();
+   map<unsigned int, MessageContainer>::iterator it3;
+
+   msgCount = 0;
+   for (it3 = ackedMessages.begin(); it3 != ackedMessages.end(); it3++) {
+      ossId.str("");;
+      ossId << it3->first;
+
+      string typeStr = MessageContainer::getMsgTypeString(it3->second.getMessage()->type);
+
+      al_draw_text(font, al_map_rgb(255, 0, 0), 5+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
+      al_draw_text(font, al_map_rgb(255, 0, 0), 25+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
+
+      msgCount++;
+   }
 }

@@ -47,3 +47,27 @@ void MessageContainer::setAcked(bool acked) {
 void MessageContainer::setTimeAcked(unsigned long long time) {
    this->timeAcked = time;
 }
+
+/*
+string getMsgTypeString(int msgType) {
+   switch(msgType) {
+      case MSG_TYPE_ACK: return "MSG_TYPE_ACK";
+      case MSG_TYPE_REGISTER: return "MSG_TYPE_REGISTER";
+      case MSG_TYPE_LOGIN: return "MSG_TYPE_LOGIN";
+      case MSG_TYPE_LOGOUT: return "MSG_TYPE_LOGOUT";
+      case MSG_TYPE_CHAT: return "MSG_TYPE_CHAT";
+      case MSG_TYPE_PLAYER: return "MSG_TYPE_PLAYER";
+      case MSG_TYPE_PLAYER_MOVE: return "MSG_TYPE_PLAYER_MOVE";
+      case MSG_TYPE_OBJECT: return "MSG_TYPE_OBJECT";
+      case MSG_TYPE_REMOVE_OBJECT: return "MSG_TYPE_REMOVE_OBJECT";
+      case MSG_TYPE_PICKUP_FLAG: return "MSG_TYPE_PICKUP_FLAG";
+      caseMSG_TYPE_DROP_FLAG: return "MSG_TYPE_DROP_FLAG";
+      case MSG_TYPE_SCORE: return "MSG_TYPE_SCORE";
+      case MSG_TYPE_START_ATTACK: return "MSG_TYPE_START_ATACK";
+      case MSG_TYPE_ATTACK: return "MSG_TYPE_ATTACK";
+      case MSG_TYPE_PROJECTILE: return "MSG_TYPE_PROJECTILE";
+      case MSG_TYPE_REMOVE_PROJECTILE: return "MSG_TYPE_REMOVE_PROJECTILE";
+      default: return "Unknown";
+   }
+}
+*/
