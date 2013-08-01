@@ -19,6 +19,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <map>
 
 #include <allegro5/allegro.h>
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
    int scoreBlue, scoreRed;
    bool fullscreen = false;
    debugging = false;
+   ofstream outputLog;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -135,6 +137,9 @@ int main(int argc, char **argv)
       fprintf(stderr, "failed to initialize allegro!\n");
       return -1;
    }
+
+   outputLog.open("client.log", ios::app);
+   outputLog << "Started client on " << getCurrentDateTimeString() << endl;
 
    if (al_init_primitives_addon())
       cout << "Primitives initialized" << endl;
@@ -495,7 +500,10 @@ int main(int argc, char **argv)
    al_destroy_event_queue(event_queue);
    al_destroy_display(display);
    al_destroy_timer(timer);
- 
+
+   outputLog << "Stopped client on " << getCurrentDateTimeString() << endl;
+   outputLog.close();
+
    return 0;
 }
 

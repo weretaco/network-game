@@ -5,9 +5,9 @@
 
 #if defined WINDOWS
    #include <Windows.h>
-#elif defined LINUX
-   #include <ctime>
 #endif
+
+#include <ctime>
 
 using namespace std;
 
@@ -41,10 +41,11 @@ unsigned long long getCurrentMillis()
 }
 
 string getCurrentDateTimeString() {
+   ostringstream timeString;
+
    time_t millis = time(NULL);
    struct tm *time = localtime(&millis);
 
-   ostringstream timeString;
    timeString << time->tm_hour << ":" << time->tm_min << ":"<< time->tm_sec << " " << (time->tm_mon+1) << "/" << time->tm_mday << "/" << (time->tm_year+1900);
 
    return timeString.str();
