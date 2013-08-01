@@ -4,11 +4,14 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <cstring>
 #include <cmath>
 
 #include <vector>
 #include <map>
+
+#include <csignal>
 
 #include <sys/time.h>
 
@@ -36,15 +39,17 @@
 
 using namespace std;
 
+bool done;
+
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
 void damagePlayer(Player *p, int damage);
 
-void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock);
+void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock, ofstream& outputLog);
 
 // this should probably go somewhere in the common folder
 void error(const char *msg)
@@ -80,6 +85,10 @@ Player *findPlayerByAddr(map<unsigned int, Player> &m, const sockaddr_in &addr)
    return NULL;
 }
 
+void quit(int sig) {
+   done = true;
+}
+
 int main(int argc, char *argv[])
 {
    int sock, length, n;
@@ -91,9 +100,14 @@ int main(int argc, char *argv[])
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int unusedPlayerId = 1, unusedProjectileId = 1;
    int scoreBlue, scoreRed;
+   ofstream outputLog;
+
+   done = false;
 
    scoreBlue = 0;
    scoreRed = 0;
+
+   signal(SIGINT, quit);
 
    //SSL_load_error_strings();
    //ERR_load_BIO_strings();
@@ -103,6 +117,9 @@ int main(int argc, char *argv[])
       cerr << "ERROR, no port provided" << endl;
       exit(1);
    }
+
+   outputLog.open("server.log", ios::app);
+   outputLog << "Started server on " << getCurrentDateTimeString() << endl;
 
    WorldMap* gameMap = WorldMap::loadMapFromFile("../data/map.txt");
 
@@ -137,7 +154,7 @@ int main(int argc, char *argv[])
    bool broadcastResponse;
    timespec ts;
    int timeLastUpdated = 0, curTime = 0, timeLastBroadcast = 0;
-   while (true) {
+   while (!done) {
 
       usleep(5000);
 
@@ -149,8 +166,8 @@ int main(int argc, char *argv[])
       if (timeLastUpdated == 0 || (curTime-timeLastUpdated) >= 50) {
          timeLastUpdated = curTime;
 
-         msgProcessor.cleanAckedMessages();
-         msgProcessor.resendUnackedMessages(sock);
+         msgProcessor.cleanAckedMessages(&outputLog);
+         msgProcessor.resendUnackedMessages(sock, &outputLog);
 
          map<unsigned int, Player>::iterator it;
 
@@ -190,7 +207,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
                }
@@ -205,7 +222,7 @@ int main(int argc, char *argv[])
                map<unsigned int, Player>::iterator it2;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                      error("sendMessage");
                }
             }
@@ -318,7 +335,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
 
@@ -328,7 +345,7 @@ int main(int argc, char *argv[])
 
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
 
@@ -369,7 +386,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
                }
@@ -382,7 +399,7 @@ int main(int argc, char *argv[])
                   map<unsigned int, Player>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
                }
@@ -403,7 +420,7 @@ int main(int argc, char *argv[])
                map<unsigned int, Player>::iterator it2;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                      error("sendMessage");
                }
 
@@ -421,7 +438,7 @@ int main(int argc, char *argv[])
                         flagType = WorldMap::OBJECT_RED_FLAG;
 
                      if (flagType != WorldMap::OBJECT_NONE) {
-                        addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+                        addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
                      }
                   }
 
@@ -451,7 +468,7 @@ int main(int argc, char *argv[])
                cout << "Broadcasting player or projectile message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                      error("sendMessage");
                }
                cout << "Done broadcasting" << endl;
@@ -473,7 +490,7 @@ int main(int argc, char *argv[])
                cout << "Broadcasting REMOVE_PROJECTILE" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                      error("sendMessage");
                }
 
@@ -491,7 +508,7 @@ int main(int argc, char *argv[])
                      flagType = WorldMap::OBJECT_RED_FLAG;
 
                   if (flagType != WorldMap::OBJECT_NONE) {
-                     addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+                     addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
                   }
                }
 
@@ -501,7 +518,7 @@ int main(int argc, char *argv[])
                cout << "Sending a PLAYER message" << endl;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr)) < 0 )
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second.addr), &outputLog) < 0 )
                      error("sendMessage");
                }
             }
@@ -509,10 +526,10 @@ int main(int argc, char *argv[])
          }
       }
 
-      n = msgProcessor.receiveMessage(&clientMsg, sock, &from);
+      n = msgProcessor.receiveMessage(&clientMsg, sock, &from, &outputLog);
 
       if (n >= 0) {
-         broadcastResponse = processMessage(clientMsg, from, msgProcessor, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed);
+         broadcastResponse = processMessage(clientMsg, from, msgProcessor, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed, outputLog);
 
          if (broadcastResponse)
          {
@@ -522,7 +539,7 @@ int main(int argc, char *argv[])
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                cout << "Sent message back to " << it->second.name << endl;
-               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr), &outputLog) < 0 )
                   error("sendMessage");
             }
          }
@@ -530,16 +547,19 @@ int main(int argc, char *argv[])
          {
             cout << "Should be sending back the message" << endl;
 
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                error("sendMessage");
          }
       }
    }
 
+   outputLog << "Stopped server on " << getCurrentDateTimeString() << endl;
+   outputLog.close();
+
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed)
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog)
 {
    DataAccess da;
 
@@ -629,7 +649,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
                cout << "sending info about " << it->second.name  << endl;
                cout << "sending id " << it->second.id  << endl;
-               if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                   error("sendMessage");
             }
 
@@ -642,7 +662,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
                itObjects->serialize(serverMsg.buffer);
                cout << "sending item id " << itObjects->id  << endl;
-               if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                   error("sendMessage");
             }
 
@@ -650,7 +670,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             serverMsg.type = MSG_TYPE_SCORE;
             memcpy(serverMsg.buffer, &scoreBlue, 4);
             memcpy(serverMsg.buffer+4, &scoreRed, 4);
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &from) < 0 )
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                error("sendMessage");
 
             serverMsg.type = MSG_TYPE_PLAYER;
@@ -660,7 +680,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
                cout << "Sent message back to " << it->second.name << endl;
-               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr), &outputLog) < 0 )
                   error("sendMessage");
             }
 
@@ -700,7 +720,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                   flagType = WorldMap::OBJECT_RED_FLAG;
 
                if (flagType != WorldMap::OBJECT_NONE) {
-                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor, sock);
+                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
                }
             }
 
@@ -825,7 +845,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                   map<unsigned int, Player>::iterator it;
                   for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
 
@@ -861,7 +881,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          else if (mapPlayers[id].hasRedFlag)
             flagType = WorldMap::OBJECT_RED_FLAG;
 
-         addObjectToMap(flagType, mapPlayers[id].pos.x, mapPlayers[id].pos.y, gameMap, mapPlayers, msgProcessor, sock);
+         addObjectToMap(flagType, mapPlayers[id].pos.x, mapPlayers[id].pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
 
          mapPlayers[id].hasBlueFlag = false;
          mapPlayers[id].hasRedFlag = false;
@@ -941,7 +961,7 @@ void damagePlayer(Player *p, int damage) {
    }
 }
 
-void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock) {
+void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player>& mapPlayers, MessageProcessor &msgProcessor, int sock, ofstream& outputLog) {
    NETWORK_MSG serverMsg;
 
    gameMap->addObject(objectType, x, y);
@@ -953,7 +973,7 @@ void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gam
    map<unsigned int, Player>::iterator it;
    for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
    {
-      if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr)) < 0 )
+      if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second.addr), &outputLog) < 0 )
          error("sendMessage");
    }
 }

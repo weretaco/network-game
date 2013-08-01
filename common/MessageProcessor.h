@@ -23,10 +23,10 @@ public:
    MessageProcessor();
    ~MessageProcessor();
 
-   int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
-   int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest);
-   void resendUnackedMessages(int sock);
-   void cleanAckedMessages();
+   int sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest, ofstream* outputLog = NULL);
+   int receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest, ofstream* outputLog = NULL);
+   void resendUnackedMessages(int sock, ofstream* outputLog = NULL);
+   void cleanAckedMessages(ofstream* outputLog = NULL);
 
    map<unsigned int, map<unsigned long, MessageContainer> >& getSentMessages();
    map<unsigned int, MessageContainer>& getAckedMessages();

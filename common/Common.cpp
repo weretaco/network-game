@@ -1,25 +1,15 @@
 #include "Common.h"
 
-#include <iostream>
+#include <sstream>
 #include <cmath>
 
 #if defined WINDOWS
    #include <Windows.h>
 #elif defined LINUX
-   #include <time.h>
+   #include <ctime>
 #endif
 
 using namespace std;
-
-/*
-FLOAT_POSITION POSITION::toFloat() {
-   FLOAT_POSITION floatPosition;
-   floatPosition.x = x;
-   floatPosition.y = y;
-
-   return floatPosition;
-}
-*/
 
 void set_nonblock(int sock)
 {
@@ -48,6 +38,16 @@ unsigned long long getCurrentMillis()
    #endif
 
    return numMilliseconds;
+}
+
+string getCurrentDateTimeString() {
+   time_t millis = time(NULL);
+   struct tm *time = localtime(&millis);
+
+   ostringstream timeString;
+   timeString << time->tm_hour << ":" << time->tm_min << ":"<< time->tm_sec << " " << (time->tm_mon+1) << "/" << time->tm_mday << "/" << (time->tm_year+1900);
+
+   return timeString.str();
 }
 
 float posDistance(FLOAT_POSITION pos1, FLOAT_POSITION pos2) {

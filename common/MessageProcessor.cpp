@@ -1,6 +1,7 @@
 #include "MessageProcessor.h"
 
 #include <iostream>
+#include <fstream>
 
 #include "Common.h"
 
@@ -11,12 +12,14 @@ MessageProcessor::MessageProcessor() {
 MessageProcessor::~MessageProcessor() {
 }
 
-int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest) {
+int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest, ofstream* outputLog) {
    cout << "Sending message of type " << msg->type << endl;
 
    msg->id = ++lastUsedId;
    MessageContainer message(*msg, *dest);
-   sentMessages[msg->id][dest->sin_addr.s_addr] = message;
+
+   if (outputLog)
+      (*outputLog) << "Sending message (id " << msg->id << ") of type " << MessageContainer::getMsgTypeString(msg->type) << endl;
 
    sentMessages[msg->id][dest->sin_addr.s_addr] = message;
 
@@ -25,7 +28,7 @@ int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in
    return ret;
 }
 
-int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source) {
+int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source, ofstream* outputLog) {
    socklen_t socklen = sizeof(struct sockaddr_in);
 
    // assume we don't care about the value of socklen
@@ -39,6 +42,8 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       if (!sentMessages[msg->id][source->sin_addr.s_addr].getAcked()) {
          sentMessages[msg->id][source->sin_addr.s_addr].setAcked(true);
          sentMessages[msg->id][source->sin_addr.s_addr].setTimeAcked(getCurrentMillis());
+         if (outputLog)
+            (*outputLog) << "Received ack for message id " << msg->id << endl;
       }
 
       return -1; // don't do any further processing
@@ -48,8 +53,11 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       if (ackedMessages.find(msg->id) != ackedMessages.end()) {
          isDuplicate = true;
          cout << "Got duplicate of type " << msg->type << endl;
-      }else
+      }else {
          cout << "Got message of type " << msg->type << endl;
+         if (outputLog)
+            (*outputLog) << "Received message (id " << msg->id << ") of type " << MessageContainer::getMsgTypeString(msg->type) << endl;
+      }
 
       ackedMessages[msg->id] = MessageContainer(*msg, *source);
       ackedMessages[msg->id].setAcked(true);
@@ -68,7 +76,7 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    return ret;
 }
 
-void MessageProcessor::resendUnackedMessages(int sock) {
+void MessageProcessor::resendUnackedMessages(int sock, ofstream* outputLog) {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
    map<unsigned long, MessageContainer>::iterator it2;
    map<unsigned long, MessageContainer> sentMsg;
@@ -83,7 +91,7 @@ void MessageProcessor::resendUnackedMessages(int sock) {
    }
 }
 
-void MessageProcessor::cleanAckedMessages() {
+void MessageProcessor::cleanAckedMessages(ofstream* outputLog) {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it = sentMessages.begin();
    map<unsigned long, MessageContainer>::iterator it2;
 
@@ -91,9 +99,11 @@ void MessageProcessor::cleanAckedMessages() {
       it2 = it->second.begin();
       while (it2 != it->second.end()) {
          if (it2->second.getAcked()) {
-            if ((getCurrentMillis() - it2->second.getTimeAcked()) > 1000)
+            if ((getCurrentMillis() - it2->second.getTimeAcked()) > 1000) {
+               if (outputLog)
+                  (*outputLog) << "Removing id " << it2->second.getMessage()->id << " from the acked record" << endl;
                it->second.erase(it2++);
-            else
+            }else
                it2++;
          }else
             it2++;
