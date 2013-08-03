@@ -111,6 +111,7 @@ chat chatConsole, debugConsole;
 bool debugging;
 
 MessageProcessor msgProcessor;
+ofstream outputLog;
 
 int main(int argc, char **argv)
 {
@@ -126,7 +127,6 @@ int main(int argc, char **argv)
    int scoreBlue, scoreRed;
    bool fullscreen = false;
    debugging = false;
-   ofstream outputLog;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
                if (state == STATE_LOGIN) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
-                  msgProcessor.sendMessage(&msgTo, sock, &server);
+                  msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
@@ -346,7 +346,7 @@ int main(int argc, char **argv)
                      if (flagType != WorldMap::OBJECT_NONE) {
                         msgTo.type = MSG_TYPE_DROP_FLAG;
                         memcpy(msgTo.buffer, &curPlayerId, 4);
-                        msgProcessor.sendMessage(&msgTo, sock, &server);
+                        msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                      }
                   }
                }
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
                   memcpy(msgTo.buffer+4, &pos.x, 4);
                   memcpy(msgTo.buffer+8, &pos.y, 4);
 
-                  msgProcessor.sendMessage(&msgTo, sock, &server);
+                  msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                }
                else
                   cout << "Invalid point: User did not click on the map" << endl;
@@ -396,22 +396,22 @@ int main(int argc, char **argv)
                         memcpy(msgTo.buffer, &curPlayerId, 4);
                         memcpy(msgTo.buffer+4, &target->id, 4);
 
-                        msgProcessor.sendMessage(&msgTo, sock, &server);
+                        msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                      }
                   }
             }
          }
       }
 
-      if (msgProcessor.receiveMessage(&msgFrom, sock, &from) >= 0)
+      if (msgProcessor.receiveMessage(&msgFrom, sock, &from, &outputLog) >= 0)
          processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
          redraw = false;
 
-         msgProcessor.resendUnackedMessages(sock);
-         //msgProcessor.cleanAckedMessages();
+         msgProcessor.resendUnackedMessages(sock, &outputLog);
+         //msgProcessor.cleanAckedMessages(&outputLog);
 
          if (debugging && wndCurrent == wndMain)
             wndMainDebug->draw(display);
@@ -957,7 +957,7 @@ void registerAccount()
    strcpy(msgTo.buffer+username.size()+1, password.c_str());
    memcpy(msgTo.buffer+username.size()+password.size()+2, &playerClass, 4);
 
-   msgProcessor.sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
 
 void login()
@@ -974,7 +974,7 @@ void login()
    strcpy(msgTo.buffer, strUsername.c_str());
    strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 
    state = STATE_LOGIN;
 }
@@ -988,7 +988,7 @@ void logout()
 
    strcpy(msgTo.buffer, username.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
 
 void quit()
@@ -1006,7 +1006,7 @@ void sendChatMessage()
 
    strcpy(msgTo.buffer, msg.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server);
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
 
 void toggleDebugging()
@@ -1031,15 +1031,14 @@ int getRefreshRate(int width, int height)
 
 void drawMessageStatus(ALLEGRO_FONT* font)
 {
-   int clientMsgOffset = 0;
-   int serverMsgOffset = 650;
+   int clientMsgOffset = 5;
+   int serverMsgOffset = 950;
 
-   al_draw_text(font, al_map_rgb(0, 255, 255), 5, 43, ALLEGRO_ALIGN_LEFT, "ID");
-   al_draw_text(font, al_map_rgb(0, 255, 255), 25, 43, ALLEGRO_ALIGN_LEFT, "Type");
-   al_draw_text(font, al_map_rgb(0, 255, 255), 245, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 0+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 20+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 240+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
 
-   al_draw_text(font, al_map_rgb(0, 255, 255), 5+serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
-   al_draw_text(font, al_map_rgb(0, 255, 255), 25+serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
+   al_draw_text(font, al_map_rgb(0, 255, 255), serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
 
    map<unsigned int, map<unsigned long, MessageContainer> >& sentMessages = msgProcessor.getSentMessages();
    int id, type;
@@ -1065,27 +1064,26 @@ void drawMessageStatus(ALLEGRO_FONT* font)
          ossAcked.str("");;
          ossAcked << boolalpha << acked;
 
-         al_draw_text(font, al_map_rgb(0, 255, 0), 5, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
-         al_draw_text(font, al_map_rgb(0, 255, 0), 25, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
-         al_draw_text(font, al_map_rgb(0, 255, 0), 245, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossAcked.str().c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 20+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 240+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossAcked.str().c_str());
 
          msgCount++;
       }
    }
 
-   map<unsigned int, MessageContainer>& ackedMessages = msgProcessor.getAckedMessages();
-   map<unsigned int, MessageContainer>::iterator it3;
+   if (msgProcessor.getAckedMessages().size() > 0) {
+      map<unsigned int, unsigned long long> ackedMessages = msgProcessor.getAckedMessages()[0];
+      map<unsigned int, unsigned long long>::iterator it3;
 
-   msgCount = 0;
-   for (it3 = ackedMessages.begin(); it3 != ackedMessages.end(); it3++) {
-      ossId.str("");;
-      ossId << it3->first;
+      msgCount = 0;
+      for (it3 = ackedMessages.begin(); it3 != ackedMessages.end(); it3++) {
+         ossId.str("");;
+         ossId << it3->first;
 
-      string typeStr = MessageContainer::getMsgTypeString(it3->second.getMessage()->type);
+         al_draw_text(font, al_map_rgb(255, 0, 0), 25+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
 
-      al_draw_text(font, al_map_rgb(255, 0, 0), 5+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
-      al_draw_text(font, al_map_rgb(255, 0, 0), 25+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
-
-      msgCount++;
+         msgCount++;
+      }
    }
 }
