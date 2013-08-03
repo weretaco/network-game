@@ -14,8 +14,8 @@ private:
    // map from message ids to maps from player addresses to message info
    map<unsigned int, map<unsigned long, MessageContainer> > sentMessages;
 
-   // map from message ids to the time each mesage was acked
-   map<unsigned int, MessageContainer> ackedMessages;
+   // map from player address to map from message id to time accked
+   map<unsigned long, map<unsigned int, unsigned long long> > ackedMessages;
 
    unsigned long pid;
 
@@ -29,7 +29,7 @@ public:
    void cleanAckedMessages(ofstream* outputLog = NULL);
 
    map<unsigned int, map<unsigned long, MessageContainer> >& getSentMessages();
-   map<unsigned int, MessageContainer>& getAckedMessages();
+   map<unsigned long, map<unsigned int, unsigned long long> >& getAckedMessages();
 };
 
 #endif

@@ -49,19 +49,20 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
       return -1; // don't do any further processing
    }else {
       bool isDuplicate = false;
+      map<unsigned int, unsigned long long>& ackedPlayerMessages = ackedMessages[source->sin_addr.s_addr];
 
-      if (ackedMessages.find(msg->id) != ackedMessages.end()) {
+      if (ackedPlayerMessages.find(msg->id) != ackedPlayerMessages.end()) {
          isDuplicate = true;
          cout << "Got duplicate of type " << msg->type << endl;
+         if (outputLog)
+            (*outputLog) << "Received duplicate (id " << msg->id << ") of type " << MessageContainer::getMsgTypeString(msg->type) << endl;
       }else {
          cout << "Got message of type " << msg->type << endl;
          if (outputLog)
             (*outputLog) << "Received message (id " << msg->id << ") of type " << MessageContainer::getMsgTypeString(msg->type) << endl;
       }
 
-      ackedMessages[msg->id] = MessageContainer(*msg, *source);
-      ackedMessages[msg->id].setAcked(true);
-      ackedMessages[msg->id].setTimeAcked(getCurrentMillis());
+      ackedPlayerMessages[msg->id] = getCurrentMillis();
 
       NETWORK_MSG ack;
       ack.id = msg->id;
@@ -115,22 +116,26 @@ void MessageProcessor::cleanAckedMessages(ofstream* outputLog) {
          it++;
    }
 
-   /*
-   map<unsigned int, unsigned long long>::iterator it3 = ackedMessages.begin();
+   map<unsigned long, map<unsigned int, unsigned long long> >::iterator it3 = ackedMessages.begin();
+   map<unsigned int, unsigned long long>::iterator it4;
 
+   // somehow want to delete the inner map once that player logs out
    while (it3 != ackedMessages.end()) {
-      if ((getCurrentMillis() - it3->second) > 500)
-         ackedMessages.erase(it3++);
-      else
-         it3++;
+      it4 = it3->second.begin();
+      while (it4 != it3->second.end()) {
+         if ((getCurrentMillis() - it4->second) > 500)
+            it3->second.erase(it4++);
+         else
+            it4++;
+      }
+      it3++;
    }
-   */
 }
 
 map<unsigned int, map<unsigned long, MessageContainer> >& MessageProcessor::getSentMessages() {
    return this->sentMessages;
 }
 
-map<unsigned int, MessageContainer>& MessageProcessor::getAckedMessages() {
+map<unsigned long, map<unsigned int, unsigned long long> >& MessageProcessor::getAckedMessages() {
    return this->ackedMessages;
 }
