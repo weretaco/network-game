@@ -30,6 +30,9 @@ using namespace std;
 #define MSG_TYPE_ATTACK            14
 #define MSG_TYPE_PROJECTILE        15
 #define MSG_TYPE_REMOVE_PROJECTILE 16
+#define MSG_TYPE_CREATE_GAME       17
+#define MSG_TYPE_JOIN_GAME         18
+#define MSG_TYPE_LEAVE_GAME        19
 
 typedef struct
 {
