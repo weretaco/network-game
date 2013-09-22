@@ -20,7 +20,7 @@ using namespace std;
 class Game {
 private:
    int id;
-   string name
+   string name;
    map<int, Player*> players;
 
 public:
