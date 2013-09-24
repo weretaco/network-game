@@ -324,14 +324,14 @@ int main(int argc, char **argv)
                doexit = true;
                break;
             case ALLEGRO_KEY_S:  // pickup an item next to you
-               if (state == STATE_LOBBY) {
+               if (state == STATE_GAME) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
                   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
-               if (state == STATE_LOBBY) {
+               if (state == STATE_GAME) {
                   // find the current player in the player list
                   map<unsigned int, Player>::iterator it;
                   Player* p = NULL;
