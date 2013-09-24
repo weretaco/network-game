@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <crypt.h>
 
 using namespace std;
 

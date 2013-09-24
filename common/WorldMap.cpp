@@ -226,6 +226,7 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
          getline(file, line);
          if (line.size() > 0)
          {
+            cout << "row: " << row << endl;
             cout << "line: " << line << endl;
 
             istringstream iss(line);
@@ -240,8 +241,10 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                for(int x=0; x<width; x++)
                {
                   getline(iss, token, ',');
-                  cout << "token: " << token << endl;
                   type = atoi(token.c_str());
+
+                  cout << "x: " << x << endl;
+                  cout << "token: " << token << endl;
                   cout << "type: " << type << endl;
 
                   switch(type) {
@@ -256,9 +259,6 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                      break;
                   }
 
-                  cout << "About to set element" << endl;
-                  cout << "x: " << x << endl;
-                  cout << "row: " << row << endl;
                   m->setElement(x, row, terrain);
                }
             }else {
