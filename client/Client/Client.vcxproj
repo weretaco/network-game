@@ -67,6 +67,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\Common.cpp" />
+    <ClCompile Include="..\..\common\Game.cpp" />
     <ClCompile Include="..\..\common\MessageContainer.cpp" />
     <ClCompile Include="..\..\common\MessageProcessor.cpp" />
     <ClCompile Include="..\..\common\Projectile.cpp" />
@@ -84,6 +85,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\common\Common.h" />
     <ClInclude Include="..\..\common\Compiler.h" />
+    <ClInclude Include="..\..\common\Game.h" />
     <ClInclude Include="..\..\common\MessageContainer.h" />
     <ClInclude Include="..\..\common\MessageProcessor.h" />
     <ClInclude Include="..\..\common\Projectile.h" />

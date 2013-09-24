@@ -75,7 +75,8 @@ const int SCREEN_H = 768;
 
 enum STATE {
    STATE_START,
-   STATE_LOGIN // this means you're already logged in
+   STATE_LOBBY,
+   STATE_GAME
 };
 
 int state;
@@ -84,8 +85,9 @@ bool doexit;
 
 Window* wndLogin;
 Window* wndRegister;
-Window* wndMain;
-Window* wndMainDebug;
+Window* wndLobby;
+Window* wndGame;
+Window* wndGameDebug;
 Window* wndCurrent;
 
 // wndLogin
@@ -99,7 +101,7 @@ Textbox* txtPasswordRegister;
 RadioButtonList* rblClasses;
 TextLabel* lblRegisterStatus;
 
-// wndMain
+// wndGame
 Textbox* txtChat;
 
 int sock;
@@ -237,19 +239,23 @@ int main(int argc, char **argv)
 
    cout << "Created register screen" << endl;
 
-   wndMain = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndMain->addComponent(new Textbox(95, 40, 300, 20, font));
-   wndMain->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
-   wndMain->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
-   wndMain->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+   wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
 
-   txtChat = (Textbox*)wndMain->getComponent(0);
+   cout << "Created lobby screen" << endl;
 
-   wndMainDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndMainDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
-   wndMainDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+   wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndGame->addComponent(new Textbox(95, 40, 300, 20, font));
+   wndGame->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
+   wndGame->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
+   wndGame->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
 
-   cout << "Created main screen" << endl;
+   txtChat = (Textbox*)wndGame->getComponent(0);
+
+   wndGameDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndGameDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
+   wndGameDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+
+   cout << "Created game screen" << endl;
 
    goToLoginScreen();
  
@@ -318,14 +324,14 @@ int main(int argc, char **argv)
                doexit = true;
                break;
             case ALLEGRO_KEY_S:  // pickup an item next to you
-               if (state == STATE_LOGIN) {
+               if (state == STATE_LOBBY) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
                   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
-               if (state == STATE_LOGIN) {
+               if (state == STATE_LOBBY) {
                   // find the current player in the player list
                   map<unsigned int, Player>::iterator it;
                   Player* p = NULL;
@@ -354,7 +360,12 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         if(wndCurrent == wndMain) {
+         if(wndCurrent == wndLobby) {
+            if (ev.mouse.button == 1) { // left click
+               state = STATE_GAME;
+               wndCurrent = wndGame;
+            }
+         }else if(wndCurrent == wndGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -413,12 +424,12 @@ int main(int argc, char **argv)
          msgProcessor.resendUnackedMessages(sock, &outputLog);
          //msgProcessor.cleanAckedMessages(&outputLog);
 
-         if (debugging && wndCurrent == wndMain)
-            wndMainDebug->draw(display);
+         if (debugging && wndCurrent == wndGame)
+            wndGameDebug->draw(display);
          else
             wndCurrent->draw(display);
 
-         if(wndCurrent == wndMain) {
+         if(wndCurrent == wndGame) {
             if (!debugging)
                chatConsole.draw(font, al_map_rgb(255,255,255));
 
@@ -493,7 +504,10 @@ int main(int argc, char **argv)
    shutdownWinSock();
    
    delete wndLogin;
-   delete wndMain;
+   delete wndRegister;
+   delete wndLobby;
+   delete wndGame;
+   delete wndGameDebug;
 
    delete gameMap;
 
@@ -599,7 +613,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
          break;
       }
-      case STATE_LOGIN:
+      case STATE_LOBBY:
+      case STATE_GAME:
       {
          switch(msg.type)
          {
@@ -621,7 +636,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                }
                else
                {
-                  wndCurrent = wndMain;
+                  wndCurrent = wndLobby;
                   
                   Player p("", "");
                   p.deserialize(msg.buffer);
@@ -688,7 +703,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received object message in STATE_LOGIN." << endl;
+               cout << "Received object message in STATE_LOBBY." << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
@@ -778,7 +793,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             default:
             {
-               cout << "(STATE_LOGIN) Received invlaid message of type " << msg.type << endl;
+               cout << "(STATE_LOBBY) Received invlaid message of type " << msg.type << endl;
                break;
             }
          }
@@ -976,7 +991,7 @@ void login()
 
    msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 
-   state = STATE_LOGIN;
+   state = STATE_LOBBY;
 }
 
 void logout()

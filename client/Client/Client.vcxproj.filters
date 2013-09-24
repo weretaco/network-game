@@ -69,6 +69,9 @@
     <ClCompile Include="..\..\common\MessageContainer.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\Game.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chat.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\MessageContainer.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Game.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
