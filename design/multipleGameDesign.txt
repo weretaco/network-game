@@ -1,0 +1,7 @@
+When a user logs in, he currently automatically joins a game.
+
+Instead, the user should join a games lobby where he sees a chat, a button to create a new game, all created games and  how many people have joined each one.
+
+The first step in this process is to create a separate Game class that just holds a list of players and lets them join and quit and slightly modify the gui.
+
+There should be a new LOBBY state the player goes to after logging in, which lets him create a game and view all created games. There should also be a button to let him go to the current "global" game.
