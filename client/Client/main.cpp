@@ -55,8 +55,9 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
 POSITION screenToMap(POSITION pos);
 POSITION mapToScreen(POSITION pos);
 int getRefreshRate(int width, int height);
+void drawMessageStatus(ALLEGRO_FONT* font);
 
-// callbacks
+// Callback declarations
 void goToLoginScreen();
 void goToRegisterScreen();
 void registerAccount();
@@ -65,7 +66,8 @@ void logout();
 void quit();
 void sendChatMessage();
 void toggleDebugging();
-void drawMessageStatus(ALLEGRO_FONT* font);
+void joinGame();
+void createGame();
 
 void error(const char *);
 
@@ -100,6 +102,10 @@ Textbox* txtUsernameRegister;
 Textbox* txtPasswordRegister;
 RadioButtonList* rblClasses;
 TextLabel* lblRegisterStatus;
+
+// wndLobby
+Textbox* txtJoinGame;
+Textbox* txtCreateGame;
 
 // wndGame
 Textbox* txtChat;
@@ -240,6 +246,16 @@ int main(int argc, char **argv)
    cout << "Created register screen" << endl;
 
    wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+   wndLobby->addComponent(new TextLabel(SCREEN_W*1/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
+   wndLobby->addComponent(new Textbox(SCREEN_W*1/4+4, 40, 100, 20, font));
+   wndLobby->addComponent(new Button(SCREEN_W*1/4-100, 80, 200, 20, font, "Join Existing Game", joinGame));
+   wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
+   wndLobby->addComponent(new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font));
+   wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame));
+
+   txtJoinGame = (Textbox*)wndLobby->getComponent(2);
+   txtCreateGame = (Textbox*)wndLobby->getComponent(5);
 
    cout << "Created lobby screen" << endl;
 
@@ -362,6 +378,8 @@ int main(int argc, char **argv)
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
          if(wndCurrent == wndLobby) {
             if (ev.mouse.button == 1) { // left click
+               txtJoinGame->clear();
+               txtCreateGame->clear();
                state = STATE_GAME;
                wndCurrent = wndGame;
             }
@@ -921,6 +939,82 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
    }
 }
 
+int getRefreshRate(int width, int height)
+{
+   int numRefreshRates = al_get_num_display_modes();
+   ALLEGRO_DISPLAY_MODE displayMode;
+
+   for(int i=0; i<numRefreshRates; i++) {
+      al_get_display_mode(i, &displayMode);
+
+      if (displayMode.width == width && displayMode.height == height)
+         return displayMode.refresh_rate;
+   }
+
+   return 0;
+}
+
+void drawMessageStatus(ALLEGRO_FONT* font)
+{
+   int clientMsgOffset = 5;
+   int serverMsgOffset = 950;
+
+   al_draw_text(font, al_map_rgb(0, 255, 255), 0+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 20+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
+   al_draw_text(font, al_map_rgb(0, 255, 255), 240+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
+
+   al_draw_text(font, al_map_rgb(0, 255, 255), serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
+
+   map<unsigned int, map<unsigned long, MessageContainer> >& sentMessages = msgProcessor.getSentMessages();
+   int id, type;
+   bool acked;
+   ostringstream ossId, ossAcked;
+
+   map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
+
+   int msgCount = 0;
+   for (it = sentMessages.begin(); it != sentMessages.end(); it++) {
+      map<unsigned long, MessageContainer> playerMessage = it->second;
+      map<unsigned long, MessageContainer>::iterator it2;
+      for (it2 = playerMessage.begin(); it2 !=  playerMessage.end(); it2++) {
+
+         id = it->first;
+         ossId.str("");;
+         ossId << id;
+
+         type = it2->second.getMessage()->type;
+         string typeStr = MessageContainer::getMsgTypeString(type);
+
+         acked = it2->second.getAcked();
+         ossAcked.str("");;
+         ossAcked << boolalpha << acked;
+
+         al_draw_text(font, al_map_rgb(0, 255, 0), clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 20+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
+         al_draw_text(font, al_map_rgb(0, 255, 0), 240+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossAcked.str().c_str());
+
+         msgCount++;
+      }
+   }
+
+   if (msgProcessor.getAckedMessages().size() > 0) {
+      map<unsigned int, unsigned long long> ackedMessages = msgProcessor.getAckedMessages()[0];
+      map<unsigned int, unsigned long long>::iterator it3;
+
+      msgCount = 0;
+      for (it3 = ackedMessages.begin(); it3 != ackedMessages.end(); it3++) {
+         ossId.str("");;
+         ossId << it3->first;
+
+         al_draw_text(font, al_map_rgb(255, 0, 0), 25+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
+
+         msgCount++;
+      }
+   }
+}
+
+// Callback definitions
+
 void goToRegisterScreen()
 {
    txtUsernameRegister->clear();
@@ -996,8 +1090,19 @@ void login()
 
 void logout()
 {
-   txtChat->clear();
-   chatConsole.clear();
+   switch(state) {
+   case STATE_LOBBY:
+      txtJoinGame->clear();
+      txtCreateGame->clear();
+      break;
+   case STATE_GAME:
+      txtChat->clear();
+      chatConsole.clear();
+      break;
+   default:
+      cout << "Logout called from invalid state: " << state << endl;
+      break;
+   }
 
    msgTo.type = MSG_TYPE_LOGOUT;
 
@@ -1029,76 +1134,12 @@ void toggleDebugging()
    debugging = !debugging;
 }
 
-int getRefreshRate(int width, int height)
+void joinGame()
 {
-   int numRefreshRates = al_get_num_display_modes();
-   ALLEGRO_DISPLAY_MODE displayMode;
-
-   for(int i=0; i<numRefreshRates; i++) {
-      al_get_display_mode(i, &displayMode);
-
-      if (displayMode.width == width && displayMode.height == height)
-         return displayMode.refresh_rate;
-   }
-
-   return 0;
+   cout << "Joining game" << endl;
 }
 
-void drawMessageStatus(ALLEGRO_FONT* font)
+void createGame()
 {
-   int clientMsgOffset = 5;
-   int serverMsgOffset = 950;
-
-   al_draw_text(font, al_map_rgb(0, 255, 255), 0+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
-   al_draw_text(font, al_map_rgb(0, 255, 255), 20+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
-   al_draw_text(font, al_map_rgb(0, 255, 255), 240+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
-
-   al_draw_text(font, al_map_rgb(0, 255, 255), serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
-
-   map<unsigned int, map<unsigned long, MessageContainer> >& sentMessages = msgProcessor.getSentMessages();
-   int id, type;
-   bool acked;
-   ostringstream ossId, ossAcked;
-
-   map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
-
-   int msgCount = 0;
-   for (it = sentMessages.begin(); it != sentMessages.end(); it++) {
-      map<unsigned long, MessageContainer> playerMessage = it->second;
-      map<unsigned long, MessageContainer>::iterator it2;
-      for (it2 = playerMessage.begin(); it2 !=  playerMessage.end(); it2++) {
-
-         id = it->first;
-         ossId.str("");;
-         ossId << id;
-
-         type = it2->second.getMessage()->type;
-         string typeStr = MessageContainer::getMsgTypeString(type);
-
-         acked = it2->second.getAcked();
-         ossAcked.str("");;
-         ossAcked << boolalpha << acked;
-
-         al_draw_text(font, al_map_rgb(0, 255, 0), clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
-         al_draw_text(font, al_map_rgb(0, 255, 0), 20+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, typeStr.c_str());
-         al_draw_text(font, al_map_rgb(0, 255, 0), 240+clientMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossAcked.str().c_str());
-
-         msgCount++;
-      }
-   }
-
-   if (msgProcessor.getAckedMessages().size() > 0) {
-      map<unsigned int, unsigned long long> ackedMessages = msgProcessor.getAckedMessages()[0];
-      map<unsigned int, unsigned long long>::iterator it3;
-
-      msgCount = 0;
-      for (it3 = ackedMessages.begin(); it3 != ackedMessages.end(); it3++) {
-         ossId.str("");;
-         ossId << it3->first;
-
-         al_draw_text(font, al_map_rgb(255, 0, 0), 25+serverMsgOffset, 60+15*msgCount, ALLEGRO_ALIGN_LEFT, ossId.str().c_str());
-
-         msgCount++;
-      }
-   }
+   cout << "Creating game" << endl;
 }
