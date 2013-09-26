@@ -620,8 +620,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
       {
          cout << "Got login message" << endl;
 
-         serverMsg.type = MSG_TYPE_LOGIN;
-         
          string username(clientMsg.buffer);
          string password(strchr(clientMsg.buffer, '\0')+1);
 
@@ -637,8 +635,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
          else
          {
-            serverMsg.type = MSG_TYPE_PLAYER;
-
             updateUnusedPlayerId(unusedPlayerId, mapPlayers);
             p->id = unusedPlayerId;
             cout << "new player id: " << p->id << endl;
@@ -646,6 +642,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
             // choose a random team (either 0 or 1)
             p->team = rand() % 2;
+
+            serverMsg.type = MSG_TYPE_PLAYER;
 
             // tell the new player about all the existing players
             cout << "Sending other players to new player" << endl;
@@ -692,10 +690,10 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                   error("sendMessage");
             }
 
-            serverMsg.type = MSG_TYPE_LOGIN;
             mapPlayers[unusedPlayerId] = *p;
          }
 
+         serverMsg.type = MSG_TYPE_LOGIN;
          delete(p);
 
          break;
@@ -954,6 +952,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          // tell the new player about all the existing players
          cout << "Sending other players to new player" << endl;
+         serverMsg.type = MSG_TYPE_LOGIN;
 
          map<unsigned int, Player*>::iterator it;
          for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
@@ -1032,6 +1031,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          // tell the new player about all the existing players
          cout << "Sending other players to new player" << endl;
+         serverMsg.type = MSG_TYPE_LOGIN;
 
          map<unsigned int, Player*>::iterator it;
          for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
