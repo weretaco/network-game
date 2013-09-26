@@ -934,9 +934,67 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
+         Player* p = findPlayerByAddr(mapPlayers, from);
+
          mapGames[gameName] = Game(gameName);
-         mapGames[gameName].addPlayer(findPlayerByAddr(mapPlayers, from));
-         int numPlayers = mapGames[gameName].getNumPlayers();
+         Game& g = mapGames[gameName];
+         g.addPlayer(p);
+         int numPlayers = g.getNumPlayers();
+
+         map<unsigned int, Player*>& otherPlayers = g.getPlayers();
+
+         // choose a random team (either 0 or 1)
+         p->team = rand() % 2;
+
+         // tell the new player about all the existing players
+         cout << "Sending other players to new player" << endl;
+
+         map<unsigned int, Player*>::iterator it;
+         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
+         {
+            it->second->serialize(serverMsg.buffer);
+
+            cout << "sending info about " << it->second->name  << endl;
+            cout << "sending id " << it->second->id  << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+               error("sendMessage");
+         }
+
+         // tell the new player about all map objects
+         // (currently just the flags)
+
+         serverMsg.type = MSG_TYPE_OBJECT;
+         vector<WorldMap::Object>* vctObjects = g.getMap()->getObjects();
+         vector<WorldMap::Object>::iterator itObjects;
+         cout << "sending items" << endl;
+         for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+            itObjects->serialize(serverMsg.buffer);
+            cout << "sending item id " << itObjects->id  << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+               error("sendMessage");
+         }
+
+         // send the current score
+         serverMsg.type = MSG_TYPE_SCORE;
+
+         int game_blueScore = g.getBlueScore();
+         int game_redScore = g.getRedScore();
+         memcpy(serverMsg.buffer, &game_blueScore, 4);
+         memcpy(serverMsg.buffer+4, &game_redScore, 4);
+
+         if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+            error("sendMessage");
+
+         serverMsg.type = MSG_TYPE_PLAYER;
+         p->serialize(serverMsg.buffer);
+         cout << "Should be broadcasting the message" << endl;
+
+         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
+         {
+            cout << "Sent message back to " << it->second->name << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
+               error("sendMessage");
+         }
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);
@@ -952,8 +1010,68 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
-         mapGames[gameName].addPlayer(findPlayerByAddr(mapPlayers, from));
-         int numPlayers = mapGames[gameName].getNumPlayers();
+         Player* p = findPlayerByAddr(mapPlayers, from);
+
+         Game& g = mapGames[gameName];
+         if (!g.addPlayer(p))
+            cout << "Player " << p->name << " trying to join a game he's already in" << endl;
+         int numPlayers = g.getNumPlayers();
+
+         map<unsigned int, Player*>& otherPlayers = g.getPlayers();
+
+         // choose a random team (either 0 or 1)
+         p->team = rand() % 2;
+
+         // tell the new player about all the existing players
+         cout << "Sending other players to new player" << endl;
+
+         map<unsigned int, Player*>::iterator it;
+         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
+         {
+            it->second->serialize(serverMsg.buffer);
+
+            cout << "sending info about " << it->second->name  << endl;
+            cout << "sending id " << it->second->id  << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+               error("sendMessage");
+         }
+
+         // tell the new player about all map objects
+         // (currently just the flags)
+
+         serverMsg.type = MSG_TYPE_OBJECT;
+         vector<WorldMap::Object>* vctObjects = g.getMap()->getObjects();
+         vector<WorldMap::Object>::iterator itObjects;
+         cout << "sending items" << endl;
+         for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+            itObjects->serialize(serverMsg.buffer);
+            cout << "sending item id " << itObjects->id  << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+               error("sendMessage");
+         }
+
+
+         // send the current score
+         serverMsg.type = MSG_TYPE_SCORE;
+
+         int game_blueScore = g.getBlueScore();
+         int game_redScore = g.getRedScore();
+         memcpy(serverMsg.buffer, &game_blueScore, 4);
+         memcpy(serverMsg.buffer+4, &game_redScore, 4);
+
+         if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+            error("sendMessage");
+
+         serverMsg.type = MSG_TYPE_PLAYER;
+         p->serialize(serverMsg.buffer);
+         cout << "Should be broadcasting the message" << endl;
+
+         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
+         {
+            cout << "Sent message back to " << it->second->name << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
+               error("sendMessage");
+         }
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);

@@ -14,14 +14,18 @@
 #include <map>
 
 #include "Player.h"
+#include "WorldMap.h"
 
 using namespace std;
 
 class Game {
 private:
-   int id;
+   unsigned int id;
    string name;
-   map<int, Player*> players;
+   map<unsigned int, Player*> players;
+   WorldMap* worldMap;
+   int blueScore;
+   int redScore;
 
 public:
    Game();
@@ -30,10 +34,16 @@ public:
    ~Game();
 
    int getNumPlayers();
+   map<unsigned int, Player*>& getPlayers();
+   int getBlueScore();
+   int getRedScore();
+   WorldMap* getMap();
 
-   void setId(int id);
+   void setId(unsigned int id);
    bool addPlayer(Player* p);
-   bool removePlayer(int id);
+   bool removePlayer(unsigned int id);
+   void setBlueScore(int score);
+   void setRedScore(int score);
 };
 
 #endif

@@ -193,7 +193,7 @@ WorldMap* WorldMap::createDefaultMap()
 
 WorldMap* WorldMap::loadMapFromFile(string filename)
 {
-    WorldMap* m = NULL;
+   WorldMap* m = NULL;
 
    ifstream file(filename.c_str());
 
