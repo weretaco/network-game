@@ -79,7 +79,8 @@ const int SCREEN_H = 768;
 enum STATE {
    STATE_START,
    STATE_LOBBY,
-   STATE_GAME
+   STATE_GAME,
+   STATE_NEW_GAME
 };
 
 int state;
@@ -119,6 +120,7 @@ string username;
 chat chatConsole, debugConsole;
 bool debugging;
 map<string, int> mapGames;
+Game* game;
 
 MessageProcessor msgProcessor;
 ofstream outputLog;
@@ -129,14 +131,16 @@ int main(int argc, char **argv)
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
    bool key[4] = { false, false, false, false };
-   bool redraw = true;
-   doexit = false;
    map<unsigned int, Player> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
    int scoreBlue, scoreRed;
-   bool fullscreen = false;
+
+   doexit = false;
    debugging = false;
+   bool redraw = true;
+   bool fullscreen = false;
+   game = NULL;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -168,7 +172,7 @@ int main(int argc, char **argv)
    if (!font) {
       fprintf(stderr, "Could not load 'pirulen.ttf'.\n");
       getchar();
-	  return -1;
+      return -1;
    }
  
    if(!al_install_keyboard()) {
@@ -302,7 +306,7 @@ int main(int argc, char **argv)
    }
 
    initWinSock();
-	
+
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0)
       error("socket");
@@ -544,6 +548,7 @@ int main(int argc, char **argv)
    delete wndGameDebug;
 
    delete gameMap;
+   delete game;
 
    al_destroy_event_queue(event_queue);
    al_destroy_display(display);
@@ -574,7 +579,7 @@ void initWinSock()
 
    wVersionRequested = MAKEWORD(2, 2);
    wsaerr = WSAStartup(wVersionRequested, &wsaData);
-	
+
    if (wsaerr != 0) {
       cout << "The Winsock dll not found." << endl;
       exit(1);
@@ -826,7 +831,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_GAME_INFO:
             {
-                cout << "Received a GAME_INFO message" << endl;
+               cout << "Received a GAME_INFO message" << endl;
 
                string gameName(msg.buffer+4);
                int numPlayers;
@@ -842,6 +847,80 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             default:
             {
                cout << "(STATE_LOBBY) Received invlaid message of type " << msg.type << endl;
+
+               break;
+            }
+         }
+
+         break;
+      }
+      case STATE_NEW_GAME:
+      {
+         switch(msg.type)
+         {
+            case MSG_TYPE_GAME_INFO:
+            {
+               cout << "(STATE_NEW_GAME) Received a GAME_INFO message" << endl;
+
+               string gameName(msg.buffer+4);
+               int numPlayers;
+
+               //game = new Game(gameName);
+
+               memcpy(&numPlayers, msg.buffer, 4);
+               
+               cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
+               
+               mapGames[gameName] = numPlayers;
+
+               break;
+            }
+            case MSG_TYPE_OBJECT:
+            {
+               cout << "(STATE_NEW_GAME) Received object message in STATE_LOBBY." << endl;
+
+               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
+               o.deserialize(msg.buffer);
+               cout << "object id: " << o.id << endl;
+               game->getMap()->updateObject(o.id, o.type, o.pos.x, o.pos.y);
+
+               break;
+            }
+            case MSG_TYPE_REMOVE_OBJECT:
+            {
+               cout << "(STATE_NEW_GAME) Received REMOVE_OBJECT message!" << endl;
+
+               int id;
+               memcpy(&id, msg.buffer, 4);
+
+               cout << "Removing object with id " << id << endl;
+
+               if (!game->getMap()->removeObject(id))
+                  cout << "Did not remove the object" << endl;
+
+               break;
+            }
+            case MSG_TYPE_SCORE:
+            {
+               cout << "Received SCORE message!" << endl;
+
+               int blueScore;
+               memcpy(&blueScore, msg.buffer, 4);
+               cout << "blue score: " << blueScore << endl;
+               game->setBlueScore(blueScore);
+
+               int redScore;
+               memcpy(&redScore, msg.buffer+4, 4);
+               cout << "red score: " << redScore << endl;
+               game->setRedScore(redScore);
+
+               cout << "Processed SCORE message!" << endl;
+ 
+               break;
+            }
+            default:
+            {
+               cout << "(STATE_NEW_GAME) Received invalid message of type " << msg.type << endl;
 
                break;
             }
@@ -1179,6 +1258,10 @@ void joinGame()
 void createGame()
 {
    cout << "Creating game" << endl;
+
+   // hack to help transitions to multiple games
+   state = STATE_NEW_GAME;
+   game = new Game( txtCreateGame->getStr());
 
    string msg = txtCreateGame->getStr();
    txtCreateGame->clear();
