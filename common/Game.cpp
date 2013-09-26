@@ -19,6 +19,18 @@ void Game::setId(int id) {
    this->id = id;
 }
 
+int Game::getNumPlayers() {
+   return players.size();
+}
+
+void Game::setNumPlayers(int numPlayers) {
+   int numCurPlayers = this->getNumPlayers();
+   int numNewPlayers = numPlayers-numCurPlayers;
+
+   for (int i=0; i<numNewPlayers; i++)
+      this->players[numCurPlayers+i] = NULL;
+}
+
 bool Game::addPlayer(Player* p) {
    if (players.count(p->id) == 0) {
       players[p->id] = p;
@@ -33,8 +45,4 @@ bool Game::removePlayer(int id) {
       return true;
    else
       return false;
-}
-
-int Game::getNumPlayers() {
-   return players.size();
 }

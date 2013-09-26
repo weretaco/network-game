@@ -29,11 +29,12 @@ public:
 
    ~Game();
 
-   void setId(int id);
+   int getNumPlayers();
 
+   void setId(int id);
+   void setNumPlayers(int numPlayers);
    bool addPlayer(Player* p);
    bool removePlayer(int id);
-   int getNumPlayers();
 };
 
 #endif

@@ -33,6 +33,7 @@
 #include "../../common/WorldMap.h"
 #include "../../common/Player.h"
 #include "../../common/Projectile.h"
+#include "../../common/Game.h"
 
 #include "Window.h"
 #include "Textbox.h"
@@ -117,7 +118,7 @@ NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole, debugConsole;
 bool debugging;
-vector<string> games;
+map<string, Game> mapGames;
 
 MessageProcessor msgProcessor;
 ofstream outputLog;
@@ -450,8 +451,11 @@ int main(int argc, char **argv)
             wndCurrent->draw(display);
 
          if (wndCurrent == wndLobby) {
-            for (int i=0; i<games.size(); i++) {
-               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, games[i].c_str());
+            map<string, Game>::iterator it;
+            int i=0;
+            for (it = mapGames.begin(); it != mapGames.end(); it++) {
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, it->first.c_str());
+               i++;
             }
          }
          else if (wndCurrent == wndGame)
@@ -820,13 +824,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                 cout << "Received a GAME_INFO message" << endl;
 
-               string name(msg.buffer+4);
+               string gameName(msg.buffer+4);
                int numPlayers;
 
                memcpy(&numPlayers, msg.buffer, 4);
                
-               cout << "Received game info for " << name << " (num players: " << numPlayers << ")" << endl;
-               games.push_back(name);
+               cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
+               
+               if (mapGames.find(gameName) == mapGames.end())
+                  mapGames[gameName] = Game(gameName);
+               mapGames[gameName].setNumPlayers(numPlayers);
 
                break;
             }
