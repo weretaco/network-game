@@ -117,6 +117,7 @@ NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole, debugConsole;
 bool debugging;
+vector<string> games;
 
 MessageProcessor msgProcessor;
 ofstream outputLog;
@@ -420,7 +421,8 @@ int main(int argc, char **argv)
                      // need to check if the right-click was actually on this player
                      // right now, this code will target all players other than the current one
                      target = &it->second;
-                     if (target->id != curPlayerId && target->team != curPlayer->team) {
+                     if (target->id != curPlayerId && target->team != curPlayer->team)
+                     {
                         msgTo.type = MSG_TYPE_START_ATTACK;
                         memcpy(msgTo.buffer, &curPlayerId, 4);
                         memcpy(msgTo.buffer+4, &target->id, 4);
@@ -447,7 +449,13 @@ int main(int argc, char **argv)
          else
             wndCurrent->draw(display);
 
-         if(wndCurrent == wndGame) {
+         if (wndCurrent == wndLobby) {
+            for (int i=0; i<games.size(); i++) {
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, games[i].c_str());
+            }
+         }
+         else if (wndCurrent == wndGame)
+         {
             if (!debugging)
                chatConsole.draw(font, al_map_rgb(255,255,255));
 
@@ -778,7 +786,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received a PROJECTILE message" << endl;
 
-               int id, x, y, targetId;
+               unsigned int id, x, y, targetId;
 
                memcpy(&id, msg.buffer, 4);
                memcpy(&x, msg.buffer+4, 4);
@@ -802,16 +810,30 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                 cout << "Received a REMOVE_PROJECTILE message" << endl;
 
                int id;
-
                memcpy(&id, msg.buffer, 4);
                
                mapProjectiles.erase(id);
 
                break;
             }
+            case MSG_TYPE_GAME_INFO:
+            {
+                cout << "Received a GAME_INFO message" << endl;
+
+               string name(msg.buffer+4);
+               int numPlayers;
+
+               memcpy(&numPlayers, msg.buffer, 4);
+               
+               cout << "Received game info for " << name << " (num players: " << numPlayers << ")" << endl;
+               games.push_back(name);
+
+               break;
+            }
             default:
             {
                cout << "(STATE_LOBBY) Received invlaid message of type " << msg.type << endl;
+
                break;
             }
          }
