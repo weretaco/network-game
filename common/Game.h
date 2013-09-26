@@ -32,7 +32,6 @@ public:
    int getNumPlayers();
 
    void setId(int id);
-   void setNumPlayers(int numPlayers);
    bool addPlayer(Player* p);
    bool removePlayer(int id);
 };

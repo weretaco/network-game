@@ -118,7 +118,7 @@ NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole, debugConsole;
 bool debugging;
-map<string, Game> mapGames;
+map<string, int> mapGames;
 
 MessageProcessor msgProcessor;
 ofstream outputLog;
@@ -451,11 +451,11 @@ int main(int argc, char **argv)
             wndCurrent->draw(display);
 
          if (wndCurrent == wndLobby) {
-            map<string, Game>::iterator it;
+            map<string, int>::iterator it;
             int i=0;
             ostringstream ossGame;
             for (it = mapGames.begin(); it != mapGames.end(); it++) {
-               ossGame << it->first << " (" << it->second.getNumPlayers() << " players)" << endl;
+               ossGame << it->first << " (" << it->second << " players)" << endl;
                al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, ossGame.str().c_str());
                ossGame.clear();
                ossGame.str("");
@@ -835,9 +835,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                
                cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
                
-               if (mapGames.find(gameName) == mapGames.end())
-                  mapGames[gameName] = Game(gameName);
-               mapGames[gameName].setNumPlayers(numPlayers);
+               mapGames[gameName] = numPlayers;
 
                break;
             }
