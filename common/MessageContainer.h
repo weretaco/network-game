@@ -33,6 +33,7 @@ using namespace std;
 #define MSG_TYPE_CREATE_GAME       17
 #define MSG_TYPE_JOIN_GAME         18
 #define MSG_TYPE_LEAVE_GAME        19
+#define MSG_TYPE_GAME_INFO         20
 
 typedef struct
 {

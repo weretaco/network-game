@@ -1119,11 +1119,9 @@ void quit()
 void sendChatMessage()
 {
    string msg = txtChat->getStr();
-
    txtChat->clear();
 
    msgTo.type = MSG_TYPE_CHAT;
-
    strcpy(msgTo.buffer, msg.c_str());
 
    msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
@@ -1137,9 +1135,25 @@ void toggleDebugging()
 void joinGame()
 {
    cout << "Joining game" << endl;
+
+   string msg = txtJoinGame->getStr();
+   txtJoinGame->clear();
+
+   msgTo.type = MSG_TYPE_JOIN_GAME;
+   strcpy(msgTo.buffer, msg.c_str());
+
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
 
 void createGame()
 {
    cout << "Creating game" << endl;
+
+   string msg = txtCreateGame->getStr();
+   txtCreateGame->clear();
+
+   msgTo.type = MSG_TYPE_CREATE_GAME;
+   strcpy(msgTo.buffer, msg.c_str());
+
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
