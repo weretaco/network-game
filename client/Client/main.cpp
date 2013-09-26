@@ -453,8 +453,12 @@ int main(int argc, char **argv)
          if (wndCurrent == wndLobby) {
             map<string, Game>::iterator it;
             int i=0;
+            ostringstream ossGame;
             for (it = mapGames.begin(); it != mapGames.end(); it++) {
-               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, it->first.c_str());
+               ossGame << it->first << " (" << it->second.getNumPlayers() << " players)" << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, ossGame.str().c_str());
+               ossGame.clear();
+               ossGame.str("");
                i++;
             }
          }
