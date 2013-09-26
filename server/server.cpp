@@ -34,6 +34,7 @@
 #include "../common/WorldMap.h"
 #include "../common/Player.h"
 #include "../common/Projectile.h"
+#include "../common/Game.h"
 
 #include "DataAccess.h"
 
@@ -43,7 +44,7 @@ bool done;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
@@ -98,6 +99,7 @@ int main(int argc, char *argv[])
    MessageProcessor msgProcessor;
    map<unsigned int, Player> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
+   map<string, Game> mapGames;
    unsigned int unusedPlayerId = 1, unusedProjectileId = 1;
    int scoreBlue, scoreRed;
    ofstream outputLog;
@@ -529,7 +531,7 @@ int main(int argc, char *argv[])
       n = msgProcessor.receiveMessage(&clientMsg, sock, &from, &outputLog);
 
       if (n >= 0) {
-         broadcastResponse = processMessage(clientMsg, from, msgProcessor, mapPlayers, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed, outputLog);
+         broadcastResponse = processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, gameMap, unusedPlayerId, serverMsg, sock, scoreBlue, scoreRed, outputLog);
 
          if (broadcastResponse)
          {
@@ -559,7 +561,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog)
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog)
 {
    DataAccess da;
 
@@ -932,8 +934,9 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
-         // temp var
-         int numPlayers = 0;
+         mapGames[gameName] = Game(gameName);
+         mapGames[gameName].addPlayer(findPlayerByAddr(mapPlayers, from));
+         int numPlayers = mapGames[gameName].getNumPlayers();
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);
@@ -949,8 +952,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
-         // temp var
-         int numPlayers = 0;
+         mapGames[gameName].addPlayer(findPlayerByAddr(mapPlayers, from));
+         int numPlayers = mapGames[gameName].getNumPlayers();
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);

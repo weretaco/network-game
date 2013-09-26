@@ -34,3 +34,7 @@ bool Game::removePlayer(int id) {
    else
       return false;
 }
+
+int Game::getNumPlayers() {
+   return players.size();
+}

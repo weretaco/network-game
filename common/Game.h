@@ -33,6 +33,7 @@ public:
 
    bool addPlayer(Player* p);
    bool removePlayer(int id);
+   int getNumPlayers();
 };
 
 #endif
