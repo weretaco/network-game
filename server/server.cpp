@@ -925,11 +925,44 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          break;
       }
+      case MSG_TYPE_CREATE_GAME:
+      {
+         cout << "Received a CREATE_GAME message" << endl;
+
+         string gameName(clientMsg.buffer);
+         cout << "Game name: " << gameName << endl;
+
+         // temp var
+         int numPlayers = 0;
+
+         serverMsg.type = MSG_TYPE_GAME_INFO;
+         memcpy(serverMsg.buffer, &numPlayers, 4);
+         strcpy(serverMsg.buffer+4, gameName.c_str());
+         broadcastResponse = true;
+
+         break;
+      }
+      case MSG_TYPE_JOIN_GAME:
+      {
+         cout << "Received a JOIN_GAME message" << endl;
+
+         string gameName(clientMsg.buffer);
+         cout << "Game name: " << gameName << endl;
+
+         // temp var
+         int numPlayers = 0;
+
+         serverMsg.type = MSG_TYPE_GAME_INFO;
+         memcpy(serverMsg.buffer, &numPlayers, 4);
+         strcpy(serverMsg.buffer+4, gameName.c_str());
+         broadcastResponse = true;
+
+         break;
+      }
       default:
       {
-         strcpy(serverMsg.buffer, "Server error occured. Report this please.");
-
          serverMsg.type = MSG_TYPE_CHAT;
+         strcpy(serverMsg.buffer, "Server error occured. Report this please.");
 
          break;
       }
