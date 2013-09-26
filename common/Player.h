@@ -18,6 +18,9 @@
 
 using namespace std;
 
+//forward declaration
+class Game;
+
 class Player {
 public:
 
@@ -76,6 +79,8 @@ public:
    int team; // 0 is blue, 1 is red
    bool hasBlueFlag;
    bool hasRedFlag;
+
+   Game* currentGame;
 };
 
 #endif

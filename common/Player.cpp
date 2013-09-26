@@ -31,6 +31,8 @@ Player::Player()
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
+
+   this->currentGame = NULL;
 }
 
 Player::Player(const Player& p)
@@ -60,6 +62,8 @@ Player::Player(const Player& p)
    this->team = p.team;
    this->hasBlueFlag = p.hasBlueFlag;
    this->hasRedFlag = p.hasRedFlag;
+
+   this->currentGame = p.currentGame;
 }
 
 // eventually make this take a PlayerClass argument as well
@@ -87,6 +91,8 @@ Player::Player(string name, string password)
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
+
+   this->currentGame = NULL;
 }
 
 Player::~Player()

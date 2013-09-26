@@ -44,7 +44,7 @@ bool done;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game*>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player>& mapPlayers);
 void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
    MessageProcessor msgProcessor;
    map<unsigned int, Player> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
-   map<string, Game> mapGames;
+   map<string, Game*> mapGames;
    unsigned int unusedPlayerId = 1, unusedProjectileId = 1;
    int scoreBlue, scoreRed;
    ofstream outputLog;
@@ -558,10 +558,16 @@ int main(int argc, char *argv[])
    outputLog << "Stopped server on " << getCurrentDateTimeString() << endl;
    outputLog.close();
 
+   // delete all games
+   map<string, Game*>::iterator itGames;
+   for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++) {
+      delete itGames->second;
+   }
+
    return 0;
 }
 
-bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog)
+bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player>& mapPlayers, map<string, Game*>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog)
 {
    DataAccess da;
 
@@ -936,15 +942,15 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player* p = findPlayerByAddr(mapPlayers, from);
 
-         mapGames[gameName] = Game(gameName);
-         Game& g = mapGames[gameName];
-         g.addPlayer(p);
-         int numPlayers = g.getNumPlayers();
+         Game* g = new Game(gameName);
+         mapGames[gameName] = g;
+         g->addPlayer(p);
+         int numPlayers = g->getNumPlayers();
 
-         map<unsigned int, Player*>& otherPlayers = g.getPlayers();
+         p->team = rand() % 2; // choose a random team (either 0 or 1)
+         p->currentGame = g;
 
-         // choose a random team (either 0 or 1)
-         p->team = rand() % 2;
+         map<unsigned int, Player*>& otherPlayers = g->getPlayers();
 
          // tell the new player about all the existing players
          cout << "Sending other players to new player" << endl;
@@ -964,21 +970,23 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // (currently just the flags)
 
          serverMsg.type = MSG_TYPE_OBJECT;
-         vector<WorldMap::Object>* vctObjects = g.getMap()->getObjects();
+         vector<WorldMap::Object>* vctObjects = g->getMap()->getObjects();
          vector<WorldMap::Object>::iterator itObjects;
          cout << "sending items" << endl;
+
          for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
             itObjects->serialize(serverMsg.buffer);
             cout << "sending item id " << itObjects->id  << endl;
             if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                error("sendMessage");
          }
+         cout << "Done sending items" << endl;
 
          // send the current score
          serverMsg.type = MSG_TYPE_SCORE;
 
-         int game_blueScore = g.getBlueScore();
-         int game_redScore = g.getRedScore();
+         int game_blueScore = g->getBlueScore();
+         int game_redScore = g->getRedScore();
          memcpy(serverMsg.buffer, &game_blueScore, 4);
          memcpy(serverMsg.buffer+4, &game_redScore, 4);
 
@@ -1012,15 +1020,15 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player* p = findPlayerByAddr(mapPlayers, from);
 
-         Game& g = mapGames[gameName];
-         if (!g.addPlayer(p))
+         Game* g = mapGames[gameName];
+         if (!g->addPlayer(p))
             cout << "Player " << p->name << " trying to join a game he's already in" << endl;
-         int numPlayers = g.getNumPlayers();
+         int numPlayers = g->getNumPlayers();
 
-         map<unsigned int, Player*>& otherPlayers = g.getPlayers();
+         p->team = rand() % 2; // choose a random team (either 0 or 1)
+         p->currentGame = g;
 
-         // choose a random team (either 0 or 1)
-         p->team = rand() % 2;
+         map<unsigned int, Player*>& otherPlayers = g->getPlayers();
 
          // tell the new player about all the existing players
          cout << "Sending other players to new player" << endl;
@@ -1040,7 +1048,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // (currently just the flags)
 
          serverMsg.type = MSG_TYPE_OBJECT;
-         vector<WorldMap::Object>* vctObjects = g.getMap()->getObjects();
+         vector<WorldMap::Object>* vctObjects = g->getMap()->getObjects();
          vector<WorldMap::Object>::iterator itObjects;
          cout << "sending items" << endl;
          for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
@@ -1054,8 +1062,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // send the current score
          serverMsg.type = MSG_TYPE_SCORE;
 
-         int game_blueScore = g.getBlueScore();
-         int game_redScore = g.getRedScore();
+         int game_blueScore = g->getBlueScore();
+         int game_redScore = g->getRedScore();
          memcpy(serverMsg.buffer, &game_blueScore, 4);
          memcpy(serverMsg.buffer+4, &game_redScore, 4);
 
