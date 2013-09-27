@@ -69,6 +69,7 @@ void sendChatMessage();
 void toggleDebugging();
 void joinGame();
 void createGame();
+void leaveGame();
 
 void error(const char *);
 
@@ -91,6 +92,7 @@ Window* wndLogin;
 Window* wndRegister;
 Window* wndLobby;
 Window* wndGame;
+Window* wndNewGame;
 Window* wndGameDebug;
 Window* wndCurrent;
 
@@ -279,6 +281,11 @@ int main(int argc, char **argv)
 
    cout << "Created game screen" << endl;
 
+   wndNewGame = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndNewGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame));
+
+   cout << "Created new game screen" << endl;
+
    goToLoginScreen();
  
    event_queue = al_create_event_queue();
@@ -465,6 +472,16 @@ int main(int argc, char **argv)
                ossGame.str("");
                i++;
             }
+         }
+         else if (wndCurrent == wndNewGame)
+         {
+            ostringstream ossScoreBlue, ossScoreRed;
+
+            ossScoreBlue << "Blue: " << game->getBlueScore() << endl;
+            ossScoreRed << "Red: " << game->getRedScore() << endl;
+
+            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
          }
          else if (wndCurrent == wndGame)
          {
@@ -851,20 +868,17 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received a JOIN_GAME_SUCCESS message" << endl;
 
-               string gameName(msg.buffer);
-               
-               cout << "Game name: " << gameName << endl;
-               
+               string gameName(msg.buffer);         
                game = new Game(gameName, "../../data/map.txt");
+               cout << "Game name: " << gameName << endl;
 
-               /*
                state = STATE_NEW_GAME;
+               wndCurrent = wndNewGame;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
 
                msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
-               */
 
                break;
             }
@@ -1295,6 +1309,20 @@ void createGame()
 
    msgTo.type = MSG_TYPE_CREATE_GAME;
    strcpy(msgTo.buffer, msg.c_str());
+
+   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+}
+
+void leaveGame()
+{
+   cout << "Leaving game" << endl;
+
+   game = NULL;
+   
+   state = STATE_LOBBY;
+   wndCurrent = wndLobby;
+
+   msgTo.type = MSG_TYPE_LEAVE_GAME;
 
    msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
 }
