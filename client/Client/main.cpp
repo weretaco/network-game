@@ -548,7 +548,9 @@ int main(int argc, char **argv)
    delete wndGameDebug;
 
    delete gameMap;
-   delete game;
+
+   if (game != NULL)
+      delete game;
 
    al_destroy_event_queue(event_queue);
    al_destroy_display(display);
@@ -653,6 +655,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
          break;
       }
       case STATE_LOBBY:
+         cout << "In STATE_LOBBY" << endl;
       case STATE_GAME:
       {
          switch(msg.type)
@@ -742,7 +745,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received object message in STATE_LOBBY." << endl;
+               cout << "Received OBJECT message" << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
@@ -844,6 +847,31 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
+            case MSG_TYPE_JOIN_GAME_SUCCESS:
+            {
+               cout << "Received a JOIN_GAME_SUCCESS message" << endl;
+
+               string gameName(msg.buffer);
+               
+               cout << "Game name: " << gameName << endl;
+               
+               game = new Game(gameName);
+
+               state = STATE_NEW_GAME;
+
+               msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
+               strcpy(msgTo.buffer, gameName.c_str());
+
+               msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+
+               break;
+            }
+            case MSG_TYPE_JOIN_GAME_FAILURE:
+            {
+               cout << "Received a JOIN_GAME_FAILURE message" << endl;
+
+               break;
+            }
             default:
             {
                cout << "(STATE_LOBBY) Received invlaid message of type " << msg.type << endl;
@@ -856,16 +884,15 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
       }
       case STATE_NEW_GAME:
       {
+         cout << "(STATE_NEW_GAME) ";
          switch(msg.type)
          {
             case MSG_TYPE_GAME_INFO:
             {
-               cout << "(STATE_NEW_GAME) Received a GAME_INFO message" << endl;
+               cout << "Received a GAME_INFO message" << endl;
 
                string gameName(msg.buffer+4);
                int numPlayers;
-
-               //game = new Game(gameName);
 
                memcpy(&numPlayers, msg.buffer, 4);
                
@@ -877,7 +904,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "(STATE_NEW_GAME) Received object message in STATE_LOBBY." << endl;
+               cout << "Received object message in STATE_NEW_GAME" << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
@@ -888,7 +915,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_REMOVE_OBJECT:
             {
-               cout << "(STATE_NEW_GAME) Received REMOVE_OBJECT message!" << endl;
+               cout << "Received REMOVE_OBJECT message!" << endl;
 
                int id;
                memcpy(&id, msg.buffer, 4);
@@ -920,7 +947,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             default:
             {
-               cout << "(STATE_NEW_GAME) Received invalid message of type " << msg.type << endl;
+               cout << "Received invalid message of type " << msg.type << endl;
 
                break;
             }
@@ -1259,12 +1286,10 @@ void createGame()
 {
    cout << "Creating game" << endl;
 
-   // hack to help transitions to multiple games
-   state = STATE_NEW_GAME;
-   game = new Game( txtCreateGame->getStr());
-
    string msg = txtCreateGame->getStr();
    txtCreateGame->clear();
+
+   cout << "Sending message: " << msg.c_str() << endl;
 
    msgTo.type = MSG_TYPE_CREATE_GAME;
    strcpy(msgTo.buffer, msg.c_str());
