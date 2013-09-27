@@ -10,12 +10,12 @@ Game::Game() {
    this->worldMap = NULL;
 }
 
-Game::Game(string name) {
+Game::Game(string name, string filepath) {
    this->id = 0;
    this->name = name;
    this->blueScore = 0;
    this->redScore = 0;
-   this->worldMap = WorldMap::loadMapFromFile("../data/map.txt");
+   this->worldMap = WorldMap::loadMapFromFile(filepath);
 }
 
 Game::~Game() {

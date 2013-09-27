@@ -123,7 +123,7 @@ void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
    vector<WorldMap::Object>::iterator it;
    bool foundObject = false;
 
-   cout << "Searching for obbject to update" << endl;
+   cout << "Searching for object to update" << endl;
    switch (t) {
    case WorldMap::OBJECT_BLUE_FLAG:
       cout << "BLUE_FLAG" << endl;
@@ -197,8 +197,12 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
    ifstream file(filename.c_str());
 
+   cout << "Trying to open file: " << filename << endl;
+
    if (file.is_open())
    {
+      cout << filename << " opened successfully" << endl;
+
       string line;
       int width, height;
 
@@ -298,9 +302,12 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
          row++;
       }
       file.close();
+      cout << filename << " closed" << endl;
    }
    else
       cout << "Could not open the file" << endl;
+
+   cout << "Finished file processing" << endl;
 
    return m;
 }

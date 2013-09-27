@@ -29,7 +29,7 @@ private:
 
 public:
    Game();
-   Game(string name);
+   Game(string name, string filepath);
 
    ~Game();
 

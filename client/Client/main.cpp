@@ -855,14 +855,16 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                
                cout << "Game name: " << gameName << endl;
                
-               game = new Game(gameName);
+               game = new Game(gameName, "../../data/map.txt");
 
+               /*
                state = STATE_NEW_GAME;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
 
                msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+               */
 
                break;
             }
