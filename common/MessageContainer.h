@@ -34,7 +34,7 @@ using namespace std;
 #define MSG_TYPE_JOIN_GAME         18
 #define MSG_TYPE_LEAVE_GAME        19
 #define MSG_TYPE_GAME_INFO         20
-#define MSG_TYPE_JOIN_GAME_INFO    21
+#define MSG_TYPE_JOIN_GAME_SUCCESS 21
 #define MSG_TYPE_JOIN_GAME_FAILURE 22
 #define MSG_TYPE_JOIN_GAME_ACK     23
 

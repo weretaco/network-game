@@ -951,7 +951,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          Player* p = findPlayerByAddr(mapPlayers, from);
          p->currentGame = g;
 
-         serverMsg.type = MSG_TYPE_JOIN_GAME_INFO;
+         serverMsg.type = MSG_TYPE_JOIN_GAME_SUCCESS;
          strcpy(serverMsg.buffer, gameName.c_str());
          broadcastResponse = false;
 
@@ -984,7 +984,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          p->currentGame = g;
 
-         serverMsg.type = MSG_TYPE_JOIN_GAME_INFO;
+         serverMsg.type = MSG_TYPE_JOIN_GAME_SUCCESS;
          strcpy(serverMsg.buffer, gameName.c_str());
          broadcastResponse = false;
 
