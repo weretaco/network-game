@@ -938,75 +938,22 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
-         Player* p = findPlayerByAddr(mapPlayers, from);
+         // check if this game already exists
+         if (mapGames.find(gameName) != mapGames.end()) {
+            serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
+            broadcastResponse = false;
+            return broadcastResponse;
+         }
 
          Game* g = new Game(gameName);
          mapGames[gameName] = g;
-         g->addPlayer(p);
-         int numPlayers = g->getNumPlayers();
 
-         p->team = rand() % 2; // choose a random team (either 0 or 1)
+         Player* p = findPlayerByAddr(mapPlayers, from);
          p->currentGame = g;
 
-         map<unsigned int, Player*>& otherPlayers = g->getPlayers();
-
-         // tell the new player about all the existing players
-         cout << "Sending other players to new player" << endl;
-         serverMsg.type = MSG_TYPE_LOGIN;
-
-         map<unsigned int, Player*>::iterator it;
-         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
-         {
-            it->second->serialize(serverMsg.buffer);
-
-            cout << "sending info about " << it->second->name  << endl;
-            cout << "sending id " << it->second->id  << endl;
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
-               error("sendMessage");
-         }
-
-         // tell the new player about all map objects
-         // (currently just the flags)
-
-         serverMsg.type = MSG_TYPE_OBJECT;
-         vector<WorldMap::Object>* vctObjects = g->getMap()->getObjects();
-         vector<WorldMap::Object>::iterator itObjects;
-         cout << "sending items" << endl;
-
-         for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
-            itObjects->serialize(serverMsg.buffer);
-            cout << "sending item id " << itObjects->id  << endl;
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
-               error("sendMessage");
-         }
-         cout << "Done sending items" << endl;
-
-         // send the current score
-         serverMsg.type = MSG_TYPE_SCORE;
-
-         int game_blueScore = g->getBlueScore();
-         int game_redScore = g->getRedScore();
-         memcpy(serverMsg.buffer, &game_blueScore, 4);
-         memcpy(serverMsg.buffer+4, &game_redScore, 4);
-
-         if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
-            error("sendMessage");
-
-         serverMsg.type = MSG_TYPE_PLAYER;
-         p->serialize(serverMsg.buffer);
-         cout << "Should be broadcasting the message" << endl;
-
-         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
-         {
-            cout << "Sent message back to " << it->second->name << endl;
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
-               error("sendMessage");
-         }
-
-         serverMsg.type = MSG_TYPE_GAME_INFO;
-         memcpy(serverMsg.buffer, &numPlayers, 4);
-         strcpy(serverMsg.buffer+4, gameName.c_str());
-         broadcastResponse = true;
+         serverMsg.type = MSG_TYPE_JOIN_GAME_INFO;
+         strcpy(serverMsg.buffer, gameName.c_str());
+         broadcastResponse = false;
 
          break;
       }
@@ -1017,13 +964,49 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string gameName(clientMsg.buffer);
          cout << "Game name: " << gameName << endl;
 
-         Player* p = findPlayerByAddr(mapPlayers, from);
+         // check if this game already exists
+         if (mapGames.find(gameName) == mapGames.end()) {
+            serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
+            broadcastResponse = false;
+            return broadcastResponse;
+         }
 
          Game* g = mapGames[gameName];
-         if (!g->addPlayer(p))
-            cout << "Player " << p->name << " trying to join a game he's already in" << endl;
-         int numPlayers = g->getNumPlayers();
+         map<unsigned int, Player*>& players = g->getPlayers();
+         Player* p = findPlayerByAddr(mapPlayers, from);
 
+         if (players.find(p->id) != players.end()) {
+            cout << "Player " << p->name << " trying to join a game he's already in" << endl;
+            serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
+            broadcastResponse = false;
+            return broadcastResponse;
+         }
+
+         p->currentGame = g;
+
+         serverMsg.type = MSG_TYPE_JOIN_GAME_INFO;
+         strcpy(serverMsg.buffer, gameName.c_str());
+         broadcastResponse = false;
+
+         break;
+      }
+      case MSG_TYPE_JOIN_GAME_ACK:
+      {
+         cout << "Received a JOIN_GAME_ACK message" << endl;
+
+         string gameName(clientMsg.buffer);
+         cout << "Game name: " << gameName << endl;
+
+         // check if this game already exists
+         if (mapGames.find(gameName) == mapGames.end()) {
+            serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
+            broadcastResponse = false;
+            return broadcastResponse;
+         }
+
+         Game* g = mapGames[gameName];
+
+         Player* p = findPlayerByAddr(mapPlayers, from);
          p->team = rand() % 2; // choose a random team (either 0 or 1)
          p->currentGame = g;
 
@@ -1081,11 +1064,13 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                error("sendMessage");
          }
 
+         g->addPlayer(p);
+         int numPlayers = g->getNumPlayers();
+
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);
          strcpy(serverMsg.buffer+4, gameName.c_str());
          broadcastResponse = true;
-
          break;
       }
       default:

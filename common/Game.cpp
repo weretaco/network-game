@@ -47,7 +47,7 @@ void Game::setId(unsigned int id) {
 }
 
 bool Game::addPlayer(Player* p) {
-   if (players.count(p->id) == 0) {
+   if (players.find(p->id) == players.end()) {
       players[p->id] = p;
       return true;
    }
