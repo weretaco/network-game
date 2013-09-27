@@ -945,7 +945,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             return broadcastResponse;
          }
 
-         Game* g = new Game(gameName);
+         Game* g = new Game(gameName, "../data/map.txt");
          mapGames[gameName] = g;
 
          Player* p = findPlayerByAddr(mapPlayers, from);
