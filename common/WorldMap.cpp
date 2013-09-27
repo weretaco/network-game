@@ -226,8 +226,8 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
          getline(file, line);
          if (line.size() > 0)
          {
-            cout << "row: " << row << endl;
-            cout << "line: " << line << endl;
+            //cout << "row: " << row << endl;
+            //cout << "line: " << line << endl;
 
             istringstream iss(line);
             string token;
@@ -243,9 +243,9 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                   getline(iss, token, ',');
                   type = atoi(token.c_str());
 
-                  cout << "x: " << x << endl;
-                  cout << "token: " << token << endl;
-                  cout << "type: " << type << endl;
+                  //cout << "x: " << x << endl;
+                  //cout << "token: " << token << endl;
+                  //cout << "type: " << type << endl;
 
                   switch(type) {
                   case 1:
@@ -268,15 +268,15 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
                StructureType structure;
 
                getline(iss, token, ',');
-               cout << "token(x): " << token << endl;
+               //cout << "token(x): " << token << endl;
                x = atoi(token.c_str());
 
                getline(iss, token, ',');
-               cout << "token(y): " << token << endl;
+               //cout << "token(y): " << token << endl;
                y = atoi(token.c_str());
 
                getline(iss, token, ',');
-               cout << "token(type): " << token << endl;
+               //cout << "token(type): " << token << endl;
                type = atoi(token.c_str());
 
                switch(type) {
