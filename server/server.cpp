@@ -940,6 +940,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          // check if this game already exists
          if (mapGames.find(gameName) != mapGames.end()) {
+            cout << "Error: Game already exists" << endl;
             serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
             broadcastResponse = false;
             return broadcastResponse;
@@ -966,6 +967,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          // check if this game already exists
          if (mapGames.find(gameName) == mapGames.end()) {
+            cout << "Error: Game does not exist" << endl;
             serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
             broadcastResponse = false;
             return broadcastResponse;
@@ -1006,7 +1008,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
 
          cout << "Game name: " << g->getName() << endl;
-         //p->currentGame = NULL;
+         p->currentGame = NULL;
+         g->removePlayer(p->id);
 
          // broadcast a messsage to other players so they know someone left the game
          // also, check if the game has any players left. If not, remove it and send everyone a message so the game is gone from their lobby list
