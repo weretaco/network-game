@@ -22,6 +22,10 @@ Game::~Game() {
    delete this->worldMap;
 }
 
+string Game::getName() {
+   return this->name;
+}
+
 int Game::getNumPlayers() {
    return this->players.size();
 }

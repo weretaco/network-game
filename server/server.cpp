@@ -990,6 +990,36 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          break;
       }
+      case MSG_TYPE_LEAVE_GAME:
+      {
+         cout << "Received a LEAVE_GAME message" << endl;
+
+         Player* p = findPlayerByAddr(mapPlayers, from);
+         Game* g = p->currentGame;
+
+         if (g == NULL) {
+            cout << "Player " << p->name << " is trying to leave a game, but is not currently in a game." << endl;
+
+            /// should send a response back, maybe a new message type is needed
+
+            break;
+         }
+
+         cout << "Game name: " << g->getName() << endl;
+         //p->currentGame = NULL;
+
+         // broadcast a messsage to other players so they know someone left the game
+         // also, check if the game has any players left. If not, remove it and send everyone a message so the game is gone from their lobby list
+
+         int numPlayers = g->getNumPlayers();
+
+         serverMsg.type = MSG_TYPE_GAME_INFO;
+         memcpy(serverMsg.buffer, &numPlayers, 4);
+         strcpy(serverMsg.buffer+4, g->getName().c_str());
+         broadcastResponse = true;
+
+         break;
+      }
       case MSG_TYPE_JOIN_GAME_ACK:
       {
          cout << "Received a JOIN_GAME_ACK message" << endl;
@@ -1071,6 +1101,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          memcpy(serverMsg.buffer, &numPlayers, 4);
          strcpy(serverMsg.buffer+4, gameName.c_str());
          broadcastResponse = true;
+
          break;
       }
       default:

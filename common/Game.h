@@ -33,6 +33,7 @@ public:
 
    ~Game();
 
+   string getName();
    int getNumPlayers();
    map<unsigned int, Player*>& getPlayers();
    int getBlueScore();
