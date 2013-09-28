@@ -15,28 +15,26 @@
 
 using namespace std;
 
-typedef struct
-{
-   float x;
-   float y;
-} FLOAT_POSITION;
+struct FLOAT_POSITION;
 
-typedef struct
-{
+struct POSITION {
    int x;
    int y;
-   FLOAT_POSITION toFloat() {
-      FLOAT_POSITION floatPosition;
-      floatPosition.x = x;
-      floatPosition.y = y;
+   FLOAT_POSITION toFloat();
+};
 
-      return floatPosition;
-   }
-} POSITION;
+struct FLOAT_POSITION {
+   float x;
+   float y;
+   POSITION toInt();
+};
 
 void set_nonblock(int sock);
 unsigned long long getCurrentMillis();
 string getCurrentDateTimeString();
+
+POSITION screenToMap(POSITION pos);
+POSITION mapToScreen(POSITION pos);
 float posDistance(FLOAT_POSITION pos1, FLOAT_POSITION pos2);
 
 #endif

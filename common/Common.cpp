@@ -11,6 +11,22 @@
 
 using namespace std;
 
+FLOAT_POSITION POSITION::toFloat() {
+   FLOAT_POSITION floatPosition;
+   floatPosition.x = x;
+   floatPosition.y = y;
+
+   return floatPosition;
+}
+
+POSITION FLOAT_POSITION::toInt() {
+   POSITION position;
+   position.x = x;
+   position.y = y;
+
+   return position;
+}
+
 void set_nonblock(int sock)
 {
    #if defined WINDOWS
@@ -56,4 +72,26 @@ float posDistance(FLOAT_POSITION pos1, FLOAT_POSITION pos2) {
    float yDiff = pos2.y - pos1.y;
 
    return sqrt( pow(xDiff,2) + pow(yDiff,2) );   
+}
+
+POSITION screenToMap(POSITION pos)
+{
+   pos.x = pos.x-300;
+   pos.y = pos.y-100;
+
+   if (pos.x < 0 || pos.y < 0)
+   {
+      pos.x = -1;
+      pos.y = -1;
+   }
+
+   return pos;
+}
+
+POSITION mapToScreen(POSITION pos)
+{
+   pos.x = pos.x+300;
+   pos.y = pos.y+100;
+
+   return pos;
 }

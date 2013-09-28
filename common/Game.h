@@ -13,6 +13,8 @@
 #include <string>
 #include <map>
 
+#include <allegro5/allegro_font.h>
+
 #include "Player.h"
 #include "WorldMap.h"
 
@@ -45,6 +47,8 @@ public:
    bool removePlayer(unsigned int id);
    void setBlueScore(int score);
    void setRedScore(int score);
+
+   void drawPlayers(ALLEGRO_FONT* font, unsigned int curPlayerId);
 };
 
 #endif

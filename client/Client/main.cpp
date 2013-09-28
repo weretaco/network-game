@@ -53,8 +53,6 @@ void shutdownWinSock();
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 void drawMap(WorldMap* gameMap);
 void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
-POSITION screenToMap(POSITION pos);
-POSITION mapToScreen(POSITION pos);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -482,6 +480,9 @@ int main(int argc, char **argv)
 
             al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
+
+            drawMap(game->getMap());
+            game->drawPlayers(font, curPlayerId);
          }
          else if (wndCurrent == wndGame)
          {
@@ -612,37 +613,6 @@ void shutdownWinSock()
 #if defined WINDOWS
    WSACleanup();
 #endif
-}
-
-POSITION screenToMap(POSITION pos)
-{
-   pos.x = pos.x-300;
-   pos.y = pos.y-100;
-
-   if (pos.x < 0 || pos.y < 0)
-   {
-      pos.x = -1;
-      pos.y = -1;
-   }
-
-   return pos;
-}
-
-POSITION mapToScreen(POSITION pos)
-{
-   pos.x = pos.x+300;
-   pos.y = pos.y+100;
-
-   return pos;
-}
-
-POSITION mapToScreen(FLOAT_POSITION pos)
-{
-   POSITION p;
-   p.x = pos.x+300;
-   p.y = pos.y+100;
-
-   return p;
 }
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
@@ -1048,7 +1018,7 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
       if (p->isDead)
          continue;
 
-      pos = mapToScreen(p->pos);
+      pos = mapToScreen(p->pos.toInt());
 
       if (p->id == curPlayerId)
          al_draw_filled_circle(pos.x, pos.y, 14, al_map_rgb(0, 0, 0));
@@ -1082,8 +1052,8 @@ void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsi
 
       // draw player health
       al_draw_filled_rectangle(pos.x-12, pos.y-24, pos.x+12, pos.y-16, al_map_rgb(0, 0, 0));
-      if (it->second.maxHealth != 0)
-         al_draw_filled_rectangle(pos.x-11, pos.y-23, pos.x-11+(22*it->second.health)/it->second.maxHealth, pos.y-17, al_map_rgb(255, 0, 0));
+      if (p->maxHealth != 0)
+         al_draw_filled_rectangle(pos.x-11, pos.y-23, pos.x-11+(22*p->health)/p->maxHealth, pos.y-17, al_map_rgb(255, 0, 0));
 
       if (p->hasBlueFlag)
          al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
