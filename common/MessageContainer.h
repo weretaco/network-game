@@ -5,6 +5,10 @@
 
 #include "Common.h"
 
+#if defined LINUX
+   #include <netinet/in.h>
+#endif
+
 using namespace std;
 
 #define MSG_TYPE_ACK               1

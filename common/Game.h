@@ -10,8 +10,6 @@
    #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <allegro5/allegro_font.h>
-
 #include "Player.h"
 #include "WorldMap.h"
 

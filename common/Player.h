@@ -5,6 +5,11 @@
 #include <map>
 
 #include "Common.h"
+
+#if defined LINUX
+   #include <netinet/in.h>
+#endif
+
 #include "WorldMap.h"
 
 using namespace std;

@@ -1,7 +1,5 @@
 #include "Game.h"
 
-#include <allegro5/allegro_primitives.h>
-
 using namespace std;
 
 Game::Game() {
