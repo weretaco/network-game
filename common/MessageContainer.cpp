@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "Compiler.h"
-
 using namespace std;
 
 MessageContainer::MessageContainer() {

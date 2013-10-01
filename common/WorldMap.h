@@ -2,7 +2,6 @@
 #define _WORLDMAP_H
 
 #include <string>
-
 #include <vector>
 
 #include "Common.h"

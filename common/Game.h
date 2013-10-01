@@ -3,15 +3,12 @@
 
 #include "Compiler.h"
 
-#if defined WINDOWS
-   #include <winsock2.h>
-   #include <WS2tcpip.h>
-#elif defined LINUX
-   #include <netinet/in.h>
-#endif
-
 #include <string>
 #include <map>
+
+#ifdef WINDOWS
+   #define WIN32_LEAN_AND_MEAN
+#endif
 
 #include <allegro5/allegro_font.h>
 
@@ -47,8 +44,6 @@ public:
    bool removePlayer(unsigned int id);
    void setBlueScore(int score);
    void setRedScore(int score);
-
-   void drawPlayers(ALLEGRO_FONT* font, unsigned int curPlayerId);
 };
 
 #endif

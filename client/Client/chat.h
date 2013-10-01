@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _CHAT_H
+#define _CHAT_H
 
 #include <string>
 #include <vector>
@@ -26,4 +27,6 @@ public:
 
    bool handleEvent(ALLEGRO_EVENT e);
 };
+
+#endif
 

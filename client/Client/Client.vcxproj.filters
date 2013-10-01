@@ -72,6 +72,9 @@
     <ClCompile Include="..\..\common\Game.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="GameRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chat.h">
@@ -118,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="..\..\common\Game.h">
       <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="GameRender.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

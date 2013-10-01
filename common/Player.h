@@ -1,15 +1,6 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-#include "Compiler.h"
-
-#if defined WINDOWS
-   #include <winsock2.h>
-   #include <WS2tcpip.h>
-#elif defined LINUX
-   #include <netinet/in.h>
-#endif
-
 #include <string>
 #include <map>
 

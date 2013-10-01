@@ -5,7 +5,7 @@
 
 #if defined WINDOWS
    #include <winsock2.h>
-   #include <WS2tcpip.h>
+   #include <ws2tcpip.h>
 #elif defined LINUX
    #include <fcntl.h>
    #include <assert.h>

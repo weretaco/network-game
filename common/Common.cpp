@@ -2,11 +2,6 @@
 
 #include <sstream>
 #include <cmath>
-
-#if defined WINDOWS
-   #include <Windows.h>
-#endif
-
 #include <ctime>
 
 using namespace std;

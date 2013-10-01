@@ -5,8 +5,6 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
 
-#include "../../common/Compiler.h"
-
 class GuiComponent
 {
 protected:

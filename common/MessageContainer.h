@@ -1,16 +1,9 @@
 #ifndef _MESSAGE_CONTAINER_H
 #define _MESSAGE_CONTAINER_H
 
-#include "Compiler.h"
-
 #include <string>
 
-#if defined WINDOWS
-   #include <winsock2.h>
-   #include <WS2tcpip.h>
-#elif defined LINUX
-   #include <netinet/in.h>
-#endif
+#include "Common.h"
 
 using namespace std;
 

@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "../../common/Compiler.h"
+
 using namespace std;
 
 Textbox::Textbox(int x, int y, int width, int height, ALLEGRO_FONT *font) :

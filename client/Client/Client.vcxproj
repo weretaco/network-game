@@ -75,6 +75,7 @@
     <ClCompile Include="..\..\common\Player.cpp" />
     <ClCompile Include="chat.cpp" />
     <ClCompile Include="Button.cpp" />
+    <ClCompile Include="GameRender.cpp" />
     <ClCompile Include="GuiComponent.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RadioButtonList.cpp" />
@@ -93,6 +94,7 @@
     <ClInclude Include="..\..\common\Player.h" />
     <ClInclude Include="chat.h" />
     <ClInclude Include="Button.h" />
+    <ClInclude Include="GameRender.h" />
     <ClInclude Include="GuiComponent.h" />
     <ClInclude Include="RadioButtonList.h" />
     <ClInclude Include="Textbox.h" />

@@ -3,8 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "Common.h"
-
 MessageProcessor::MessageProcessor() {
    lastUsedId = 0;
 }

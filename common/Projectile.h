@@ -1,8 +1,6 @@
 #ifndef _PROJECTILE_H
 #define _PROJECTILE_H
 
-#include "Compiler.h"
-
 #include <string>
 #include <map>
 

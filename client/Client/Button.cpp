@@ -1,5 +1,7 @@
 #include "Button.h"
 
+#include "../../common/Compiler.h"
+
 Button::Button(int x, int y, int width, int height, ALLEGRO_FONT *font, string str, void (*callback)()) :
    GuiComponent(x, y, width, height, font)
 {
