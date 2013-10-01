@@ -3,6 +3,14 @@
 #include <iostream>
 #include <fstream>
 
+#include "Compiler.h"
+
+#if defined WINDOWS
+   #include <ws2tcpip.h>
+#endif
+
+#include "Common.h"
+
 MessageProcessor::MessageProcessor() {
    lastUsedId = 0;
 }

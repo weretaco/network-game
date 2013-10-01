@@ -53,7 +53,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
    bool key[4] = { false, false, false, false };
-   map<unsigned int, Player> mapPlayers;
+   map<unsigned int, Player*> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
    int scoreBlue, scoreRed;
@@ -361,12 +361,12 @@ int main(int argc, char **argv)
             case ALLEGRO_KEY_D:  // drop the current item
                if (state == STATE_GAME) {
                   // find the current player in the player list
-                  map<unsigned int, Player>::iterator it;
+                  map<unsigned int, Player*>::iterator it;
                   Player* p = NULL;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
-                     if (it->second.id == curPlayerId)
-                        p = &it->second;
+                     if (it->second->id == curPlayerId)
+                        p = it->second;
                   }
 
                   if (p != NULL) {
@@ -415,15 +415,15 @@ int main(int argc, char **argv)
                else
                   cout << "Invalid point: User did not click on the map" << endl;
             }else if (ev.mouse.button == 2) {   // right click
-                  map<unsigned int, Player>::iterator it;
+                  map<unsigned int, Player*>::iterator it;
 
                   cout << "Detected a right-click" << endl;
 
                   Player* curPlayer;
                   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
                   {
-                     if (it->second.id == curPlayerId)
-                        curPlayer = &it->second;
+                     if (it->second->id == curPlayerId)
+                        curPlayer = it->second;
                   }
 
                   Player* target;
@@ -431,7 +431,7 @@ int main(int argc, char **argv)
                   {
                      // need to check if the right-click was actually on this player
                      // right now, this code will target all players other than the current one
-                     target = &it->second;
+                     target = it->second;
                      if (target->id != curPlayerId && target->team != curPlayer->team)
                      {
                         msgTo.type = MSG_TYPE_START_ATTACK;
@@ -501,15 +501,15 @@ int main(int argc, char **argv)
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
 
             // update players
-            map<unsigned int, Player>::iterator it;
+            map<unsigned int, Player*>::iterator it;
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
-               it->second.updateTarget(mapPlayers);
+               it->second->updateTarget(mapPlayers);
             }
 
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
-               it->second.move(gameMap);   // ignore return value
+               it->second->move(gameMap);    // ignore return value
             }
 
             // update projectile positions
@@ -527,7 +527,7 @@ int main(int argc, char **argv)
             {
                Projectile proj = it2->second;
 
-               FLOAT_POSITION target = mapPlayers[proj.target].pos;
+               FLOAT_POSITION target = mapPlayers[proj.target]->pos;
                float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
 
                POSITION start, end;
@@ -570,6 +570,12 @@ int main(int argc, char **argv)
 
    if (game != NULL)
       delete game;
+
+   map<unsigned int, Player*>::iterator it;
+
+   for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+      delete it->second;
+   }
 
    al_destroy_event_queue(event_queue);
    al_destroy_display(display);
@@ -616,7 +622,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
 {
    string response = string(msg.buffer);
 
@@ -670,7 +676,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                   
                   Player p("", "");
                   p.deserialize(msg.buffer);
-                  mapPlayers[p.id] = p;
+
+                  if (mapPlayers.find(p.id) != mapPlayers.end())
+                     delete mapPlayers[p.id];
+                  mapPlayers[p.id] = new Player(p);
                   curPlayerId = p.id;
 
                   cout << "Got a valid login response with the player" << endl;
@@ -707,7 +716,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                else
                   p.isDead = false;
 
-               mapPlayers[p.id] = p;
+               if (mapPlayers.find(p.id) != mapPlayers.end())
+                    delete mapPlayers[p.id];
+               mapPlayers[p.id] = new Player(p);
 
                break;
             }
@@ -720,8 +731,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                memcpy(&x, msg.buffer+4, 4);
                memcpy(&y, msg.buffer+8, 4);
 
-               mapPlayers[id].target.x = x;
-               mapPlayers[id].target.y = y;
+               mapPlayers[id]->target.x = x;
+               mapPlayers[id]->target.y = y;
 
                break;
             }
@@ -780,7 +791,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                cout << "source id: " << id << endl;
                cout << "target id: " << targetID << endl;
 
-               Player* source = &mapPlayers[id];
+               Player* source = mapPlayers[id];
                source->targetPlayer = targetID;
                source->isChasing = true;
 

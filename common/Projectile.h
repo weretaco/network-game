@@ -25,7 +25,12 @@ public:
    void deserialize(char* buffer);
 
    // returns true if it reached the target and should be deleted
-   bool move(map<unsigned int, Player>& mapPlayers);
+   bool move(map<unsigned int, Player*>& mapPlayers);
+
+   /*
+    * target should become a Player*. When this object gets serialized, the player's id should be sent.
+    * Deserialization in this case might be tricky since it will require a playerMap to turn the id into a Plauyer*
+    */
 
    int id;
    POSITION pos;

@@ -70,12 +70,12 @@ void Projectile::deserialize(char* buffer)
    memcpy(buffer+20, &this->damage, 4);
 }
 
-bool Projectile::move(map<unsigned int, Player>& mapPlayers) {
+bool Projectile::move(map<unsigned int, Player*>& mapPlayers) {
    // if the current target logs off, this method will run into problems
 
    unsigned long long curTime = getCurrentMillis();
 
-   Player targetP = mapPlayers[target];
+   Player* targetP = mapPlayers[target];
 
    if (timeLastUpdated == 0) {
       timeLastUpdated = curTime;
@@ -84,12 +84,12 @@ bool Projectile::move(map<unsigned int, Player>& mapPlayers) {
 
 
    float pixels = speed * (curTime-timeLastUpdated) / 1000.0;
-   double angle = atan2(targetP.pos.y-pos.y, targetP.pos.x-pos.x);
-   float dist = sqrt(pow(targetP.pos.x-pos.x, 2) + pow(targetP.pos.y-pos.y, 2));
+   double angle = atan2(targetP->pos.y-pos.y, targetP->pos.x-pos.x);
+   float dist = sqrt(pow(targetP->pos.x-pos.x, 2) + pow(targetP->pos.y-pos.y, 2));
 
    if (dist <= pixels) {
-      pos.x = targetP.pos.x;
-      pos.y = targetP.pos.y;
+      pos.x = targetP->pos.x;
+      pos.y = targetP->pos.y;
       return true;
    }else {
       pos.x = pos.x + cos(angle)*pixels;

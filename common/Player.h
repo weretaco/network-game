@@ -4,9 +4,11 @@
 #include <string>
 #include <map>
 
-#include "Common.h"
+#include "Compiler.h"
 
-#if defined LINUX
+#if defined WINDOWS
+   #include <winsock2.h>
+#elif defined LINUX
    #include <netinet/in.h>
 #endif
 
@@ -45,7 +47,7 @@ public:
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
-   bool updateTarget(map<unsigned int, Player>& mapPlayers);
+   bool updateTarget(map<unsigned int, Player*>& mapPlayers);
    bool move(WorldMap *map);
 
    void takeFlag(int flag, WorldMap* map);

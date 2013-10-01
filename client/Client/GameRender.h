@@ -23,7 +23,6 @@ class GameRender
 {
 public:
    static void drawMap(WorldMap* gameMap);
-   static void drawPlayers(map<unsigned int, Player>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
    static void drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
 };
 

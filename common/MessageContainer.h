@@ -3,9 +3,11 @@
 
 #include <string>
 
-#include "Common.h"
+#include "Compiler.h"
 
-#if defined LINUX
+#if defined WINDOWS
+   #include <winsock2.h>
+#elif defined LINUX
    #include <netinet/in.h>
 #endif
 
