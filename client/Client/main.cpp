@@ -624,6 +624,7 @@ void shutdownWinSock()
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
 {
+   // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
 
    switch(state)
@@ -696,11 +697,26 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Got a logout message" << endl;
 
-               if (response.compare("You have successfully logged out.") == 0)
+               int playerId;
+
+               // Check if it's about you or another player
+               memcpy(&playerId, msg.buffer, 4);
+               response = string(msg.buffer+4);
+
+               if (playerId == curPlayerId)
                {
-                  cout << "Logged out" << endl;
-                  state = STATE_START;
-                  goToLoginScreen();
+                  if (response.compare("You have successfully logged out.") == 0)
+                  {
+                     cout << "Logged out" << endl;
+                     state = STATE_START;
+                     goToLoginScreen();
+                  }
+
+                  // if there was an error logging out, nothing happens
+               }
+               else
+               {
+                  delete mapPlayers[playerId];
                }
 
                break;
