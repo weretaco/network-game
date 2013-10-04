@@ -673,18 +673,20 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                else
                {
                   wndCurrent = wndLobby;
-                  
-                  Player p("", "");
-                  p.deserialize(msg.buffer);
+                
+                  // this message should only be sent when a player first logs in so they know their id
+  
+                  Player* p = new Player("", "");
+                  p->deserialize(msg.buffer);
 
-                  if (mapPlayers.find(p.id) != mapPlayers.end())
-                     delete mapPlayers[p.id];
-                  mapPlayers[p.id] = new Player(p);
-                  curPlayerId = p.id;
+                  if (mapPlayers.find(p->id) != mapPlayers.end())
+                     delete mapPlayers[p->id];
+                  mapPlayers[p->id] = p;
+                  curPlayerId = p->id;
 
                   cout << "Got a valid login response with the player" << endl;
                   cout << "Player id: " << curPlayerId << endl;
-                  cout << "Player health: " << p.health << endl;
+                  cout << "Player health: " << p->health << endl;
                   cout << "player map size: " << mapPlayers.size() << endl;
                }
 
@@ -707,18 +709,18 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received MSG_TYPE_PLAYER" << endl;
 
-               Player p("", "");
-               p.deserialize(msg.buffer);
-               p.timeLastUpdated = getCurrentMillis();
-               p.isChasing = false;
-               if (p.health <= 0)
-                  p.isDead = true;
+               Player* p = new Player("", "");
+               p->deserialize(msg.buffer);
+               p->timeLastUpdated = getCurrentMillis();
+               p->isChasing = false;
+               if (p->health <= 0)
+                  p->isDead = true;
                else
-                  p.isDead = false;
+                  p->isDead = false;
 
-               if (mapPlayers.find(p.id) != mapPlayers.end())
-                    delete mapPlayers[p.id];
-               mapPlayers[p.id] = new Player(p);
+               if (mapPlayers.find(p->id) != mapPlayers.end())
+                    delete mapPlayers[p->id];
+               mapPlayers[p->id] = p;
 
                break;
             }
