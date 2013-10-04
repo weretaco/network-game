@@ -726,15 +726,17 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player *p = findPlayerByName(mapPlayers, name);
 
+         memcpy(serverMsg.buffer, &p->id, 4);
+
          if (p == NULL)
          {
-            strcpy(serverMsg.buffer, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
+            strcpy(serverMsg.buffer+4, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
             cout << "Player not logged in" << endl;
          }
          else if ( p->addr.sin_addr.s_addr != from.sin_addr.s_addr ||
                    p->addr.sin_port != from.sin_port )
          {
-            strcpy(serverMsg.buffer, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
+            strcpy(serverMsg.buffer+4, "That player is logged in using a differemt connection. This is either a bug, or you're trying to hack the server.");
             cout << "Player logged in using a different connection" << endl;
          }
          else
@@ -755,7 +757,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                unusedPlayerId = p->id;
             mapPlayers.erase(p->id);
             delete p;
-            strcpy(serverMsg.buffer, "You have successfully logged out.");
+            strcpy(serverMsg.buffer+4, "You have successfully logged out.");
+            broadcastResponse = true;
          }
 
          serverMsg.type = MSG_TYPE_LOGOUT;
