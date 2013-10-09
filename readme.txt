@@ -1,4 +1,9 @@
-This info is outdated. The latest info is on the github wiki.
+Building client on linux (tested in ubuntu)
+
+Build a static version of the allegro library
+http://ventilatorxor.wordpress.com/2011/08/07/linux-allegro5-static-linking-for-beginners/
+
+The info below is outdated. The latest info is on the github wiki.
 
 BoostPro Installer options
 
