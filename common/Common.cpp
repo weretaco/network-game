@@ -1,5 +1,11 @@
 #include "Common.h"
 
+#include "Compiler.h"
+
+#if defined WINDOWS
+   #include <winsock2.h>
+#endif
+
 #include <sstream>
 #include <cmath>
 #include <ctime>
@@ -28,8 +34,7 @@ void set_nonblock(int sock)
       unsigned long mode = 1;
       ioctlsocket(sock, FIONBIO, &mode);
    #elif defined LINUX
-      int flags;
-      flags = fcntl(sock, F_GETFL,0);
+      int flags = fcntl(sock, F_GETFL,0);
       assert(flags != -1);
       fcntl(sock, F_SETFL, flags | O_NONBLOCK);
    #endif
