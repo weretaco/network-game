@@ -1,0 +1,76 @@
+This document contains all messages and descriptions of how they are used or should be used
+
+MSG_TYPE_ACK
+Sent in response to a message of any other type and contains the id of the received message. When the recipient gets the ack, the know the original message with that id was received. This type is used by the MessageProcessor class.
+
+MSG_TYPE_REGISTER
+Client sends this message to register a new account. Contains a username, password, and class.
+
+MSG_TYPE_LOGIN
+Client sends this message to login. Contains a username and password
+
+MSG_TYPE_LOGOUT
+Client sends this message to logout. Contains no extra data. The server uses the sender address to determine which player sent it.
+
+MSG_TYPE_CHAT
+Client uses this to send chat messages to the server. The server uses it to relay chat message to the correct recipients. Contains the userame of the sender and the message itself (I think).
+
+MSG_TYPE_PLAYER
+Double-check correctness of this info
+server sends this to update player positions
+
+MSG_TYPE_PLAYER_MOVE
+Double-check correctness of this info
+Client sends this when a player wants to move
+
+MSG_TYPE_OBJECT
+Server sends this to indicate that a new object appeared on the map. (Currently, the only objects are flags).
+
+MSG_TYPE_REMOVE_OBJECT
+Server sends this to indicate that an object has been removed from the map. (Currently happens when a flag is picked up)
+
+MSG_TYPE_PICKUP_FLAG
+Client sends this when it wants to pick up a flag. This is sent when the user presses the correct hotkey, even if there is no flag close enough to pick up.
+
+MSG_TYPE_DROP_FLAG
+Client sends this when it wants to drop a flag. As above, this is sent when the hotkey is pressed, even if the player isn't holding a flag.
+
+MSG_TYPE_SCORE
+The server sends this to indicate a change in the score of a team.
+
+MSG_TYPE_START_ATTACK
+Info needs confirmation
+The client sends this to indicate they are starting an attack animation.
+I think the point here is for the server to tell other clients, so the correct animation is played on their screen as well.
+
+MSG_TYPE_ATTACK
+Not sure who sends this, but I think it's the client and I think it indicates the actual attack. The server sends MSG_TYPE_PLAYER messages to indicate a decrease in the hp of the target and some other state changes.
+
+MSG_TYPE_PROJECTILE
+Verify this
+Server sends this to indicate that a projectile has been created (in the case of a ranged attack). Probably contains the position and direction of the projectile. Not sure if it contains the id or name of the target player.
+
+MSG_TYPE_REMOVE_PROJECTILE
+Server sends this when a projectile should be removed (when it has reached its target).
+
+MSG_TYPE_CREATE_GAME
+Client sends this when they want to create a game. Contains the game name (probably not id since the server determines the id upon creation).
+
+MSG_TYPE_JOIN_GAME
+Client sends this when they want to join a game. Contains the game name or id.
+
+MSG_TYPE_LEAVE_GAME
+Client sends this when they want to leave a game. Not sure what this contains. Maybe nothing.
+
+MSG_TYPE_GAME_INFO
+Server sends this to tell all clients about existing games. Contains the game name and the number of players currently in it.
+
+MSG_TYPE_JOIN_GAME_SUCCESS
+Server sends this to a client to indicate that a game was joined successfully. This is useful because two clients might simultaneously want to a join a game with only one open slot or maybe the game ended by the time the server got the client's message.
+
+MSG_TYPE_JOIN_GAME_FAILURE
+Server sends this to indicate that a game could not be join. See explanation about. Also could be sent if the name the client specified doesn't match an existing game.
+
+MSG_TYPE_JOIN_GAME_ACK
+Needs verification.
+The client sends this upon receipt of a MSG_TYPE_JOIN_GAME_SUCCESS to indicate that he got it. This message is useful to guarantee initialization of some variables (I think of the Game variable on the client). Pretty clunky, so try to find a way of avoiding this.

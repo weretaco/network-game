@@ -1,0 +1,35 @@
+This file general algorithms used in the game, such as how players login/logout and how the create games or join existing games.
+
+Currently, there is no distinction between logging in and creating a game. There is essentially one game that always exists; when a player logs in, he joins that game, and when he logs out, he leaves that game.
+
+New Login/Logout Algorithm:
+
+When a player logs in, the db lookup and password check occurs just like it already does, and the player is added to some global player list. Other logged-in players get notified of this.
+
+When a player logs out, he gets removed from the list and everyone else also gets notified.
+
+All of this already happens, but it's tied to the signle game instance.
+
+STEPS:
+ - Un-implement/comment out the current code that sends messages about the game instance and just keep the code that adds/removes players from the global list.
+ - Make sure that chatting with players works.
+ - Modify the current game class to keep track of players in the game and re-implement (or possibly create) the messages for joining and leaving a game.
+ - Re-implement the movement/combat messages to use the list of players in the game, not the global list
+
+mapPlayers holds all players on the server and broadcasted messages are sent to everyone in the map
+
+A player logs in by sending a LOGIN message. When the server receives the message and verifies user credentials, it sends the following messages:
+ To the new player
+ - PLAYER messages for existing players (still needed)
+ - OBJECT messages for existing objects on the map (only send for new game)
+ - SCORE messages (only send for new game)
+ - PLAYER message to each existing player about the new one
+ - LOGIN message to the new player to indicate successful login (final reply)
+
+For logout messages, the logic can basically be kept the same. Just move the part related to restoring the flag in case the player is carrying one.
+
+Logic for sending chat messages
+
+Server receives a chat message and sends the following:
+ - The received chat message is simply broadcast to all other players
+ - An error will result in a chat message only being sent back to the sender

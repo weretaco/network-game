@@ -4,6 +4,9 @@
 
 #if defined WINDOWS
    #include <winsock2.h>
+#elif defined LINUX
+   #include <fcntl.h>
+   #include <assert.h>
 #endif
 
 #include <sstream>
