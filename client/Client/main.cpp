@@ -254,25 +254,27 @@ int main(int argc, char **argv)
 
    wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
-   wndLobby->addComponent(new TextLabel(SCREEN_W*1/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
-   wndLobby->addComponent(new Textbox(SCREEN_W*1/4+4, 40, 100, 20, font));
-   wndLobby->addComponent(new Button(SCREEN_W*1/4-100, 80, 200, 20, font, "Join Existing Game", joinGame));
+   wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
+   wndLobby->addComponent(new Textbox(SCREEN_W*1/2+15+4, 40, 100, 20, font));
+   wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame));
    wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
    wndLobby->addComponent(new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font));
    wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame));
+   wndLobby->addComponent(new Textbox(95, 40, 300, 20, font));
+   wndLobby->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
 
    txtJoinGame = (Textbox*)wndLobby->getComponent(2);
    txtCreateGame = (Textbox*)wndLobby->getComponent(5);
+   txtChat = (Textbox*)wndLobby->getComponent(7);
 
    cout << "Created lobby screen" << endl;
 
+   // this is the old game screen
    wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndGame->addComponent(new Textbox(95, 40, 300, 20, font));
    wndGame->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
    wndGame->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
    wndGame->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
-
-   txtChat = (Textbox*)wndGame->getComponent(0);
 
    wndGameDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndGameDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
@@ -280,6 +282,7 @@ int main(int argc, char **argv)
 
    cout << "Created game screen" << endl;
 
+   // this is the new game screen, without a debug console
    wndNewGame = new Window(0, 0, SCREEN_W, SCREEN_H);
    wndNewGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame));
 
@@ -461,6 +464,8 @@ int main(int argc, char **argv)
             wndCurrent->draw(display);
 
          if (wndCurrent == wndLobby) {
+            chatConsole.draw(font, al_map_rgb(255,255,255));
+
             map<string, int>::iterator it;
             int i=0;
             ostringstream ossGame;
