@@ -753,12 +753,20 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                }
             }
 
+            // broadcast to all players before deleting p from the map
+            map<unsigned int, Player*>::iterator it;
+            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+            {
+               cout << "Sent message back to " << it->second->name << endl;
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
+                  error("sendMessage");
+            }
+
             if (p->id < unusedPlayerId)
                unusedPlayerId = p->id;
             mapPlayers.erase(p->id);
             delete p;
             strcpy(serverMsg.buffer+4, "You have successfully logged out.");
-            broadcastResponse = true;
          }
 
          serverMsg.type = MSG_TYPE_LOGOUT;

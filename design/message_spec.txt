@@ -11,6 +11,7 @@ Client sends this message to login. Contains a username and password
 
 MSG_TYPE_LOGOUT
 Client sends this message to logout. Contains no extra data. The server uses the sender address to determine which player sent it.
+Server broadcasts a reply with the player id if logout was successfull or sends the sender's id and a string with an error message back to the original sender.
 
 MSG_TYPE_CHAT
 Client uses this to send chat messages to the server. The server uses it to relay chat message to the correct recipients. Contains the userame of the sender and the message itself (I think).
