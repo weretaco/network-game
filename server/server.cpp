@@ -1074,6 +1074,12 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          strcpy(serverMsg.buffer+4, g->getName().c_str());
          broadcastResponse = true;
 
+         // if there are no more players in the game, remove it
+         if (numPlayers == 0) {
+            mapGames.erase(g->getName());
+            delete g;
+         }
+
          break;
       }
       case MSG_TYPE_JOIN_GAME_ACK:
