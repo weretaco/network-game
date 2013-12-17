@@ -471,7 +471,7 @@ int main(int argc, char **argv)
             ostringstream ossGame;
             for (it = mapGames.begin(); it != mapGames.end(); it++) {
                ossGame << it->first << " (" << it->second << " players)" << endl;
-               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/4-100, 120+i*15, ALLEGRO_ALIGN_LEFT, ossGame.str().c_str());
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/2-100, 120+i*15, ALLEGRO_ALIGN_LEFT, ossGame.str().c_str());
                ossGame.clear();
                ossGame.str("");
                i++;
@@ -479,6 +479,18 @@ int main(int argc, char **argv)
          }
          else if (wndCurrent == wndNewGame)
          {
+            al_draw_text(font, al_map_rgb(0, 255, 0), 4, 4, ALLEGRO_ALIGN_LEFT, "Players");
+
+            map<unsigned int, Player*>& gamePlayers = game->getPlayers();
+            map<unsigned int, Player*>::iterator it;
+
+            int playerCount = 0;
+            for (it = gamePlayers.begin(); it != gamePlayers.end(); it++)
+            {
+               al_draw_text(font, al_map_rgb(0, 255, 0), 4, 19+(playerCount+1)*15, ALLEGRO_ALIGN_LEFT, it->second->name.c_str());
+               playerCount++;
+            }
+
             ostringstream ossScoreBlue, ossScoreRed;
 
             ossScoreBlue << "Blue: " << game->getBlueScore() << endl;
@@ -875,6 +887,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                string gameName(msg.buffer);         
                game = new Game(gameName, "../../data/map.txt");
+               game->addPlayer(mapPlayers[curPlayerId]);
                cout << "Game name: " << gameName << endl;
 
                state = STATE_NEW_GAME;
@@ -920,6 +933,27 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
                
                mapGames[gameName] = numPlayers;
+
+               break;
+            }
+            case MSG_TYPE_PLAYER:
+            {
+               cout << "Received MSG_TYPE_PLAYER" << endl;
+
+               Player* p = new Player("", "");
+               p->deserialize(msg.buffer);
+               p->timeLastUpdated = getCurrentMillis();
+               p->isChasing = false;
+               if (p->health <= 0)
+                  p->isDead = true;
+               else
+                  p->isDead = false;
+
+               if (mapPlayers.find(p->id) != mapPlayers.end())
+                    delete mapPlayers[p->id];
+               mapPlayers[p->id] = p;
+
+               game->addPlayer(p);
 
                break;
             }

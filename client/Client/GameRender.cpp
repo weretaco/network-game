@@ -62,7 +62,7 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
    POSITION pos;
    ALLEGRO_COLOR color;
 
-   for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+   for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
    {
       p = it->second;
 
