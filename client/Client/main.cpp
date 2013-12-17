@@ -877,7 +877,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                
                cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
                
-               mapGames[gameName] = numPlayers;
+               if (numPlayers > 0)
+                  mapGames[gameName] = numPlayers;
+               else
+                  mapGames.erase(gameName);
 
                break;
             }
@@ -932,7 +935,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                
                cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
                
-               mapGames[gameName] = numPlayers;
+               if (numPlayers > 0)
+                  mapGames[gameName] = numPlayers;
+               else
+                  mapGames.erase(gameName);
 
                break;
             }
