@@ -742,18 +742,19 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received MSG_TYPE_PLAYER" << endl;
 
-               Player* p = new Player("", "");
-               p->deserialize(msg.buffer);
-               p->timeLastUpdated = getCurrentMillis();
-               p->isChasing = false;
-               if (p->health <= 0)
-                  p->isDead = true;
+               Player p("", "");
+               p.deserialize(msg.buffer);
+               p.timeLastUpdated = getCurrentMillis();
+               p.isChasing = false;
+               if (p.health <= 0)
+                  p.isDead = true;
                else
-                  p->isDead = false;
+                  p.isDead = false;
 
-               if (mapPlayers.find(p->id) != mapPlayers.end())
-                    delete mapPlayers[p->id];
-               mapPlayers[p->id] = p;
+               if (mapPlayers.find(p.id) != mapPlayers.end())
+                  *(mapPlayers[p.id]) = p;
+               else
+                  mapPlayers[p.id] = new Player(p);
 
                break;
             }
@@ -946,20 +947,26 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received MSG_TYPE_PLAYER" << endl;
 
-               Player* p = new Player("", "");
-               p->deserialize(msg.buffer);
-               p->timeLastUpdated = getCurrentMillis();
-               p->isChasing = false;
-               if (p->health <= 0)
-                  p->isDead = true;
+               Player p("", "");
+               p.deserialize(msg.buffer);
+               p.timeLastUpdated = getCurrentMillis();
+               p.isChasing = false;
+               if (p.health <= 0)
+                  p.isDead = true;
                else
-                  p->isDead = false;
+                  p.isDead = false;
 
-               if (mapPlayers.find(p->id) != mapPlayers.end())
-                    delete mapPlayers[p->id];
-               mapPlayers[p->id] = p;
+               if (mapPlayers.find(p.id) != mapPlayers.end())
+                  *(mapPlayers[p.id]) = p;
+               else
+                  mapPlayers[p.id] = new Player(p);
 
-               game->addPlayer(p);
+               break;
+
+               // there's a problem here because PLAYER messages will be sent
+               // for players in this game as well as for new players logging in
+               // we might need two different message types
+               game->addPlayer(mapPlayers[p.id]);
 
                break;
             }
