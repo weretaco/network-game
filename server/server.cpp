@@ -1094,7 +1094,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player* p = findPlayerByAddr(mapPlayers, from);
          p->team = rand() % 2; // choose a random team (either 0 or 1)
-         p->currentGame = g;
+         p->currentGame = g; // should have been done in JOIN_GAME, so not necessary
 
          map<unsigned int, Player*>& otherPlayers = g->getPlayers();
 
