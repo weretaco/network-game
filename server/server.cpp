@@ -1102,23 +1102,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          p->team = rand() % 2; // choose a random team (either 0 or 1)
          p->currentGame = g; // should have been done in JOIN_GAME, so not necessary
 
-         map<unsigned int, Player*>& otherPlayers = g->getPlayers();
-
-         // tell the new player about all the existing players
-         cout << "Sending other players to new player" << endl;
-         serverMsg.type = MSG_TYPE_PLAYER;
-
-         map<unsigned int, Player*>::iterator it;
-         for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
-         {
-            it->second->serialize(serverMsg.buffer);
-
-            cout << "sending info about " << it->second->name  << endl;
-            cout << "sending id " << it->second->id  << endl;
-            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
-               error("sendMessage");
-         }
-
          // tell the new player about all map objects
          // (currently just the flags)
 
@@ -1145,10 +1128,11 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
             error("sendMessage");
 
-         serverMsg.type = MSG_TYPE_PLAYER;
+         serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
          p->serialize(serverMsg.buffer);
          cout << "Should be broadcasting the message" << endl;
 
+         map<unsigned int, Player*>& otherPlayers = g->getPlayers();
          for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
          {
             cout << "Sent message back to " << it->second->name << endl;
@@ -1157,6 +1141,24 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
 
          g->addPlayer(p);
+
+         map<unsigned int, Player*>& allPlayers = g->getPlayers();
+
+         // tell the new player about all the players in the game (including himself)
+         cout << "Sending other players to new player" << endl;
+         serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
+
+         map<unsigned int, Player*>::iterator it;
+         for (it = allPlayers.begin(); it != allPlayers.end(); it++)
+         {
+            it->second->serialize(serverMsg.buffer);
+
+            cout << "sending info about " << it->second->name  << endl;
+            cout << "sending id " << it->second->id  << endl;
+            if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+               error("sendMessage");
+         }
+
          int numPlayers = g->getNumPlayers();
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
