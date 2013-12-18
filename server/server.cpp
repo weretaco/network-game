@@ -1068,6 +1068,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // also, check if the game has any players left. If not, remove it and send everyone a message so the game is gone from their lobby list
 
          int numPlayers = g->getNumPlayers();
+         cout << "" << endl;
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);
@@ -1133,6 +1134,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          cout << "Should be broadcasting the message" << endl;
 
          map<unsigned int, Player*>& otherPlayers = g->getPlayers();
+         map<unsigned int, Player*>::iterator it;
          for (it = otherPlayers.begin(); it != otherPlayers.end(); it++)
          {
             cout << "Sent message back to " << it->second->name << endl;
@@ -1148,7 +1150,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          cout << "Sending other players to new player" << endl;
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
 
-         map<unsigned int, Player*>::iterator it;
          for (it = allPlayers.begin(); it != allPlayers.end(); it++)
          {
             it->second->serialize(serverMsg.buffer);
