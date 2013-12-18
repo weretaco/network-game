@@ -610,8 +610,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          string password(strchr(clientMsg.buffer, '\0')+1);
          Player::PlayerClass playerClass;
 
-         memcpy(&playerClass, clientMsg.buffer+username.length()+password.length()+2, 4);
          serverMsg.type = MSG_TYPE_REGISTER;
+         memcpy(&playerClass, clientMsg.buffer+username.length()+password.length()+2, 4);
 
          cout << "username: " << username << endl;
          cout << "password: " << password << endl;
@@ -726,8 +726,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player *p = findPlayerByName(mapPlayers, name);
 
-         memcpy(serverMsg.buffer, &p->id, 4);
-
          if (p == NULL)
          {
             strcpy(serverMsg.buffer+4, "That player is not logged in. This is either a bug, or you're trying to hack the server.");
@@ -754,6 +752,9 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             }
 
             // broadcast to all players before deleting p from the map
+            serverMsg.type = MSG_TYPE_LOGOUT;
+            memcpy(serverMsg.buffer, &p->id, 4);
+
             map<unsigned int, Player*>::iterator it;
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
@@ -1064,11 +1065,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          g->removePlayer(p->id);
 
-         // broadcast a messsage to other players so they know someone left the game
-         // also, check if the game has any players left. If not, remove it and send everyone a message so the game is gone from their lobby list
-
          int numPlayers = g->getNumPlayers();
-         cout << "" << endl;
 
          serverMsg.type = MSG_TYPE_GAME_INFO;
          memcpy(serverMsg.buffer, &numPlayers, 4);
