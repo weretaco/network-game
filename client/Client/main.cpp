@@ -891,7 +891,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                string gameName(msg.buffer);         
                game = new Game(gameName, "../../data/map.txt");
-               game->addPlayer(mapPlayers[curPlayerId]);
                cout << "Game name: " << gameName << endl;
 
                state = STATE_NEW_GAME;
@@ -962,10 +961,25 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                   mapPlayers[p.id] = new Player(p);
 
                break;
+            }
+            case MSG_TYPE_PLAYER_JOIN_GAME:
+            {
+               cout << "Received MSG_TYPE_PLAYER_JOIN_GAME" << endl;
 
-               // there's a problem here because PLAYER messages will be sent
-               // for players in this game as well as for new players logging in
-               // we might need two different message types
+               Player p("", "");
+               p.deserialize(msg.buffer);
+               p.timeLastUpdated = getCurrentMillis();
+               p.isChasing = false;
+               if (p.health <= 0)
+                  p.isDead = true;
+               else
+                  p.isDead = false;
+
+               if (mapPlayers.find(p.id) != mapPlayers.end())
+                  *(mapPlayers[p.id]) = p;
+               else
+                  mapPlayers[p.id] = new Player(p);
+
                game->addPlayer(mapPlayers[p.id]);
 
                break;
