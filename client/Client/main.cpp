@@ -398,7 +398,7 @@ int main(int argc, char **argv)
                state = STATE_GAME;
                wndCurrent = wndGame;
             }
-         }else if(wndCurrent == wndGame) {
+         }else if(wndCurrent == wndGame || wndCurrent == wndNewGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -498,6 +498,17 @@ int main(int argc, char **argv)
 
             al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
+
+            // update players
+            for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
+            {
+               it->second->updateTarget(game->getPlayers());
+            }
+
+            for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
+            {
+               it->second->move(game->getMap());    // ignore return value
+            }
 
             GameRender::drawMap(game->getMap());
             GameRender::drawPlayers(game->getPlayers(), font, curPlayerId);
@@ -981,6 +992,24 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                   mapPlayers[p.id] = new Player(p);
 
                game->addPlayer(mapPlayers[p.id]);
+
+               break;
+            }
+            case MSG_TYPE_PLAYER_MOVE:
+            {
+               cout << "Received PLAYER_MOVE message" << endl;
+
+               unsigned int id;
+               int x, y;
+
+               memcpy(&id, msg.buffer, 4);
+               memcpy(&x, msg.buffer+4, 4);
+               memcpy(&y, msg.buffer+8, 4);
+
+               cout << "id: " << id << endl;
+
+               mapPlayers[id]->target.x = x;
+               mapPlayers[id]->target.y = y;
 
                break;
             }
