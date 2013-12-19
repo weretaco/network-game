@@ -40,6 +40,7 @@ public:
    void setId(unsigned int id);
    bool addPlayer(Player* p);
    bool removePlayer(unsigned int id);
+   bool startPlayerMovement(unsigned int id, int x, int y);
    void setBlueScore(int score);
    void setRedScore(int score);
 };

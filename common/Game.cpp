@@ -66,6 +66,27 @@ bool Game::removePlayer(unsigned int id) {
       return false;
 }
 
+bool Game::startPlayerMovement(unsigned int id, int x, int y) {
+   // need to check if players actually contains the id
+   Player* p = players[id];
+
+   // we need to make sure the player can move here
+   if (0 <= x && x < this->worldMap->width*25 &&
+       0 <= y && y < this->worldMap->height*25 &&
+       this->worldMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
+   {
+      p->target.x = x;
+      p->target.y = y;
+
+      p->isChasing = false;
+      p->isAttacking = false;
+
+      return true;
+   }
+   else
+      return false;
+}
+
 void Game::setRedScore(int score) {
    this->redScore = score;
 }

@@ -817,18 +817,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          if ( p->addr.sin_addr.s_addr == from.sin_addr.s_addr &&
               p->addr.sin_port == from.sin_port )
          {
-            // we need to make sure the player can move here
-            if (0 <= x && x < gameMap->width*25 && 0 <= y && y < gameMap->height*25 &&
-               gameMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
-            {
-               cout << "valid terrain" << endl;
-
-               p->target.x = x;
-               p->target.y = y;
-
-               p->isChasing = false;
-               p->isAttacking = false;
-
+            if (p->currentGame->startPlayerMovement(id, x, y)) {
                serverMsg.type = MSG_TYPE_PLAYER_MOVE;
                
                memcpy(serverMsg.buffer, &id, 4);
