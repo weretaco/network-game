@@ -87,6 +87,30 @@ bool Game::startPlayerMovement(unsigned int id, int x, int y) {
       return false;
 }
 
+// returns true if the movement should be canceled
+bool Game::processPlayerMovement(Player* p, FLOAT_POSITION oldPos) {
+
+   // check if the move needs to be canceled
+   switch(this->worldMap->getElement(p->pos.x/25, p->pos.y/25))
+   {
+      case WorldMap::TERRAIN_NONE:
+      case WorldMap::TERRAIN_OCEAN:
+      case WorldMap::TERRAIN_ROCK:
+      {
+         p->pos = oldPos;
+         p->target.x = p->pos.x;
+         p->target.y = p->pos.y;
+         p->isChasing = false;
+         return true;
+         break;
+      }
+      default:
+         // if there are no obstacles, don't cancel movement
+         return false;
+         break;
+      }
+}
+
 void Game::setRedScore(int score) {
    this->redScore = score;
 }

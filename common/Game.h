@@ -41,6 +41,8 @@ public:
    bool addPlayer(Player* p);
    bool removePlayer(unsigned int id);
    bool startPlayerMovement(unsigned int id, int x, int y);
+   bool processPlayerMovement(Player* p, FLOAT_POSITION oldPos);
+
    void setBlueScore(int score);
    void setRedScore(int score);
 };

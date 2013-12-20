@@ -137,7 +137,6 @@ int main(int argc, char *argv[])
    int timeLastUpdated = 0, curTime = 0, timeLastBroadcast = 0;
    while (!done)
    {
-
       usleep(5000);
 
       clock_gettime(CLOCK_REALTIME, &ts);
@@ -216,34 +215,20 @@ int main(int argc, char *argv[])
             }
          }
 
-         // move all players
-         // maybe put this in a separate method
+         // process players currently in a game
          FLOAT_POSITION oldPos;
-         bool broadcastMove = false;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
          {
+            bool broadcastMove = false;
+
+            // move player and perform associated tasks
             oldPos = it->second->pos;
-            if (it->second->move(gameMap)) {
+            if (it->second->move(it->second->currentGame->getMap())) {
 
-               // check if the move needs to be canceled
-               switch(gameMap->getElement(it->second->pos.x/25, it->second->pos.y/25))
-               {
-                  case WorldMap::TERRAIN_NONE:
-                  case WorldMap::TERRAIN_OCEAN:
-                  case WorldMap::TERRAIN_ROCK:
-                  {
-                     it->second->pos = oldPos;
-                     it->second->target.x = it->second->pos.x;
-                     it->second->target.y = it->second->pos.y;
-                     it->second->isChasing = false;
-                     broadcastMove = true;
-                     break;
-                  }
-                  default:
-                     // if there are no obstacles, do nothing
-                     break;
-               }
+               if (it->second->currentGame->processPlayerMovement(it->second, oldPos))
+                   broadcastMove = true;
 
+               /*
                WorldMap::ObjectType flagType;
                POSITION pos;
                bool flagTurnedIn = false;
@@ -396,15 +381,19 @@ int main(int argc, char *argv[])
                         error("sendMessage");
                   }
                }
+               */
 
                if (broadcastMove)
                {
                   serverMsg.type = MSG_TYPE_PLAYER;
                   it->second->serialize(serverMsg.buffer);
 
+                  // only broadcast message to other players in the same game
                   cout << "about to broadcast move" << endl;
+
+                  map<unsigned int, Player*> playersInGame = it->second->currentGame->getPlayers();
                   map<unsigned int, Player*>::iterator it2;
-                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  for (it2 = playersInGame.begin(); it2 != playersInGamePlayers.end(); it2++)
                   {
                      if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                         error("sendMessage");
