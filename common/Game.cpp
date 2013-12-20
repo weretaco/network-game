@@ -1,5 +1,7 @@
 #include "Game.h"
 
+#include "Common.h"
+
 using namespace std;
 
 Game::Game() {
@@ -109,6 +111,39 @@ bool Game::processPlayerMovement(Player* p, FLOAT_POSITION oldPos) {
          return false;
          break;
       }
+}
+
+// returns the id of the picked-up flag or -1 if none was picked up
+int Game::processFlagPickupRequest(Player* p) {
+   vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
+   vector<WorldMap::Object>::iterator it;
+   int playerId = -1;
+
+   for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
+      if (posDistance(p->pos, it->pos.toFloat()) < 10) {
+         switch (it->type) {
+            case WorldMap::OBJECT_BLUE_FLAG:
+               if (p->team == 1) {
+                  p->hasBlueFlag = true;
+                  playerId = it->id;
+               }
+               break;
+            case WorldMap::OBJECT_RED_FLAG:
+               if (p->team == 0) {
+                  p->hasRedFlag = true;
+                  playerId = it->id;
+               }
+               break;
+         }
+
+         if (playerId > -1) {
+            vctObjects->erase(it);
+            return playerId;
+         }
+      }
+   }
+
+   return playerId;
 }
 
 void Game::setRedScore(int score) {

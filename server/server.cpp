@@ -153,6 +153,8 @@ int main(int argc, char *argv[])
 
          map<unsigned int, Player*>::iterator it;
 
+         cout << "Updating player targets and respawning dead players" << endl;
+
          // set targets for all chasing players (or make them attack if they're close enough)
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
          {
@@ -215,18 +217,26 @@ int main(int argc, char *argv[])
             }
          }
 
+         cout << "Processing players in a game" << endl;
+
          // process players currently in a game
          FLOAT_POSITION oldPos;
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
          {
+            if (it->second->currentGame == NULL)
+               continue;
+
+            cout << "moving player" << endl;
             bool broadcastMove = false;
 
             // move player and perform associated tasks
             oldPos = it->second->pos;
             if (it->second->move(it->second->currentGame->getMap())) {
 
+               cout << "player moved" << endl;
                if (it->second->currentGame->processPlayerMovement(it->second, oldPos))
                    broadcastMove = true;
+               cout << "player move processed" << endl;
 
                /*
                WorldMap::ObjectType flagType;
@@ -385,6 +395,7 @@ int main(int argc, char *argv[])
 
                if (broadcastMove)
                {
+                  cout << "broadcasting player move" << endl;
                   serverMsg.type = MSG_TYPE_PLAYER;
                   it->second->serialize(serverMsg.buffer);
 
@@ -393,13 +404,16 @@ int main(int argc, char *argv[])
 
                   map<unsigned int, Player*> playersInGame = it->second->currentGame->getPlayers();
                   map<unsigned int, Player*>::iterator it2;
-                  for (it2 = playersInGame.begin(); it2 != playersInGamePlayers.end(); it2++)
+                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
                   {
                      if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
+                  cout << "done broadcasting player move" << endl;
                }
             }
+
+            cout << "processing player attack" << endl;
 
             // check if the player's attack animation is complete
             if (it->second->isAttacking && it->second->timeAttackStarted+it->second->attackCooldown <= getCurrentMillis())
@@ -476,6 +490,8 @@ int main(int argc, char *argv[])
             }
          }
 
+         cout << "Processing projectiles"  << endl;
+
          // move all projectiles
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++)
@@ -539,6 +555,7 @@ int main(int argc, char *argv[])
          {
             cout << "Should be broadcasting the message" << endl;
 
+            // needs to be updated to use the players from the game
             map<unsigned int, Player*>::iterator it;
             for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
             {
@@ -554,6 +571,8 @@ int main(int argc, char *argv[])
             if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
                error("sendMessage");
          }
+
+         cout << "Finished processing the message" << endl;
       }
    }
 
@@ -650,6 +669,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             p->id = unusedPlayerId;
             cout << "new player id: " << p->id << endl;
             p->setAddr(from);
+            p->currentGame = NULL;
 
             // choose a random team (either 0 or 1)
             p->team = rand() % 2;
@@ -834,54 +854,23 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          cout << "id: " << id << endl;
 
          Player* p = mapPlayers[id];
+         int objectId = p->currentGame->processFlagPickupRequest(p);
 
-         vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
-         vector<WorldMap::Object>::iterator itObjects;
+         if (objectId >= 0) {
+            serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
+            memcpy(serverMsg.buffer, &objectId, 4);
 
-         for (itObjects = vctObjects->begin(); itObjects != vctObjects->end();) {
-            POSITION pos = itObjects->pos;
-            bool gotFlag = false;
-
-            if (posDistance(p->pos, pos.toFloat()) < 10) {
-               switch (itObjects->type) {
-                  case WorldMap::OBJECT_BLUE_FLAG:
-                     if (p->team == 1) {
-                        gotFlag = true;
-                        p->hasBlueFlag = true;
-                        broadcastResponse = true;
-                     }
-                     break;
-                  case WorldMap::OBJECT_RED_FLAG:
-                     if (p->team == 0) {
-                        gotFlag = true;
-                        p->hasRedFlag = true;
-                        broadcastResponse = true;
-                     }
-                     break;
-               }
-
-               if (gotFlag) {
-                  serverMsg.type = MSG_TYPE_REMOVE_OBJECT;
-                  memcpy(serverMsg.buffer, &itObjects->id, 4);
-
-                  map<unsigned int, Player*>::iterator it;
-                  for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-                  {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
-                        error("sendMessage");
-                  }
-
-                  // remove the object from the server-side map
-                  cout << "size before: " << gameMap->getObjects()->size() << endl;
-                  itObjects = vctObjects->erase(itObjects);
-                  cout << "size after: " << gameMap->getObjects()->size() << endl;
-               }
+            map<unsigned int, Player*> players = p->currentGame->getPlayers();
+            map<unsigned int, Player*>::iterator it;
+            for (it = players.begin(); it != players.end(); it++)
+            {
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &(it->second->addr), &outputLog) < 0 )
+                  error("sendMessage");
             }
 
-            if (!gotFlag)
-               itObjects++;
          }
 
+         // if there was no flag to pickup, we really don't need to send a message
          serverMsg.type = MSG_TYPE_PLAYER;
          p->serialize(serverMsg.buffer);
 

@@ -42,6 +42,7 @@ public:
    bool removePlayer(unsigned int id);
    bool startPlayerMovement(unsigned int id, int x, int y);
    bool processPlayerMovement(Player* p, FLOAT_POSITION oldPos);
+   int processFlagPickupRequest(Player* p);
 
    void setBlueScore(int score);
    void setRedScore(int score);
