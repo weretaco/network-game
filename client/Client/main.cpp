@@ -355,22 +355,18 @@ int main(int argc, char **argv)
                doexit = true;
                break;
             case ALLEGRO_KEY_S:  // pickup an item next to you
-               if (state == STATE_GAME) {
+               if (state == STATE_GAME || state == STATE_NEW_GAME) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
                   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
-               if (state == STATE_GAME) {
-                  // find the current player in the player list
-                  map<unsigned int, Player*>::iterator it;
+               if (state == STATE_GAME || state == STATE_NEW_GAME) {
                   Player* p = NULL;
-                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-                  {
-                     if (it->second->id == curPlayerId)
-                        p = it->second;
-                  }
+                  try {
+                     p = mapPlayers.at(curPlayerId);
+                  } catch (const out_of_range& ex) {}
 
                   if (p != NULL) {
                      int flagType = WorldMap::OBJECT_NONE;
