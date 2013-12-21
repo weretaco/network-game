@@ -416,32 +416,39 @@ int main(int argc, char **argv)
                else
                   cout << "Invalid point: User did not click on the map" << endl;
             }else if (ev.mouse.button == 2) {   // right click
-                  map<unsigned int, Player*>::iterator it;
+               cout << "Detected a right-click" << endl;
+               map<unsigned int, Player*>::iterator it;
 
-                  cout << "Detected a right-click" << endl;
+               Player* curPlayer;
+               for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+               {
+                  if (it->second->id == curPlayerId)
+                     curPlayer = it->second;
+               }
 
-                  Player* curPlayer;
-                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
+               cout << "Got current player" << endl;
+               cout << "current game: " << game << endl;
+
+               map<unsigned int, Player*> playersInGame = game->getPlayers();
+               Player* target;
+
+               for(it = playersInGame.begin(); it != playersInGame.end(); it++)
+               {
+                  // need to check if the right-click was actually on this player
+                  // right now, this code will target all players other than the current one
+                  target = it->second;
+                  cout << "set target" << endl;
+                  if (target->id != curPlayerId && target->team != curPlayer->team)
                   {
-                     if (it->second->id == curPlayerId)
-                        curPlayer = it->second;
-                  }
+                     cout << "Found valid target" << endl;
 
-                  Player* target;
-                  for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-                  {
-                     // need to check if the right-click was actually on this player
-                     // right now, this code will target all players other than the current one
-                     target = it->second;
-                     if (target->id != curPlayerId && target->team != curPlayer->team)
-                     {
-                        msgTo.type = MSG_TYPE_START_ATTACK;
-                        memcpy(msgTo.buffer, &curPlayerId, 4);
-                        memcpy(msgTo.buffer+4, &target->id, 4);
+                     msgTo.type = MSG_TYPE_START_ATTACK;
+                     memcpy(msgTo.buffer, &curPlayerId, 4);
+                     memcpy(msgTo.buffer+4, &target->id, 4);
 
-                        msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
-                     }
+                     msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
                   }
+               }
             }
          }
       }
@@ -1052,6 +1059,30 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                cout << "Processed SCORE message!" << endl;
  
+               break;
+            }
+            case MSG_TYPE_ATTACK:
+            {
+               cout << "Received ATTACK message" << endl;
+
+               break;
+            }
+            case MSG_TYPE_START_ATTACK:
+            {
+               cout << "Received START_ATTACK message" << endl;
+
+               unsigned int id, targetId;
+               memcpy(&id, msg.buffer, 4);
+               memcpy(&targetId, msg.buffer+4, 4);
+
+               cout << "source id: " << id << endl;
+               cout << "target id: " << targetId << endl;
+
+               // need to check the target exists in the current game
+               Player* source = game->getPlayers()[id];
+               source->targetPlayer = targetId;
+               source->isChasing = true;
+
                break;
             }
             default:
