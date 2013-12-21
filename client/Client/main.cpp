@@ -388,12 +388,14 @@ int main(int argc, char **argv)
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
          if(wndCurrent == wndLobby) {
+            /*
             if (ev.mouse.button == 1) { // left click
                txtJoinGame->clear();
                txtCreateGame->clear();
                state = STATE_GAME;
                wndCurrent = wndGame;
             }
+            */
          }else if(wndCurrent == wndGame || wndCurrent == wndNewGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
