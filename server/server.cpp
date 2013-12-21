@@ -158,16 +158,18 @@ int main(int argc, char *argv[])
          // set targets for all chasing players (or make them attack if they're close enough)
          for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
          {
+            Player* p = it->second;
+
             // check if it's time to revive dead players
-            if (it->second->isDead)
+            if (p->isDead)
             {
-               if (getCurrentMillis() - it->second->timeDied >= 10000)
+               if (getCurrentMillis() - p->timeDied >= 10000)
                {
-                  it->second->isDead = false;
+                  p->isDead = false;
 
                   POSITION spawnPos;
  
-                  switch (it->second->team)
+                  switch (p->team)
                   {
                   case 0:// blue team
                      spawnPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
@@ -185,17 +187,17 @@ int main(int argc, char *argv[])
                   spawnPos.x = (spawnPos.x+1) * 25 + 12;
                   spawnPos.y = spawnPos.y * 25 + 12;
 
-                  it->second->pos = spawnPos.toFloat();
-                  it->second->target = spawnPos;
-                  it->second->health = it->second->maxHealth;
+                  p->pos = spawnPos.toFloat();
+                  p->target = spawnPos;
+                  p->health = p->maxHealth;
 
                   serverMsg.type = MSG_TYPE_PLAYER;
-                  it->second->serialize(serverMsg.buffer);
+                  p->serialize(serverMsg.buffer);
 
                   map<unsigned int, Player*>::iterator it2;
                   for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(p->addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
                }
@@ -203,16 +205,19 @@ int main(int argc, char *argv[])
                continue;
             }
 
-            if (it->second->updateTarget(mapPlayers))
-            {
-               serverMsg.type = MSG_TYPE_PLAYER;
-               it->second->serialize(serverMsg.buffer);
-
-               map<unsigned int, Player*>::iterator it2;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+            if (p->currentGame != NULL) {
+               map<unsigned int, Player*> playersInGame = p->currentGame->getPlayers();
+               if (p->updateTarget(playersInGame))
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                     error("sendMessage");
+                  serverMsg.type = MSG_TYPE_PLAYER;
+                  p->serialize(serverMsg.buffer);
+
+                  map<unsigned int, Player*>::iterator it2;
+                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                  {
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                        error("sendMessage");
+                  }
                }
             }
          }
@@ -934,6 +939,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          memcpy(&id, clientMsg.buffer, 4);
          memcpy(&targetId, clientMsg.buffer+4, 4);
+
+         // need to make sure the target is in the sender's game
 
          Player* source = mapPlayers[id];
          source->targetPlayer = targetId;
