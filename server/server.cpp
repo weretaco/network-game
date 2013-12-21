@@ -707,6 +707,22 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                   error("sendMessage");
             }
 
+            // send info about existing games to new player
+            map<string, Game*>::iterator itGames;
+            Game* g;
+            int numPlayers;
+            serverMsg.type = MSG_TYPE_GAME_INFO;
+
+            for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++)
+            {
+               g = itGames->second;
+               numPlayers = g->getNumPlayers();
+               memcpy(serverMsg.buffer, &numPlayers, 4);
+               strcpy(serverMsg.buffer+4, g->getName().c_str());
+               if ( msgProcessor.sendMessage(&serverMsg, sock, &from, &outputLog) < 0 )
+                  error("sendMessage");
+            }
+
             // send the current score
             serverMsg.type = MSG_TYPE_SCORE;
             memcpy(serverMsg.buffer, &scoreBlue, 4);
