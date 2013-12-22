@@ -25,6 +25,7 @@ private:
    WorldMap* worldMap;
    int blueScore;
    int redScore;
+   unsigned int unusedProjectileId;
 
 public:
    Game();
@@ -34,8 +35,6 @@ public:
 
    string getName();
    int getNumPlayers();
-   map<unsigned int, Player*>& getPlayers();
-   map<unsigned int, Projectile>& getProjectiles();
    int getBlueScore();
    int getRedScore();
    WorldMap* getMap();
@@ -44,14 +43,20 @@ public:
    void setBlueScore(int score);
    void setRedScore(int score);
 
+   map<unsigned int, Player*>& getPlayers();
    bool addPlayer(Player* p);
    bool removePlayer(unsigned int id);
+
+   map<unsigned int, Projectile>& getProjectiles();
+   bool addProjectile(Projectile p);
+   bool removeProjectile(unsigned int id);
+
    bool startPlayerMovement(unsigned int id, int x, int y);
    bool processPlayerMovement(Player* p, FLOAT_POSITION oldPos);
    int processFlagPickupRequest(Player* p);
 
-   bool addProjectile(Projectile p);
-   bool removeProjectile(unsigned int id);
+   void assignProjectileId(Projectile* p);
+   void updateUnusedProjectileId();
 };
 
 #endif

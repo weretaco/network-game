@@ -36,8 +36,40 @@ map<unsigned int, Player*>& Game::getPlayers() {
    return this->players;
 }
 
+bool Game::addPlayer(Player* p) {
+   if (players.find(p->id) == players.end()) {
+      players[p->id] = p;
+      return true;
+   }
+   else
+      return false;
+}
+
+bool Game::removePlayer(unsigned int id) {
+   if (players.erase(id) == 1)
+      return true;
+   else
+      return false;
+}
+
 map<unsigned int, Projectile>& Game::getProjectiles() {
    return this->projectiles;
+}
+
+bool Game::addProjectile(Projectile p) {
+   if (projectiles.find(p.id) == projectiles.end()) {
+      projectiles[p.id] = p;
+      return true;
+   }
+   else
+      return false;
+}
+
+bool Game::removeProjectile(unsigned int id) {
+   if (projectiles.erase(id) == 1)
+      return true;
+   else
+      return false;
 }
 
 int Game::getRedScore() {
@@ -62,22 +94,6 @@ void Game::setRedScore(int score) {
 
 void Game::setBlueScore(int score) {
    this->blueScore = score;
-}
-
-bool Game::addPlayer(Player* p) {
-   if (players.find(p->id) == players.end()) {
-      players[p->id] = p;
-      return true;
-   }
-   else
-      return false;
-}
-
-bool Game::removePlayer(unsigned int id) {
-   if (players.erase(id) == 1)
-      return true;
-   else
-      return false;
 }
 
 bool Game::startPlayerMovement(unsigned int id, int x, int y) {
@@ -158,18 +174,12 @@ int Game::processFlagPickupRequest(Player* p) {
    return playerId;
 }
 
-bool Game::addProjectile(Projectile p) {
-   if (projectiles.find(p.id) == projectiles.end()) {
-      projectiles[p.id] = p;
-      return true;
-   }
-   else
-      return false;
+void Game::assignProjectileId(Projectile* p) {
+   p->id = unusedProjectileId;
+   updateUnusedProjectileId();
 }
 
-bool Game::removeProjectile(unsigned int id) {
-   if (projectiles.erase(id) == 1)
-      return true;
-   else
-      return false;
+void Game::updateUnusedProjectileId() {
+   while (projectiles.find(unusedProjectileId) != projectiles.end())
+      unusedProjectileId++;
 }

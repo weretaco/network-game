@@ -47,7 +47,6 @@ bool done;
 bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId, NETWORK_MSG &serverMsg, int sock, int &scoreBlue, int &scoreRed, ofstream& outputLog);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers);
-void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles);
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
 Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr);
 void damagePlayer(Player *p, int damage);
@@ -475,18 +474,18 @@ int main(int argc, char *argv[])
                   cout << "Ranged attack" << endl;
 
                   Projectile proj(p->pos.x, p->pos.y, p->targetPlayer, p->damage);
-                  proj.id = unusedProjectileId;
-                  updateUnusedProjectileId(unusedProjectileId, mapProjectiles);
-                  mapProjectiles[proj.id] = proj;
+                  p->currentGame->assignProjectileId(&proj);
+                  
+                  p->currentGame->addProjectile(proj);
 
-                  int x = it->second->pos.x;
-                  int y = it->second->pos.y;
+                  int x = p->pos.x;
+                  int y = p->pos.y;
 
                   serverMsg.type = MSG_TYPE_PROJECTILE;
                   memcpy(serverMsg.buffer, &proj.id, 4);
                   memcpy(serverMsg.buffer+4, &x, 4);
                   memcpy(serverMsg.buffer+8, &y, 4);
-                  memcpy(serverMsg.buffer+12, &it->second->targetPlayer, 4);
+                  memcpy(serverMsg.buffer+12, &p->targetPlayer, 4);
                }
                else
                   cout << "Invalid attack type: " << it->second->attackType << endl;
@@ -506,6 +505,7 @@ int main(int argc, char *argv[])
 
          // move all projectiles
          // see if this can be moved inside the game class
+         // this method can be moved when I add a MessageProcessor to the Game class
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++)
          {
@@ -1194,12 +1194,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers)
 {
    while (mapPlayers.find(id) != mapPlayers.end())
-      id++;
-}
-
-void updateUnusedProjectileId(unsigned int& id, map<unsigned int, Projectile>& mapProjectiles)
-{
-   while (mapProjectiles.find(id) != mapProjectiles.end())
       id++;
 }
 
