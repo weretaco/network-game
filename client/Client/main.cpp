@@ -515,8 +515,35 @@ int main(int argc, char **argv)
                it->second->move(game->getMap());    // ignore return value
             }
 
+             // update projectile positions
+            map<unsigned int, Projectile>::iterator it2;
+            for (it2 = game->getProjectiles().begin(); it2 != game->getProjectiles().end(); it2++)
+            {
+               it2->second.move(game->getPlayers());
+            }
+
             GameRender::drawMap(game->getMap());
             GameRender::drawPlayers(game->getPlayers(), font, curPlayerId);
+
+            // draw projectiles
+            for (it2 = game->getProjectiles().begin(); it2 != game->getProjectiles().end(); it2++)
+            {
+               Projectile proj = it2->second;
+
+               FLOAT_POSITION target = game->getPlayers()[proj.target]->pos;
+               float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
+
+               POSITION start, end;
+               start.x = cos(angle)*15+proj.pos.x;
+               start.y = sin(angle)*15+proj.pos.y;
+               end.x = proj.pos.x;
+               end.y = proj.pos.y;
+
+               start = mapToScreen(start);
+               end = mapToScreen(end);
+
+               al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
+            }
          }
          else if (wndCurrent == wndGame)
          {
@@ -1082,6 +1109,40 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                Player* source = game->getPlayers()[id];
                source->targetPlayer = targetId;
                source->isChasing = true;
+
+               break;
+            }
+            case MSG_TYPE_PROJECTILE:
+            {
+               cout << "Received a PROJECTILE message" << endl;
+
+               unsigned int projId, x, y, targetId;
+
+               memcpy(&projId, msg.buffer, 4);
+               memcpy(&x, msg.buffer+4, 4);
+               memcpy(&y, msg.buffer+8, 4);
+               memcpy(&targetId, msg.buffer+12, 4);
+
+               cout << "projId: " << projId << endl;
+               cout << "x: " << x << endl;
+               cout << "y: " << y << endl;
+               cout << "Target: " << targetId << endl;
+
+               Projectile proj(x, y, targetId, 0);
+               proj.setId(projId);
+
+               game->addProjectile(proj);
+
+               break;
+            }
+            case MSG_TYPE_REMOVE_PROJECTILE:
+            {
+                cout << "Received a REMOVE_PROJECTILE message" << endl;
+
+               unsigned int id;
+               memcpy(&id, msg.buffer, 4);
+               
+               game->removeProjectile(id);
 
                break;
             }
