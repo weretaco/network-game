@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
             // check if it's time to revive dead players
             if (p->isDead)
             {
+
                if (getCurrentMillis() - p->timeDied >= 10000)
                {
                   p->isDead = false;
@@ -171,10 +172,10 @@ int main(int argc, char *argv[])
                   switch (p->team)
                   {
                   case 0:// blue team
-                     spawnPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                     spawnPos = p->currentGame->getMap()->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
                      break;
                   case 1:// red team
-                     spawnPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                     spawnPos = p->currentGame->getMap()->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
                      break;
                   default:
                      // should never go here
@@ -194,9 +195,9 @@ int main(int argc, char *argv[])
                   p->serialize(serverMsg.buffer);
 
                   map<unsigned int, Player*>::iterator it2;
-                  for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+                  for (it2 = p->currentGame->getPlayers().begin(); it2 != p->currentGame->getPlayers().end(); it2++)
                   {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(p->addr), &outputLog) < 0 )
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                         error("sendMessage");
                   }
                }
