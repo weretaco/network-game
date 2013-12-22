@@ -36,6 +36,10 @@ map<unsigned int, Player*>& Game::getPlayers() {
    return this->players;
 }
 
+map<unsigned int, Projectile>& Game::getProjectiles() {
+   return this->projectiles;
+}
+
 int Game::getRedScore() {
    return this->redScore;
 }
@@ -50,6 +54,14 @@ WorldMap* Game::getMap() {
 
 void Game::setId(unsigned int id) {
    this->id = id;
+}
+
+void Game::setRedScore(int score) {
+   this->redScore = score;
+}
+
+void Game::setBlueScore(int score) {
+   this->blueScore = score;
 }
 
 bool Game::addPlayer(Player* p) {
@@ -146,10 +158,18 @@ int Game::processFlagPickupRequest(Player* p) {
    return playerId;
 }
 
-void Game::setRedScore(int score) {
-   this->redScore = score;
+bool Game::addProjectile(Projectile p) {
+   if (projectiles.find(p.id) == projectiles.end()) {
+      projectiles[p.id] = p;
+      return true;
+   }
+   else
+      return false;
 }
 
-void Game::setBlueScore(int score) {
-   this->blueScore = score;
+bool Game::removeProjectile(unsigned int id) {
+   if (projectiles.erase(id) == 1)
+      return true;
+   else
+      return false;
 }
