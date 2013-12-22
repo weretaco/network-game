@@ -235,6 +235,8 @@ int main(int argc, char *argv[])
             cout << "moving player" << endl;
             bool broadcastMove = false;
 
+            // xompute playersInGame here
+
             // move player and perform associated tasks
             oldPos = p->pos;
             if (p->move(p->currentGame->getMap())) {
@@ -425,31 +427,32 @@ int main(int argc, char *argv[])
             cout << "processing player attack" << endl;
 
             // check if the player's attack animation is complete
-            if (it->second->isAttacking && it->second->timeAttackStarted+it->second->attackCooldown <= getCurrentMillis())
+            if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis())
             {
-               it->second->isAttacking = false;
+               p->isAttacking = false;
                cout << "Attack animation is complete" << endl;
 
                //send everyone an ATTACK message
                cout << "about to broadcast attack" << endl;
 
                serverMsg.type = MSG_TYPE_ATTACK; 
-               memcpy(serverMsg.buffer, &it->second->id, 4);
-               memcpy(serverMsg.buffer+4, &it->second->targetPlayer, 4);
+               memcpy(serverMsg.buffer, &p->id, 4);
+               memcpy(serverMsg.buffer+4, &p->targetPlayer, 4);
 
+               map<unsigned int, Player*>& playersInGame = p->currentGame->getPlayers();
                map<unsigned int, Player*>::iterator it2;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
                {
                   if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                      error("sendMessage");
                }
 
-               if (it->second->attackType == Player::ATTACK_MELEE)
+               if (p->attackType == Player::ATTACK_MELEE)
                {
                   cout << "Melee attack" << endl;
 
-                  Player* target = mapPlayers[it->second->targetPlayer];
-                  damagePlayer(target, it->second->damage);
+                  Player* target = playersInGame[p->targetPlayer];
+                  damagePlayer(target, p->damage);
 
                   if (target->isDead)
                   {
@@ -460,18 +463,18 @@ int main(int argc, char *argv[])
                         flagType = WorldMap::OBJECT_RED_FLAG;
 
                      if (flagType != WorldMap::OBJECT_NONE) {
-                        addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
+                        addObjectToMap(flagType, target->pos.x, target->pos.y, p->currentGame->getMap(), playersInGame, msgProcessor, sock, outputLog);
                      }
                   }
 
                   serverMsg.type = MSG_TYPE_PLAYER;
                   target->serialize(serverMsg.buffer);
                }
-               else if (it->second->attackType == Player::ATTACK_RANGED)
+               else if (p->attackType == Player::ATTACK_RANGED)
                {
                   cout << "Ranged attack" << endl;
 
-                  Projectile proj(it->second->pos.x, it->second->pos.y, it->second->targetPlayer, it->second->damage);
+                  Projectile proj(p->pos.x, p->pos.y, p->targetPlayer, p->damage);
                   proj.id = unusedProjectileId;
                   updateUnusedProjectileId(unusedProjectileId, mapProjectiles);
                   mapProjectiles[proj.id] = proj;
@@ -490,7 +493,7 @@ int main(int argc, char *argv[])
 
                // broadcast either a PLAYER or PROJECTILE message
                cout << "Broadcasting player or projectile message" << endl;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
                {
                   if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                      error("sendMessage");
@@ -502,6 +505,7 @@ int main(int argc, char *argv[])
          cout << "Processing projectiles"  << endl;
 
          // move all projectiles
+         // see if this can be moved inside the game class
          map<unsigned int, Projectile>::iterator itProj;
          for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++)
          {
