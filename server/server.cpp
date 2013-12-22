@@ -506,55 +506,60 @@ int main(int argc, char *argv[])
          // move all projectiles
          // see if this can be moved inside the game class
          // this method can be moved when I add a MessageProcessor to the Game class
+         map<string, Game*>::iterator itGames;
+         Game* game;
          map<unsigned int, Projectile>::iterator itProj;
-         for (itProj = mapProjectiles.begin(); itProj != mapProjectiles.end(); itProj++)
-         {
-            cout << "About to call projectile move" << endl;
-            if (itProj->second.move(mapPlayers))
+         for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++) { 
+            game = itGames->second;
+            for (itProj = game->getProjectiles().begin(); itProj != game->getProjectiles().end(); itProj++)
             {
-               // send a REMOVE_PROJECTILE message
-               cout << "send a REMOVE_PROJECTILE message" << endl;
-               serverMsg.type = MSG_TYPE_REMOVE_PROJECTILE;
-               memcpy(serverMsg.buffer, &itProj->second.id, 4);
-               mapProjectiles.erase(itProj->second.id);
-
-               map<unsigned int, Player*>::iterator it2;
-               cout << "Broadcasting REMOVE_PROJECTILE" << endl;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
+               cout << "About to call projectile move" << endl;
+               if (itProj->second.move(game->getPlayers()))
                {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                     error("sendMessage");
+                  // send a REMOVE_PROJECTILE message
+                  cout << "send a REMOVE_PROJECTILE message" << endl;
+                  serverMsg.type = MSG_TYPE_REMOVE_PROJECTILE;
+                  memcpy(serverMsg.buffer, &itProj->second.id, 4);
+                  game->removeProjectile(itProj->second.id);
+
+                  map<unsigned int, Player*>::iterator it2;
+                  cout << "Broadcasting REMOVE_PROJECTILE" << endl;
+                  for (it2 = game->getPlayers().begin(); it2 != game->getPlayers().end(); it2++)
+                  {
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                        error("sendMessage");
+                  }
+
+                  cout << "send a PLAYER message after dealing damage" << endl;
+                  // send a PLAYER message after dealing damage
+                  Player* target = game->getPlayers()[itProj->second.target];
+
+                  damagePlayer(target, itProj->second.damage);
+
+                  if (target->isDead)
+                  {
+                     WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+                     if (target->hasBlueFlag)
+                        flagType = WorldMap::OBJECT_BLUE_FLAG;
+                     else if (target->hasRedFlag)
+                        flagType = WorldMap::OBJECT_RED_FLAG;
+
+                     if (flagType != WorldMap::OBJECT_NONE)
+                        addObjectToMap(flagType, target->pos.x, target->pos.y, game->getMap(), game->getPlayers(), msgProcessor, sock, outputLog);
+                  }
+
+                  serverMsg.type = MSG_TYPE_PLAYER;
+                  target->serialize(serverMsg.buffer);
+
+                  cout << "Sending a PLAYER message" << endl;
+                  for (it2 = game->getPlayers().begin(); it2 != game->getPlayers().end(); it2++)
+                  {
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                        error("sendMessage");
+                  }
                }
-
-               cout << "send a PLAYER message after dealing damage" << endl;
-               // send a PLAYER message after dealing damage
-               Player* target = mapPlayers[itProj->second.target];
-
-               damagePlayer(target, itProj->second.damage);
-
-               if (target->isDead)
-               {
-                  WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
-                  if (target->hasBlueFlag)
-                     flagType = WorldMap::OBJECT_BLUE_FLAG;
-                  else if (target->hasRedFlag)
-                     flagType = WorldMap::OBJECT_RED_FLAG;
-
-                  if (flagType != WorldMap::OBJECT_NONE)
-                     addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, mapPlayers, msgProcessor, sock, outputLog);
-               }
-
-               serverMsg.type = MSG_TYPE_PLAYER;
-               target->serialize(serverMsg.buffer);
-
-               cout << "Sending a PLAYER message" << endl;
-               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
-               {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                     error("sendMessage");
-               }
+               cout << "Projectile was not moved" << endl;
             }
-            cout << "Projectile was not moved" << endl;
          }
       }
 
