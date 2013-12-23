@@ -34,6 +34,7 @@
 #include "../../common/Player.h"
 #include "../../common/Projectile.h"
 #include "../../common/Game.h"
+#include "../../common/GameSummary.h"
 
 #include "Window.h"
 #include "TextLabel.h"
@@ -53,7 +54,9 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed,
+                    GameSummary* gameSummary);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -69,6 +72,7 @@ void toggleDebugging();
 void joinGame();
 void createGame();
 void leaveGame();
+void closeGameSummary();
 
 void error(const char *);
 
@@ -93,6 +97,7 @@ Window* wndLobby;
 Window* wndGame;
 Window* wndNewGame;
 Window* wndGameDebug;
+Window* wndGameSummary;
 Window* wndCurrent;
 
 // wndLogin
@@ -122,6 +127,7 @@ chat chatConsole, debugConsole;
 bool debugging;
 map<string, int> mapGames;
 Game* game;
+GameSummary* gameSummary;
 
 MessageProcessor msgProcessor;
 ofstream outputLog;
@@ -142,6 +148,7 @@ int main(int argc, char **argv)
    bool redraw = true;
    bool fullscreen = false;
    game = NULL;
+   gameSummary = NULL;
 
    scoreBlue = 0;
    scoreRed = 0;
@@ -288,6 +295,11 @@ int main(int argc, char **argv)
 
    cout << "Created new game screen" << endl;
 
+   wndGameSummary = new Window(0, 0, SCREEN_W, SCREEN_H);
+   wndGameSummary->addComponent(new Button(840, 730, 160, 20, font, "Back to Lobby", closeGameSummary));
+
+   cout << "Created game summary screen" << endl;
+
    goToLoginScreen();
  
    event_queue = al_create_event_queue();
@@ -387,16 +399,7 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         if(wndCurrent == wndLobby) {
-            /*
-            if (ev.mouse.button == 1) { // left click
-               txtJoinGame->clear();
-               txtCreateGame->clear();
-               state = STATE_GAME;
-               wndCurrent = wndGame;
-            }
-            */
-         }else if(wndCurrent == wndGame || wndCurrent == wndNewGame) {
+         if(wndCurrent == wndGame || wndCurrent == wndNewGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -454,7 +457,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, sock, &from, &outputLog) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed, gameSummary);
 
       if (redraw)
       {
@@ -601,6 +604,21 @@ int main(int argc, char **argv)
 
                al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
             }
+         }else if (wndCurrent == wndGameSummary) {
+            string strBlueScore = "Blue Score: "+gameSummary->getBlueScore();
+            string strRedScore = "Red Score: "+gameSummary->getRedScore();
+
+            string strWinner;
+
+            if (gameSummary->getWinner() == 0)
+                strWinner = "Blue Team Wins";
+            else if (gameSummary->getWinner() == 1)
+                strWinner = "Red Team Wins";
+
+            al_draw_text(font, al_map_rgb(0, 255, 0), 512, 40, ALLEGRO_ALIGN_CENTRE, gameSummary->getName().c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, strBlueScore.c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, strRedScore.c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 512, 120, ALLEGRO_ALIGN_CENTRE, strWinner.c_str());
          }
 
          if (debugging) {
@@ -630,6 +648,9 @@ int main(int argc, char **argv)
 
    if (game != NULL)
       delete game;
+
+   if (gameSummary != NULL)
+      delete gameSummary;
 
    map<unsigned int, Player*>::iterator it;
 
@@ -682,7 +703,9 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers, map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed,
+                    GameSummary* gameSummary)
 {
    // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
@@ -985,6 +1008,45 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
+            case MSG_TYPE_SCORE:
+            {
+               cout << "Received SCORE message!" << endl;
+
+               int blueScore;
+               memcpy(&blueScore, msg.buffer, 4);
+               cout << "blue score: " << blueScore << endl;
+               game->setBlueScore(blueScore);
+
+               int redScore;
+               memcpy(&redScore, msg.buffer+4, 4);
+               cout << "red score: " << redScore << endl;
+               game->setRedScore(redScore);
+
+               cout << "Processed SCORE message!" << endl;
+ 
+               break;
+            }
+            case MSG_TYPE_FINISH_GAME:
+            {
+               cout << "Got a finish game message" << endl;
+               cout << "Should switch to STATE_LOBBY and show the final score" << endl;
+
+               string gameName(msg.buffer);
+
+               unsigned int winner, blueScore, redScore;
+               memcpy(&winner, msg.buffer+4, 4);
+               memcpy(&blueScore, msg.buffer+8, 4);
+               memcpy(&redScore, msg.buffer+12, 4);
+
+               gameSummary = new GameSummary(gameName, winner, blueScore, redScore);
+
+               delete game;
+               game = NULL;
+               state = STATE_LOBBY;
+               wndCurrent = wndGameSummary;
+
+               break;
+            }
             case MSG_TYPE_PLAYER:
             {
                cout << "Received MSG_TYPE_PLAYER" << endl;
@@ -1068,24 +1130,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                if (!game->getMap()->removeObject(id))
                   cout << "Did not remove the object" << endl;
 
-               break;
-            }
-            case MSG_TYPE_SCORE:
-            {
-               cout << "Received SCORE message!" << endl;
-
-               int blueScore;
-               memcpy(&blueScore, msg.buffer, 4);
-               cout << "blue score: " << blueScore << endl;
-               game->setBlueScore(blueScore);
-
-               int redScore;
-               memcpy(&redScore, msg.buffer+4, 4);
-               cout << "red score: " << redScore << endl;
-               game->setRedScore(redScore);
-
-               cout << "Processed SCORE message!" << endl;
- 
                break;
             }
             case MSG_TYPE_ATTACK:
@@ -1398,4 +1442,10 @@ void leaveGame()
    msgTo.type = MSG_TYPE_LEAVE_GAME;
 
    msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+}
+
+void closeGameSummary()
+{
+    delete gameSummary;
+    wndCurrent = wndLobby;
 }
