@@ -229,11 +229,13 @@ int main(int argc, char *argv[])
          map<string, Game*>::iterator itGames;
          Game* game = NULL;
          WorldMap* gameMap = NULL;
+         bool gameFinished;
 
-         for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++) { 
+         for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             game = itGames->second;
             gameMap = game->getMap();
             map<unsigned int, Player*>& playersInGame = game->getPlayers();
+            gameFinished = false;
 
             for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
             {
@@ -362,9 +364,10 @@ int main(int argc, char *argv[])
                            error("sendMessage");
                      }
 
-                     /*
+                     // check to see if the game should end
+                     // move to its own method
                      if (scoreBlue == 3 || scoreRed == 3) {
-                        gameOver = true;
+                        gameFinished = true;
 
                         unsigned int winningTeam;
                         if (scoreBlue == 3)
@@ -382,19 +385,7 @@ int main(int argc, char *argv[])
                            if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                               error("sendMessage");
                         }
-
-                        // send a GAME_INFO message with 0 players to force clients to delete the game
-                        int numPlayers = 0;
-                        serverMsg.type = MSG_TYPE_GAME_INFO;
-                        memcpy(serverMsg.buffer, &numPlayers, 4);
-
-                        for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-                        {
-                           if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                              error("sendMessage");
-                        }
                      }
-                     */
 
                      // this means a PLAYER message will be sent
                      broadcastMove = true;
@@ -538,6 +529,24 @@ int main(int argc, char *argv[])
                   cout << "Done broadcasting" << endl;
                }
             }
+
+            if (gameFinished) {
+                // send a GAME_INFO message with 0 players to force clients to delete the game
+               int numPlayers = 0;
+               serverMsg.type = MSG_TYPE_GAME_INFO;
+               memcpy(serverMsg.buffer, &numPlayers, 4);
+
+               map<unsigned int, Player*>::iterator it2;
+               for (it2 = mapPLayers.begin(); it2 != mapPLayers.end(); it2++)
+               {
+                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                     error("sendMessage");
+               }
+
+               // erase game from server
+               mapGames.erase(itGames);
+            }else
+               itGames++;
          }
 
          cout << "Processing projectiles"  << endl;
