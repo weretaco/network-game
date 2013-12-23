@@ -945,6 +945,8 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          serverMsg.type = MSG_TYPE_PLAYER;
          p->serialize(serverMsg.buffer);
 
+         broadcastResponse = true;
+
          break;
       }
       case MSG_TYPE_DROP_FLAG:
