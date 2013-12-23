@@ -226,279 +226,317 @@ int main(int argc, char *argv[])
 
          // process players currently in a game
          FLOAT_POSITION oldPos;
-         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-         {
-            Player* p = it->second;
-            if (p->currentGame == NULL)
-               continue;
+         map<string, Game*>::iterator itGames;
+         Game* game = NULL;
+         WorldMap* gameMap = NULL;
 
-            cout << "moving player" << endl;
-            bool broadcastMove = false;
+         for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++) { 
+            game = itGames->second;
+            gameMap = game->getMap();
+            map<unsigned int, Player*>& playersInGame = game->getPlayers();
 
-            // xompute playersInGame here
-
-            // move player and perform associated tasks
-            oldPos = p->pos;
-            if (p->move(p->currentGame->getMap())) {
-
-               cout << "player moved" << endl;
-               if (p->currentGame->processPlayerMovement(p, oldPos))
-                   broadcastMove = true;
-               cout << "player move processed" << endl;
-
-               map<unsigned int, Player*>& playersInGame = p->currentGame->getPlayers();
-
-               WorldMap::ObjectType flagType;
-               POSITION pos;
-               bool flagTurnedIn = false;
-               bool flagReturned = false;
-               bool ownFlagAtBase = false;
-
-               // need to figure out how to move this to a different file
-               // while still sending back flag type and position
-               WorldMap* playerMap = p->currentGame->getMap();
-               switch(playerMap->getStructure(p->pos.x/25, p->pos.y/25))
-               {
-                  case WorldMap::STRUCTURE_BLUE_FLAG:
-                  {
-                     if (p->team == 0 && p->hasRedFlag)
-                     {
-                        // check that your flag is at your base
-                        pos = playerMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
-                        
-                        vector<WorldMap::Object>* vctObjects = playerMap->getObjects();
-                        vector<WorldMap::Object>::iterator itObjects;
-
-                        for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-                        {
-                           if (itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
-                           {
-                              if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
-                              {
-                                 ownFlagAtBase = true;
-                                 break;
-                              }
-                           }
-                        }
-
-                        if (ownFlagAtBase)
-                        {
-                           p->hasRedFlag = false;
-                           flagType = WorldMap::OBJECT_RED_FLAG;
-                           pos = playerMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
-                           flagTurnedIn = true;
-                           scoreBlue++;
-                        }
-                     }
-
-                     break;
-                  }
-                  case WorldMap::STRUCTURE_RED_FLAG:
-                  {
-                     if (p->team == 1 && p->hasBlueFlag)
-                     {
-                        // check that your flag is at your base
-                        pos = playerMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
-                        
-                        vector<WorldMap::Object>* vctObjects = playerMap->getObjects();
-                        vector<WorldMap::Object>::iterator itObjects;
-
-                        for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-                        {
-                           if (itObjects->type == WorldMap::OBJECT_RED_FLAG)
-                           {
-                              if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
-                              {
-                                 ownFlagAtBase = true;
-                                 break;
-                              }
-                           }
-                        }
-
-                        if (ownFlagAtBase)
-                        {
-                           p->hasBlueFlag = false;
-                           flagType = WorldMap::OBJECT_BLUE_FLAG;
-                           pos = playerMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
-                           flagTurnedIn = true;
-                           scoreRed++;
-                        }
-                     }
-
-                     break;
-                  }
-               }
-
-               if (flagTurnedIn)
-               {
-                  // send an OBJECT message to add the flag back to its spawn point
-                  pos.x = pos.x*25+12;
-                  pos.y = pos.y*25+12;
-                  playerMap->addObject(flagType, pos.x, pos.y);
-
-                  serverMsg.type = MSG_TYPE_OBJECT;
-                  playerMap->getObjects()->back().serialize(serverMsg.buffer);
-
-                  map<unsigned int, Player*>::iterator it2;
-                  
-                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-                  {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                        error("sendMessage");
-                  }
-
-                  serverMsg.type = MSG_TYPE_SCORE;
-                  memcpy(serverMsg.buffer, &scoreBlue, 4);
-                  memcpy(serverMsg.buffer+4, &scoreRed, 4);
-
-                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-                  {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                        error("sendMessage");
-                  }
-
-                  // this means a PLAYER message will be sent
-                  broadcastMove = true;
-               }
-
-               // go through all objects and check if the player is close to one and if its their flag
-               vector<WorldMap::Object>* vctObjects = playerMap->getObjects();
-               vector<WorldMap::Object>::iterator itObjects;
-               POSITION structPos;
-
-               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-               {
-                  POSITION pos = itObjects->pos;
-
-                  if (posDistance(p->pos, pos.toFloat()) < 10)
-                  {
-                     if (p->team == 0 && 
-                         itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
-                     {
-                        structPos = playerMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
-                        flagReturned = true;
-                        break;
-                     }
-                     else if (p->team == 1 &&
-                              itObjects->type == WorldMap::OBJECT_RED_FLAG)
-                     {
-                        structPos = playerMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
-                        flagReturned = true;
-                        break;
-                     }
-                  }
-               }
-
-               if (flagReturned)
-               {
-                  itObjects->pos.x = structPos.x*25+12;
-                  itObjects->pos.y = structPos.y*25+12;
-
-                  serverMsg.type = MSG_TYPE_OBJECT;
-                  itObjects->serialize(serverMsg.buffer);
-
-                  map<unsigned int, Player*>::iterator it2;
-                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-                  {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                        error("sendMessage");
-                  }
-               }
-
-               if (broadcastMove)
-               {
-                  cout << "broadcasting player move" << endl;
-                  serverMsg.type = MSG_TYPE_PLAYER;
-                  p->serialize(serverMsg.buffer);
-
-                  // only broadcast message to other players in the same game
-                  cout << "about to broadcast move" << endl;
-
-                  map<unsigned int, Player*>::iterator it2;
-                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-                  {
-                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                        error("sendMessage");
-                  }
-                  cout << "done broadcasting player move" << endl;
-               }
-            }
-
-            cout << "processing player attack" << endl;
-
-            // check if the player's attack animation is complete
-            if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis())
+            for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
             {
-               p->isAttacking = false;
-               cout << "Attack animation is complete" << endl;
+               Player* p = it->second;
 
-               //send everyone an ATTACK message
-               cout << "about to broadcast attack" << endl;
+               cout << "moving player" << endl;
+               bool broadcastMove = false;
 
-               serverMsg.type = MSG_TYPE_ATTACK; 
-               memcpy(serverMsg.buffer, &p->id, 4);
-               memcpy(serverMsg.buffer+4, &p->targetPlayer, 4);
+               // xompute playersInGame here
 
-               map<unsigned int, Player*>& playersInGame = p->currentGame->getPlayers();
-               map<unsigned int, Player*>::iterator it2;
-               for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
-               {
-                  if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                     error("sendMessage");
-               }
+               // move player and perform associated tasks
+               oldPos = p->pos;
+               if (p->move(gameMap)) {
 
-               if (p->attackType == Player::ATTACK_MELEE)
-               {
-                  cout << "Melee attack" << endl;
+                  cout << "player moved" << endl;
+                  if (game->processPlayerMovement(p, oldPos))
+                      broadcastMove = true;
+                  cout << "player move processed" << endl;
 
-                  Player* target = playersInGame[p->targetPlayer];
-                  damagePlayer(target, p->damage);
 
-                  if (target->isDead)
+                  WorldMap::ObjectType flagType;
+                  POSITION pos;
+                  bool flagTurnedIn = false;
+                  bool flagReturned = false;
+                  bool ownFlagAtBase = false;
+
+                  // need to figure out how to move this to a different file
+                  // while still sending back flag type and position
+                  switch(gameMap->getStructure(p->pos.x/25, p->pos.y/25))
                   {
-                     WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
-                     if (target->hasBlueFlag)
-                        flagType = WorldMap::OBJECT_BLUE_FLAG;
-                     else if (target->hasRedFlag)
-                        flagType = WorldMap::OBJECT_RED_FLAG;
+                     case WorldMap::STRUCTURE_BLUE_FLAG:
+                     {
+                        if (p->team == 0 && p->hasRedFlag)
+                        {
+                           // check that your flag is at your base
+                           pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                           
+                           vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
+                           vector<WorldMap::Object>::iterator itObjects;
 
-                     if (flagType != WorldMap::OBJECT_NONE) {
-                        addObjectToMap(flagType, target->pos.x, target->pos.y, p->currentGame->getMap(), playersInGame, msgProcessor, sock, outputLog);
+                           for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
+                           {
+                              if (itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
+                              {
+                                 if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
+                                 {
+                                    ownFlagAtBase = true;
+                                    break;
+                                 }
+                              }
+                           }
+
+                           if (ownFlagAtBase)
+                           {
+                              p->hasRedFlag = false;
+                              flagType = WorldMap::OBJECT_RED_FLAG;
+                              pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                              flagTurnedIn = true;
+                              scoreBlue++;
+                           }
+                        }
+
+                        break;
+                     }
+                     case WorldMap::STRUCTURE_RED_FLAG:
+                     {
+                        if (p->team == 1 && p->hasBlueFlag)
+                        {
+                           // check that your flag is at your base
+                           pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                        
+                           vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
+                           vector<WorldMap::Object>::iterator itObjects;
+
+                           for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
+                           {
+                              if (itObjects->type == WorldMap::OBJECT_RED_FLAG)
+                              {
+                                 if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
+                                 {
+                                    ownFlagAtBase = true;
+                                    break;
+                                 }
+                              }
+                           }
+
+                           if (ownFlagAtBase)
+                           {
+                              p->hasBlueFlag = false;
+                              flagType = WorldMap::OBJECT_BLUE_FLAG;
+                              pos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                              flagTurnedIn = true;
+                              scoreRed++;
+                           }
+                        }
+
+                        break;
                      }
                   }
 
-                  serverMsg.type = MSG_TYPE_PLAYER;
-                  target->serialize(serverMsg.buffer);
-               }
-               else if (p->attackType == Player::ATTACK_RANGED)
-               {
-                  cout << "Ranged attack" << endl;
+                  if (flagTurnedIn)
+                  {
+                     // send an OBJECT message to add the flag back to its spawn point
+                     pos.x = pos.x*25+12;
+                     pos.y = pos.y*25+12;
+                     gameMap->addObject(flagType, pos.x, pos.y);
 
-                  Projectile proj(p->pos.x, p->pos.y, p->targetPlayer, p->damage);
-                  p->currentGame->assignProjectileId(&proj);
+                     serverMsg.type = MSG_TYPE_OBJECT;
+                     gameMap->getObjects()->back().serialize(serverMsg.buffer);
+
+                     map<unsigned int, Player*>::iterator it2;
                   
-                  p->currentGame->addProjectile(proj);
+                     for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                     {
+                        if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                           error("sendMessage");
+                     }
 
-                  int x = p->pos.x;
-                  int y = p->pos.y;
+                     serverMsg.type = MSG_TYPE_SCORE;
+                     memcpy(serverMsg.buffer, &scoreBlue, 4);
+                     memcpy(serverMsg.buffer+4, &scoreRed, 4);
 
-                  serverMsg.type = MSG_TYPE_PROJECTILE;
-                  memcpy(serverMsg.buffer, &proj.id, 4);
-                  memcpy(serverMsg.buffer+4, &x, 4);
-                  memcpy(serverMsg.buffer+8, &y, 4);
-                  memcpy(serverMsg.buffer+12, &p->targetPlayer, 4);
+                     for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                     {
+                        if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                           error("sendMessage");
+                     }
+
+                     /*
+                     if (scoreBlue == 3 || scoreRed == 3) {
+                        gameOver = true;
+
+                        unsigned int winningTeam;
+                        if (scoreBlue == 3)
+                           winningTeam = 0;
+                        else if (scoreRed == 3)
+                           winningTeam = 1;
+
+                        serverMsg.type = MSG_TYPE_FINISH_GAME;
+                        memcpy(serverMsg.buffer+4, &winningTeam, 4);
+                        memcpy(serverMsg.buffer+4, &scoreBlue, 4);
+                        memcpy(serverMsg.buffer+8, &scoreRed, 4);
+
+                        for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                        {
+                           if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                              error("sendMessage");
+                        }
+
+                        // send a GAME_INFO message with 0 players to force clients to delete the game
+                        int numPlayers = 0;
+                        serverMsg.type = MSG_TYPE_GAME_INFO;
+                        memcpy(serverMsg.buffer, &numPlayers, 4);
+
+                        for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                        {
+                           if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                              error("sendMessage");
+                        }
+                     }
+                     */
+
+                     // this means a PLAYER message will be sent
+                     broadcastMove = true;
+                  }
+
+                  // go through all objects and check if the player is close to one and if its their flag
+                  vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
+                  vector<WorldMap::Object>::iterator itObjects;
+                  POSITION structPos;
+
+                  for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
+                  {
+                     POSITION pos = itObjects->pos;
+
+                     if (posDistance(p->pos, pos.toFloat()) < 10)
+                     {
+                        if (p->team == 0 && 
+                            itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
+                        {
+                           structPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                           flagReturned = true;
+                           break;
+                        }
+                        else if (p->team == 1 &&
+                                 itObjects->type == WorldMap::OBJECT_RED_FLAG)
+                        {
+                           structPos = gameMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                           flagReturned = true;
+                           break;
+                        }
+                     }
+                  }
+
+                  if (flagReturned)
+                  {
+                     itObjects->pos.x = structPos.x*25+12;
+                     itObjects->pos.y = structPos.y*25+12;
+
+                     serverMsg.type = MSG_TYPE_OBJECT;
+                     itObjects->serialize(serverMsg.buffer);
+
+                     map<unsigned int, Player*>::iterator it2;
+                     for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                     {
+                        if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                           error("sendMessage");
+                     }
+                  }
+
+                  if (broadcastMove)
+                  {
+                     cout << "broadcasting player move" << endl;
+                     serverMsg.type = MSG_TYPE_PLAYER;
+                     p->serialize(serverMsg.buffer);
+
+                     // only broadcast message to other players in the same game
+                     cout << "about to broadcast move" << endl;
+
+                     map<unsigned int, Player*>::iterator it2;
+                     for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                     {
+                        if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                           error("sendMessage");
+                     }
+                     cout << "done broadcasting player move" << endl;
+                  }
                }
-               else
-                  cout << "Invalid attack type: " << it->second->attackType << endl;
 
-               // broadcast either a PLAYER or PROJECTILE message
-               cout << "Broadcasting player or projectile message" << endl;
-               for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+               cout << "processing player attack" << endl;
+
+               // check if the player's attack animation is complete
+               if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis())
                {
-                  if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
-                     error("sendMessage");
+                  p->isAttacking = false;
+                  cout << "Attack animation is complete" << endl;
+
+                  //send everyone an ATTACK message
+                  cout << "about to broadcast attack" << endl;
+
+                  serverMsg.type = MSG_TYPE_ATTACK; 
+                  memcpy(serverMsg.buffer, &p->id, 4);
+                  memcpy(serverMsg.buffer+4, &p->targetPlayer, 4);
+
+                  map<unsigned int, Player*>::iterator it2;
+                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                  {
+                     if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                        error("sendMessage");
+                  }
+
+                  if (p->attackType == Player::ATTACK_MELEE)
+                  {
+                     cout << "Melee attack" << endl;
+
+                     Player* target = playersInGame[p->targetPlayer];
+                     damagePlayer(target, p->damage);
+
+                     if (target->isDead)
+                     {
+                        WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+                        if (target->hasBlueFlag)
+                           flagType = WorldMap::OBJECT_BLUE_FLAG;
+                        else if (target->hasRedFlag)
+                           flagType = WorldMap::OBJECT_RED_FLAG;
+
+                        if (flagType != WorldMap::OBJECT_NONE) {
+                           addObjectToMap(flagType, target->pos.x, target->pos.y, gameMap, playersInGame, msgProcessor, sock, outputLog);
+                        }
+                     }
+
+                     serverMsg.type = MSG_TYPE_PLAYER;
+                     target->serialize(serverMsg.buffer);
+                  }
+                  else if (p->attackType == Player::ATTACK_RANGED)
+                  {
+                     cout << "Ranged attack" << endl;
+
+                     Projectile proj(p->pos.x, p->pos.y, p->targetPlayer, p->damage);
+                     game->assignProjectileId(&proj);
+                     game->addProjectile(proj);
+
+                     int x = p->pos.x;
+                     int y = p->pos.y;
+
+                     serverMsg.type = MSG_TYPE_PROJECTILE;
+                     memcpy(serverMsg.buffer, &proj.id, 4);
+                     memcpy(serverMsg.buffer+4, &x, 4);
+                     memcpy(serverMsg.buffer+8, &y, 4);
+                     memcpy(serverMsg.buffer+12, &p->targetPlayer, 4);
+                  }
+                  else
+                     cout << "Invalid attack type: " << p->attackType << endl;
+
+                  // broadcast either a PLAYER or PROJECTILE message
+                  cout << "Broadcasting player or projectile message" << endl;
+                  for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
+                  {
+                     if (msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
+                        error("sendMessage");
+                  }
+                  cout << "Done broadcasting" << endl;
                }
-               cout << "Done broadcasting" << endl;
             }
          }
 
@@ -507,8 +545,6 @@ int main(int argc, char *argv[])
          // move all projectiles
          // see if this can be moved inside the game class
          // this method can be moved when I add a MessageProcessor to the Game class
-         map<string, Game*>::iterator itGames;
-         Game* game;
          map<unsigned int, Projectile>::iterator itProj;
          for (itGames = mapGames.begin(); itGames != mapGames.end(); itGames++) { 
             game = itGames->second;
@@ -1008,9 +1044,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             }
          }
 
-         Player* p = findPlayerByAddr(mapPlayers, from);
-         p->currentGame = g;
-
          serverMsg.type = MSG_TYPE_JOIN_GAME_SUCCESS;
          strcpy(serverMsg.buffer, gameName.c_str());
          broadcastResponse = false;
@@ -1042,8 +1075,6 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             broadcastResponse = false;
             return broadcastResponse;
          }
-
-         p->currentGame = g;
 
          serverMsg.type = MSG_TYPE_JOIN_GAME_SUCCESS;
          strcpy(serverMsg.buffer, gameName.c_str());
@@ -1117,7 +1148,7 @@ bool processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player* p = findPlayerByAddr(mapPlayers, from);
          p->team = rand() % 2; // choose a random team (either 0 or 1)
-         p->currentGame = g; // should have been done in JOIN_GAME, so not necessary
+         p->currentGame = g;
 
          // tell the new player about all map objects
          // (currently just the flags)

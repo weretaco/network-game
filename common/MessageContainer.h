@@ -37,6 +37,7 @@ using namespace std;
 #define MSG_TYPE_JOIN_GAME_FAILURE 22
 #define MSG_TYPE_JOIN_GAME_ACK     23
 #define MSG_TYPE_PLAYER_JOIN_GAME  24
+#define MSG_TYPE_FINISH_GAME       25
 
 typedef struct
 {

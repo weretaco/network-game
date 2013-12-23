@@ -6,4 +6,8 @@ The first step in this process is to create a separate Game class that just hold
 
 There should be a new LOBBY state the player goes to after logging in, which lets him create a game and view all created games. There should also be a button to let him go to the current "global" game.
 
-The client only has one game object, which is the game the client is currently in (or MILL if the client is in the lobby). The mapGames of the client maps game names to number of players in each game.
+The client only has one game object, which is the game the client is currently in (or NULL if the client is in the lobby). The mapGames of the client maps game names to number of players in each game.
+
+There should be code that ends a game when a team scores 3 points and shows each participant a screen saying which team won, what the final score was, and a button back to the lobby. More info can be added to that screen in the future. As far as the server is concerned, when a player is viewing this screen, they are already at the lobby and no longer in their game.
+
+When a game ends, everyone not in the game should get a GAME_INFO message with 0 players so they delete the game. Everyone in the game will instead get a GAME_FINISH message which will have the winner and the final score (and possibly other info in the future, such as kills, deaths, assists, and flag turn-ins per player). Once these messages are sent, the server will delete the game from its list. The player who got the FINISH_GAME message will go to the lobby state, but save the game results in a new GameResult object and display it in the afore-mentioned screen with the results.
