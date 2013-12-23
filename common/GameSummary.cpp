@@ -13,7 +13,7 @@ GameSummary::GameSummary() {
 
 GameSummary::GameSummary(string name, unsigned int winner, unsigned int blueScore, unsigned int redScore) {
    this->gameName = name;
-   this->blueScore = winner;
+   this->winner = winner;
    this->blueScore = blueScore;
    this->redScore = redScore;
 }

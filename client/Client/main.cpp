@@ -55,8 +55,7 @@ using namespace std;
 void initWinSock();
 void shutdownWinSock();
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed,
-                    GameSummary* gameSummary);
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -457,7 +456,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, sock, &from, &outputLog) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed, gameSummary);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
@@ -605,20 +604,37 @@ int main(int argc, char **argv)
                al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
             }
          }else if (wndCurrent == wndGameSummary) {
-            string strBlueScore = "Blue Score: "+gameSummary->getBlueScore();
-            string strRedScore = "Red Score: "+gameSummary->getRedScore();
+            cout << "Drawing game summary" << endl;
+
+            cout << "blue score from obj: " << gameSummary->getBlueScore() << endl;
+            cout << "red score from obj: " << gameSummary->getRedScore() << endl;
+
+            ostringstream ossBlueScore, ossRedScore;
+
+            cout << "Declared scores" << endl;
+
+            ossBlueScore << "Blue Score: " << gameSummary->getBlueScore();
+            ossRedScore << "Red Score: " << gameSummary->getRedScore();
+
+            cout << "set scores" << endl;
 
             string strWinner;
 
             if (gameSummary->getWinner() == 0)
-                strWinner = "Blue Team Wins";
+               strWinner = "Blue Team Wins";
             else if (gameSummary->getWinner() == 1)
-                strWinner = "Red Team Wins";
+               strWinner = "Red Team Wins";
+            else
+               strWinner = "winner set to wrong value";
+
+            cout << "Calling the drawing routines" << endl;
 
             al_draw_text(font, al_map_rgb(0, 255, 0), 512, 40, ALLEGRO_ALIGN_CENTRE, gameSummary->getName().c_str());
-            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, strBlueScore.c_str());
-            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, strRedScore.c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossBlueScore.str().c_str());
+            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossRedScore.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 512, 120, ALLEGRO_ALIGN_CENTRE, strWinner.c_str());
+
+            cout << "Done drawing game summary" << endl;
          }
 
          if (debugging) {
@@ -704,8 +720,7 @@ void shutdownWinSock()
 }
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed,
-                    GameSummary* gameSummary)
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
 {
    // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
@@ -1031,12 +1046,17 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                cout << "Got a finish game message" << endl;
                cout << "Should switch to STATE_LOBBY and show the final score" << endl;
 
-               string gameName(msg.buffer);
-
                unsigned int winner, blueScore, redScore;
-               memcpy(&winner, msg.buffer+4, 4);
-               memcpy(&blueScore, msg.buffer+8, 4);
-               memcpy(&redScore, msg.buffer+12, 4);
+               memcpy(&winner, msg.buffer, 4);
+               memcpy(&blueScore, msg.buffer+4, 4);
+               memcpy(&redScore, msg.buffer+8, 4);
+
+               string gameName(msg.buffer+12);
+
+               cout << "winner: " << winner << endl;
+               cout << "blueScore: " << blueScore << endl;
+               cout << "redScore: " << redScore << endl;
+               cout << "gameName: " << gameName << endl;
 
                gameSummary = new GameSummary(gameName, winner, blueScore, redScore);
 
@@ -1045,6 +1065,11 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                state = STATE_LOBBY;
                wndCurrent = wndGameSummary;
 
+
+               cout << "winner from obj: " << gameSummary->getWinner() << endl;
+               cout << "blueScore from obj: " << gameSummary->getBlueScore() << endl;
+               cout << "redScore from obj: " << gameSummary->getRedScore() << endl;
+               cout << "gameName from obj: " << gameSummary->getName() << endl;
                break;
             }
             case MSG_TYPE_PLAYER:
@@ -1447,5 +1472,7 @@ void leaveGame()
 void closeGameSummary()
 {
     delete gameSummary;
+    gameSummary = NULL;
     wndCurrent = wndLobby;
+    cout << "Processed button actions" << endl;
 }
