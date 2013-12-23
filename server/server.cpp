@@ -163,6 +163,7 @@ int main(int argc, char *argv[])
             // check if it's time to revive dead players
             if (p->isDead)
             {
+               cout << "Player is dead" << endl;
 
                if (getCurrentMillis() - p->timeDied >= 10000)
                {
@@ -543,6 +544,8 @@ int main(int argc, char *argv[])
                map<unsigned int, Player*>::iterator it2;
                for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
+                  if (it2->second->currentGame == game)
+                      it2->second->currentGame = NULL;
                   if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                      error("sendMessage");
                }
