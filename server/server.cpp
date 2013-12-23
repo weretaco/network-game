@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
                memcpy(serverMsg.buffer, &numPlayers, 4);
 
                map<unsigned int, Player*>::iterator it2;
-               for (it2 = mapPLayers.begin(); it2 != mapPLayers.end(); it2++)
+               for (it2 = mapPlayers.begin(); it2 != mapPlayers.end(); it2++)
                {
                   if ( msgProcessor.sendMessage(&serverMsg, sock, &(it2->second->addr), &outputLog) < 0 )
                      error("sendMessage");
@@ -545,6 +545,7 @@ int main(int argc, char *argv[])
 
                // erase game from server
                mapGames.erase(itGames);
+               delete game;
             }else
                itGames++;
          }
