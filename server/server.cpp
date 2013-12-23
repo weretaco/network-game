@@ -379,9 +379,10 @@ int main(int argc, char *argv[])
                         serverMsg.type = MSG_TYPE_FINISH_GAME;
 
                         // I should create an instance of the GameSummary object here and just serialize it into this message
-                        memcpy(serverMsg.buffer+4, &winningTeam, 4);
+                        memcpy(serverMsg.buffer, &winningTeam, 4);
                         memcpy(serverMsg.buffer+4, &scoreBlue, 4);
                         memcpy(serverMsg.buffer+8, &scoreRed, 4);
+                        strcpy(serverMsg.buffer+12, game->getName().c_str());
 
                         for (it2 = playersInGame.begin(); it2 != playersInGame.end(); it2++)
                         {
