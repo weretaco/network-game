@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
                }
 
                // erase game from server
-               mapGames.erase(itGames);
+               mapGames.erase(itGames++);
                delete game;
             }else
                itGames++;
