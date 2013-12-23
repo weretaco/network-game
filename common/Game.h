@@ -23,8 +23,8 @@ private:
    map<unsigned int, Player*> players;
    map<unsigned int, Projectile> projectiles;
    WorldMap* worldMap;
-   int blueScore;
-   int redScore;
+   unsigned int blueScore;
+   unsigned int redScore;
    unsigned int unusedProjectileId;
 
 public:
@@ -35,13 +35,13 @@ public:
 
    string getName();
    int getNumPlayers();
-   int getBlueScore();
-   int getRedScore();
+   unsigned int getBlueScore();
+   unsigned int getRedScore();
    WorldMap* getMap();
 
    void setId(unsigned int id);
-   void setBlueScore(int score);
-   void setRedScore(int score);
+   void setBlueScore(unsigned int score);
+   void setRedScore(unsigned int score);
 
    map<unsigned int, Player*>& getPlayers();
    bool addPlayer(Player* p);

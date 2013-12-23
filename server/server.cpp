@@ -35,6 +35,7 @@
 #include "../common/Player.h"
 #include "../common/Projectile.h"
 #include "../common/Game.h"
+#include "../common/GameSummary.h"
 
 #include "DataAccess.h"
 
@@ -376,6 +377,8 @@ int main(int argc, char *argv[])
                            winningTeam = 1;
 
                         serverMsg.type = MSG_TYPE_FINISH_GAME;
+
+                        // I should create an instance of the GameSummary object here and just serialize it into this message
                         memcpy(serverMsg.buffer+4, &winningTeam, 4);
                         memcpy(serverMsg.buffer+4, &scoreBlue, 4);
                         memcpy(serverMsg.buffer+8, &scoreRed, 4);

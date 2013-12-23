@@ -72,11 +72,11 @@ bool Game::removeProjectile(unsigned int id) {
       return false;
 }
 
-int Game::getRedScore() {
+unsigned int Game::getRedScore() {
    return this->redScore;
 }
 
-int Game::getBlueScore() {
+unsigned int Game::getBlueScore() {
    return this->blueScore;
 }
 
@@ -88,11 +88,11 @@ void Game::setId(unsigned int id) {
    this->id = id;
 }
 
-void Game::setRedScore(int score) {
+void Game::setRedScore(unsigned int score) {
    this->redScore = score;
 }
 
-void Game::setBlueScore(int score) {
+void Game::setBlueScore(unsigned int score) {
    this->blueScore = score;
 }
 
