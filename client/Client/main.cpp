@@ -73,8 +73,6 @@ void createGame();
 void leaveGame();
 void closeGameSummary();
 
-void error(const char *);
-
 const float FPS = 60;
 const int SCREEN_W = 1024;
 const int SCREEN_H = 768;
@@ -336,7 +334,7 @@ int main(int argc, char **argv)
 
    server.sin_family = AF_INET;
    hp = gethostbyname(argv[1]);
-   if (hp==0)
+   if (hp == 0)
       error("Unknown host");
 
    memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
@@ -684,16 +682,6 @@ int main(int argc, char **argv)
    outputLog.close();
 
    return 0;
-}
-
-
-
-// need to make a function like this that works on windows
-void error(const char *msg)
-{
-   perror(msg);
-   shutdownWinSock();
-   exit(1);
 }
 
 void initWinSock()
