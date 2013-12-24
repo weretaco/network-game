@@ -19,6 +19,7 @@ struct FLOAT_POSITION {
    POSITION toInt();
 };
 
+void error(const char *msg);
 void set_nonblock(int sock);
 unsigned long long getCurrentMillis();
 string getCurrentDateTimeString();

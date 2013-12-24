@@ -12,6 +12,8 @@
 #include <sstream>
 #include <cmath>
 #include <ctime>
+#include <cstdlib>
+#include <cstdio>
 
 using namespace std;
 
@@ -29,6 +31,13 @@ POSITION FLOAT_POSITION::toInt() {
    position.y = y;
 
    return position;
+}
+
+// This might not be cross-platform. Verify that this works correctly or fix it.
+void error(const char *msg)
+{
+    perror(msg);
+    exit(0);
 }
 
 void set_nonblock(int sock)
