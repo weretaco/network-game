@@ -12,13 +12,21 @@
 #include "Common.h"
 
 MessageProcessor::MessageProcessor() {
+   this->sock = 0;
+   this->outputLog = NULL;
+   lastUsedId = 0;
+}
+
+MessageProcessor::MessageProcessor(int sock, ofstream* outputLog) {
+   this->sock = sock;
+   this->outputLog = outputLog;
    lastUsedId = 0;
 }
 
 MessageProcessor::~MessageProcessor() {
 }
 
-int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *dest, ofstream* outputLog) {
+int MessageProcessor::sendMessage(NETWORK_MSG *msg, struct sockaddr_in *dest) {
    cout << "Sending message of type " << msg->type << endl;
 
    msg->id = ++lastUsedId;
@@ -34,7 +42,7 @@ int MessageProcessor::sendMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in
    return ret;
 }
 
-int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr_in *source, ofstream* outputLog) {
+int MessageProcessor::receiveMessage(NETWORK_MSG *msg, struct sockaddr_in *source) {
    socklen_t socklen = sizeof(struct sockaddr_in);
 
    // assume we don't care about the value of socklen
@@ -83,7 +91,7 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, int sock, struct sockaddr
    return ret;
 }
 
-void MessageProcessor::resendUnackedMessages(int sock, ofstream* outputLog) {
+void MessageProcessor::resendUnackedMessages() {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
    map<unsigned long, MessageContainer>::iterator it2;
    map<unsigned long, MessageContainer> sentMsg;
@@ -98,7 +106,7 @@ void MessageProcessor::resendUnackedMessages(int sock, ofstream* outputLog) {
    }
 }
 
-void MessageProcessor::cleanAckedMessages(ofstream* outputLog) {
+void MessageProcessor::cleanAckedMessages() {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it = sentMessages.begin();
    map<unsigned long, MessageContainer>::iterator it2;
 

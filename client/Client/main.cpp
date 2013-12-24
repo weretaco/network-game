@@ -129,7 +129,6 @@ Game* game;
 GameSummary* gameSummary;
 
 MessageProcessor msgProcessor;
-ofstream outputLog;
 
 int main(int argc, char **argv)
 {
@@ -140,6 +139,8 @@ int main(int argc, char **argv)
    map<unsigned int, Player*> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
+   ofstream outputLog;
+
    int scoreBlue, scoreRed;
 
    doexit = false;
@@ -341,6 +342,8 @@ int main(int argc, char **argv)
    memcpy((char *)&server.sin_addr, (char *)hp->h_addr, hp->h_length);
    server.sin_port = htons(atoi(argv[2]));
 
+   msgProcessor = MessageProcessor(sock, &outputLog);
+
    al_start_timer(timer);
 
    while(!doexit)
@@ -369,7 +372,7 @@ int main(int argc, char **argv)
                if (state == STATE_GAME || state == STATE_NEW_GAME) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
-                  msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+                  msgProcessor.sendMessage(&msgTo, &server);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
@@ -390,7 +393,7 @@ int main(int argc, char **argv)
                      if (flagType != WorldMap::OBJECT_NONE) {
                         msgTo.type = MSG_TYPE_DROP_FLAG;
                         memcpy(msgTo.buffer, &curPlayerId, 4);
-                        msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+                        msgProcessor.sendMessage(&msgTo, &server);
                      }
                   }
                }
@@ -413,7 +416,7 @@ int main(int argc, char **argv)
                   memcpy(msgTo.buffer+4, &pos.x, 4);
                   memcpy(msgTo.buffer+8, &pos.y, 4);
 
-                  msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+                  msgProcessor.sendMessage(&msgTo, &server);
                }
                else
                   cout << "Invalid point: User did not click on the map" << endl;
@@ -448,22 +451,21 @@ int main(int argc, char **argv)
                      memcpy(msgTo.buffer, &curPlayerId, 4);
                      memcpy(msgTo.buffer+4, &target->id, 4);
 
-                     msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+                     msgProcessor.sendMessage(&msgTo, &server);
                   }
                }
             }
          }
       }
 
-      if (msgProcessor.receiveMessage(&msgFrom, sock, &from, &outputLog) >= 0)
+      if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
          processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
 
       if (redraw)
       {
          redraw = false;
 
-         msgProcessor.resendUnackedMessages(sock, &outputLog);
-         //msgProcessor.cleanAckedMessages(&outputLog);
+         msgProcessor.resendUnackedMessages();
 
          if (debugging && wndCurrent == wndGame)
             wndGameDebug->draw(display);
@@ -980,7 +982,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
 
-               msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+               msgProcessor.sendMessage(&msgTo, &server);
 
                break;
             }
@@ -1361,7 +1363,7 @@ void registerAccount()
    strcpy(msgTo.buffer+username.size()+1, password.c_str());
    memcpy(msgTo.buffer+username.size()+password.size()+2, &playerClass, 4);
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void login()
@@ -1378,7 +1380,7 @@ void login()
    strcpy(msgTo.buffer, strUsername.c_str());
    strcpy(msgTo.buffer+username.size()+1, strPassword.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 
    state = STATE_LOBBY;
 }
@@ -1403,7 +1405,7 @@ void logout()
 
    strcpy(msgTo.buffer, username.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void quit()
@@ -1419,7 +1421,7 @@ void sendChatMessage()
    msgTo.type = MSG_TYPE_CHAT;
    strcpy(msgTo.buffer, msg.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void toggleDebugging()
@@ -1437,7 +1439,7 @@ void joinGame()
    msgTo.type = MSG_TYPE_JOIN_GAME;
    strcpy(msgTo.buffer, msg.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void createGame()
@@ -1452,7 +1454,7 @@ void createGame()
    msgTo.type = MSG_TYPE_CREATE_GAME;
    strcpy(msgTo.buffer, msg.c_str());
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void leaveGame()
@@ -1466,7 +1468,7 @@ void leaveGame()
 
    msgTo.type = MSG_TYPE_LEAVE_GAME;
 
-   msgProcessor.sendMessage(&msgTo, sock, &server, &outputLog);
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void closeGameSummary()
