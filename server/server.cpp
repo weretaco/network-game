@@ -215,8 +215,8 @@ int main(int argc, char *argv[])
 
          for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             if (handleGameEvents(itGames->second, mapPlayers, msgProcessor)) {
-               mapGames.erase(itGames++);
                delete itGames->second;
+               mapGames.erase(itGames++);
             }else
                itGames++;
          }
@@ -830,20 +830,29 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 bool handleGameEvents(Game* game, map<unsigned int, Player*>& mapPlayers, MessageProcessor& msgProcessor) {
    NETWORK_MSG serverMsg;
    map<unsigned int, Player*>::iterator it;
+   bool gameFinished = false;
 
    for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
    {
-      if (handlePlayerEvents(it->second, game, msgProcessor)) {
-                // send a GAME_INFO message with 0 players to force clients to delete the game
-         int numPlayers = 0;
-         serverMsg.type = MSG_TYPE_GAME_INFO;
-         memcpy(serverMsg.buffer, &numPlayers, 4);
-         broadcastMessage(msgProcessor, serverMsg, mapPlayers);
-
-         return true;
-      }else
-         return false;
+      gameFinished = gameFinished ||
+         handlePlayerEvents(it->second, game, msgProcessor);
    }
+
+   // set each player's current game to null
+   if (gameFinished) {
+      // send a GAME_INFO message with 0 players to force clients to delete the game
+      int numPlayers = 0;
+      serverMsg.type = MSG_TYPE_GAME_INFO;
+      memcpy(serverMsg.buffer, &numPlayers, 4);
+      broadcastMessage(msgProcessor, serverMsg, mapPlayers);
+
+      for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
+      {
+         it->second->currentGame = NULL;
+      }
+   }
+
+   return gameFinished;
 }
 
 bool handlePlayerEvents(Player* p, Game* game, MessageProcessor& msgProcessor) {
@@ -1096,6 +1105,8 @@ bool handlePlayerEvents(Player* p, Game* game, MessageProcessor& msgProcessor) {
 
       broadcastMessage(msgProcessor, serverMsg, playersInGame);
    }
+
+   return gameFinished;
 }
 
 void broadcastMessage(MessageProcessor &msgProcessor, NETWORK_MSG &serverMsg, map<unsigned int, Player*>& players) {
