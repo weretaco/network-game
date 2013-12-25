@@ -598,19 +598,10 @@ int main(int argc, char **argv)
                al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
             }
          }else if (wndCurrent == wndGameSummary) {
-            cout << "Drawing game summary" << endl;
-
-            cout << "blue score from obj: " << gameSummary->getBlueScore() << endl;
-            cout << "red score from obj: " << gameSummary->getRedScore() << endl;
-
             ostringstream ossBlueScore, ossRedScore;
-
-            cout << "Declared scores" << endl;
 
             ossBlueScore << "Blue Score: " << gameSummary->getBlueScore();
             ossRedScore << "Red Score: " << gameSummary->getRedScore();
-
-            cout << "set scores" << endl;
 
             string strWinner;
 
@@ -621,14 +612,10 @@ int main(int argc, char **argv)
             else
                strWinner = "winner set to wrong value";
 
-            cout << "Calling the drawing routines" << endl;
-
             al_draw_text(font, al_map_rgb(0, 255, 0), 512, 40, ALLEGRO_ALIGN_CENTRE, gameSummary->getName().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossBlueScore.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossRedScore.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 512, 120, ALLEGRO_ALIGN_CENTRE, strWinner.c_str());
-
-            cout << "Done drawing game summary" << endl;
          }
 
          if (debugging) {
