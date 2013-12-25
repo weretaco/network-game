@@ -844,6 +844,7 @@ bool handleGameEvents(Game* game, map<unsigned int, Player*>& mapPlayers, Messag
       int numPlayers = 0;
       serverMsg.type = MSG_TYPE_GAME_INFO;
       memcpy(serverMsg.buffer, &numPlayers, 4);
+      strcpy(serverMsg.buffer+4, game->getName().c_str());
       broadcastMessage(msgProcessor, serverMsg, mapPlayers);
 
       for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++)
