@@ -55,7 +55,7 @@ using namespace std;
 void initWinSock();
 void shutdownWinSock();
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed);
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -80,8 +80,7 @@ const int SCREEN_H = 768;
 enum STATE {
    STATE_START,
    STATE_LOBBY,
-   STATE_GAME,
-   STATE_NEW_GAME
+   STATE_GAME
 };
 
 int state;
@@ -139,17 +138,12 @@ int main(int argc, char **argv)
    unsigned int curPlayerId = -1;
    ofstream outputLog;
 
-   int scoreBlue, scoreRed;
-
    doexit = false;
    debugging = false;
    bool redraw = true;
    bool fullscreen = false;
    game = NULL;
    gameSummary = NULL;
-
-   scoreBlue = 0;
-   scoreRed = 0;
 
    state = STATE_START;
 
@@ -367,14 +361,14 @@ int main(int argc, char **argv)
                doexit = true;
                break;
             case ALLEGRO_KEY_S:  // pickup an item next to you
-               if (state == STATE_GAME || state == STATE_NEW_GAME) {
+               if (state == STATE_GAME) {
                   msgTo.type = MSG_TYPE_PICKUP_FLAG;
                   memcpy(msgTo.buffer, &curPlayerId, 4);
                   msgProcessor.sendMessage(&msgTo, &server);
                }
                break;
             case ALLEGRO_KEY_D:  // drop the current item
-               if (state == STATE_GAME || state == STATE_NEW_GAME) {
+               if (state == STATE_GAME) {
                   Player* p = NULL;
                   try {
                      p = mapPlayers.at(curPlayerId);
@@ -457,7 +451,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId, scoreBlue, scoreRed);
+         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId);
 
       if (redraw)
       {
@@ -556,8 +550,8 @@ int main(int argc, char **argv)
 
             ostringstream ossScoreBlue, ossScoreRed;
 
-            ossScoreBlue << "Blue: " << scoreBlue << endl;
-            ossScoreRed << "Red: " << scoreRed << endl;
+            ossScoreBlue << "Blue: " << game->getBlueScore() << endl;
+            ossScoreRed << "Red: " << game->getRedScore() << endl;
 
             al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
             al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
@@ -710,7 +704,7 @@ void shutdownWinSock()
 }
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId, int &scoreBlue, int &scoreRed)
+                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId)
 {
    // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
@@ -738,9 +732,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
          break;
       }
       case STATE_LOBBY:
-         cout << "In STATE_LOBBY" << endl;
-      case STATE_GAME:
       {
+         cout << "In STATE_LOBBY" << endl;
          switch(msg.type)
          {
             case MSG_TYPE_LOGIN:
@@ -874,13 +867,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
-            case MSG_TYPE_SCORE:
-            {
-               memcpy(&scoreBlue, msg.buffer, 4);
-               memcpy(&scoreRed, msg.buffer+4, 4);
- 
-               break;
-            }
             case MSG_TYPE_ATTACK:
             {
                cout << "Received ATTACK message" << endl;
@@ -964,7 +950,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                game = new Game(gameName, "../../data/map.txt");
                cout << "Game name: " << gameName << endl;
 
-               state = STATE_NEW_GAME;
+               state = STATE_GAME;
                wndCurrent = wndNewGame;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
@@ -990,9 +976,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
          break;
       }
-      case STATE_NEW_GAME:
+      case STATE_GAME:
       {
-         cout << "(STATE_NEW_GAME) ";
+         cout << "(STATE_GAME) ";
          switch(msg.type)
          {
             case MSG_TYPE_GAME_INFO:
@@ -1124,7 +1110,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_OBJECT:
             {
-               cout << "Received object message in STATE_NEW_GAME" << endl;
+               cout << "Received object message in STATE_GAME" << endl;
 
                WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
@@ -1379,10 +1365,6 @@ void logout()
    case STATE_LOBBY:
       txtJoinGame->clear();
       txtCreateGame->clear();
-      break;
-   case STATE_GAME:
-      txtChat->clear();
-      chatConsole.clear();
       break;
    default:
       cout << "Logout called from invalid state: " << state << endl;
