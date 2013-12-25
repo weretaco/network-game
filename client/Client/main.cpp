@@ -1077,6 +1077,19 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
 
                break;
             }
+            case MSG_TYPE_LEAVE_GAME:
+            {
+               cout << "Received a LEAVE_GAME message" << endl;
+
+               string gameName(msg.buffer+4);
+               unsigned int playerId;
+
+               memcpy(&playerId, msg.buffer, 4);
+               
+               game->removePlayer(playerId);
+
+               break;
+            }
             case MSG_TYPE_PLAYER_MOVE:
             {
                cout << "Received PLAYER_MOVE message" << endl;
