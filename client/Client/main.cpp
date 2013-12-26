@@ -416,12 +416,7 @@ int main(int argc, char **argv)
                cout << "Detected a right-click" << endl;
                map<unsigned int, Player*>::iterator it;
 
-               Player* curPlayer;
-               for(it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-               {
-                  if (it->second->id == curPlayerId)
-                     curPlayer = it->second;
-               }
+               Player* curPlayer = mapPlayers[curPlayerId];;
 
                cout << "Got current player" << endl;
                cout << "current game: " << game << endl;
