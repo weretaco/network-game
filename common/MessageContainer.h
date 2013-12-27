@@ -25,19 +25,18 @@ using namespace std;
 #define MSG_TYPE_PICKUP_FLAG       10
 #define MSG_TYPE_DROP_FLAG         11
 #define MSG_TYPE_SCORE             12
-#define MSG_TYPE_START_ATTACK      13
-#define MSG_TYPE_ATTACK            14
-#define MSG_TYPE_PROJECTILE        15
-#define MSG_TYPE_REMOVE_PROJECTILE 16
-#define MSG_TYPE_CREATE_GAME       17
-#define MSG_TYPE_JOIN_GAME         18
-#define MSG_TYPE_LEAVE_GAME        19
-#define MSG_TYPE_GAME_INFO         20
-#define MSG_TYPE_JOIN_GAME_SUCCESS 21
-#define MSG_TYPE_JOIN_GAME_FAILURE 22
-#define MSG_TYPE_JOIN_GAME_ACK     23
-#define MSG_TYPE_PLAYER_JOIN_GAME  24
-#define MSG_TYPE_FINISH_GAME       25
+#define MSG_TYPE_ATTACK            13
+#define MSG_TYPE_PROJECTILE        14
+#define MSG_TYPE_REMOVE_PROJECTILE 15
+#define MSG_TYPE_CREATE_GAME       16
+#define MSG_TYPE_JOIN_GAME         17
+#define MSG_TYPE_LEAVE_GAME        18
+#define MSG_TYPE_GAME_INFO         19
+#define MSG_TYPE_JOIN_GAME_SUCCESS 20
+#define MSG_TYPE_JOIN_GAME_FAILURE 21
+#define MSG_TYPE_JOIN_GAME_ACK     22
+#define MSG_TYPE_PLAYER_JOIN_GAME  23
+#define MSG_TYPE_FINISH_GAME       24
 
 typedef struct
 {
@@ -80,10 +79,18 @@ public:
          case MSG_TYPE_PICKUP_FLAG: return "MSG_TYPE_PICKUP_FLAG";
          case MSG_TYPE_DROP_FLAG: return "MSG_TYPE_DROP_FLAG";
          case MSG_TYPE_SCORE: return "MSG_TYPE_SCORE";
-         case MSG_TYPE_START_ATTACK: return "MSG_TYPE_START_ATACK";
          case MSG_TYPE_ATTACK: return "MSG_TYPE_ATTACK";
          case MSG_TYPE_PROJECTILE: return "MSG_TYPE_PROJECTILE";
          case MSG_TYPE_REMOVE_PROJECTILE: return "MSG_TYPE_REMOVE_PROJECTILE";
+         case MSG_TYPE_CREATE_GAME: return "MSG_TYPE_CREATE_GAME";
+         case MSG_TYPE_JOIN_GAME: return "MSG_TYPE_JOIN_GAME";
+         case MSG_TYPE_LEAVE_GAME: return "MSG_TYPE_LEAVE_GAME";
+         case MSG_TYPE_GAME_INFO: return "MSG_TYPE_GAME_INFO";
+         case MSG_TYPE_JOIN_GAME_SUCCESS: return "MSG_TYPE_JOIN_GAME_SUCCESS";
+         case MSG_TYPE_JOIN_GAME_FAILURE: return "MSG_TYPE_JOIN_GAME_FAILURE";
+         case MSG_TYPE_JOIN_GAME_ACK: return "MSG_TYPE_JOIN_GAME_ACK";
+         case MSG_TYPE_PLAYER_JOIN_GAME: return "MSG_TYPE_PLAYER_JOIN_GAME";
+         case MSG_TYPE_FINISH_GAME: return "MSG_TYPE_FINISH_GAME";
          default: return "Unknown";
       }
    }

@@ -606,7 +606,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          break;
       }
-      case MSG_TYPE_START_ATTACK:
+      case MSG_TYPE_ATTACK:
       {
          cout << "Received a START_ATTACK message" << endl;
 
@@ -623,7 +623,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          map<unsigned int, Player*> players = p->currentGame->getPlayers();
 
-         serverMsg.type = MSG_TYPE_START_ATTACK;
+         serverMsg.type = MSG_TYPE_ATTACK;
          memcpy(serverMsg.buffer, &id, 4);
          memcpy(serverMsg.buffer+4, &targetId, 4);
          broadcastMessage(msgProcessor, serverMsg, players);
@@ -1055,11 +1055,6 @@ bool handlePlayerEvents(Player* p, Game* game, MessageProcessor& msgProcessor) {
 
       //send everyone an ATTACK message
       cout << "about to broadcast attack" << endl;
-
-      serverMsg.type = MSG_TYPE_ATTACK; 
-      memcpy(serverMsg.buffer, &p->id, 4);
-      memcpy(serverMsg.buffer+4, &p->targetPlayer, 4);
-      broadcastMessage(msgProcessor, serverMsg, playersInGame);
 
       if (p->attackType == Player::ATTACK_MELEE)
       {
