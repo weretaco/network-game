@@ -17,7 +17,7 @@ public:
    Window(int x, int y, int width, int height);
    ~Window(void);
 
-   void addComponent(GuiComponent *comp);
+   GuiComponent* addComponent(GuiComponent* comp);
    GuiComponent* getComponent(int x);
    void draw(ALLEGRO_DISPLAY *display);
    bool handleEvent(ALLEGRO_EVENT& e);

@@ -21,6 +21,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <vector>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -87,12 +88,13 @@ int state;
 
 bool doexit;
 
+vector<GuiComponent*> vctComponents;
+
 Window* wndLogin;
 Window* wndRegister;
 Window* wndLobby;
-Window* wndGame;
+Window* wndLobbyDebug;
 Window* wndNewGame;
-Window* wndGameDebug;
 Window* wndGameSummary;
 Window* wndCurrent;
 
@@ -110,8 +112,6 @@ TextLabel* lblRegisterStatus;
 // wndLobby
 Textbox* txtJoinGame;
 Textbox* txtCreateGame;
-
-// wndGame
 Textbox* txtChat;
 
 int sock;
@@ -212,15 +212,15 @@ int main(int argc, char **argv)
    debugConsole.addLine("");
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndLogin->addComponent(new Textbox(516, 40, 100, 20, font));
-   wndLogin->addComponent(new Textbox(516, 70, 100, 20, font));
-   wndLogin->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT));
-   wndLogin->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT));
-   wndLogin->addComponent(new TextLabel((SCREEN_W-600)/2, 100, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE));
-   wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen));
-   wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login));
-   wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
-   wndLogin->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
+   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 40, 100, 20, font)));
+   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 70, 100, 20, font)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel((SCREEN_W-600)/2, 100, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
 
    txtUsername = (Textbox*)wndLogin->getComponent(0);
    txtPassword = (Textbox*)wndLogin->getComponent(1);
@@ -229,16 +229,16 @@ int main(int argc, char **argv)
    cout << "Created login screen" << endl;
 
    wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndRegister->addComponent(new Textbox(516, 40, 100, 20, font));
-   wndRegister->addComponent(new Textbox(516, 70, 100, 20, font));
-   wndRegister->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT));
-   wndRegister->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT));
-   wndRegister->addComponent(new RadioButtonList(432, 100, "Pick a class", font));
-   wndRegister->addComponent(new TextLabel((SCREEN_W-600)/2, 190, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE));
-   wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen));
-   wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount));
-   wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit));
-   wndRegister->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
+   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 40, 100, 20, font)));
+   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 70, 100, 20, font)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndRegister->addComponent(new RadioButtonList(432, 100, "Pick a class", font)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel((SCREEN_W-600)/2, 190, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
 
    txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
    txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
@@ -251,44 +251,48 @@ int main(int argc, char **argv)
 
    cout << "Created register screen" << endl;
 
-   wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
-   wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
-   wndLobby->addComponent(new Textbox(SCREEN_W*1/2+15+4, 40, 100, 20, font));
-   wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame));
-   wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT));
-   wndLobby->addComponent(new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font));
-   wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame));
-   wndLobby->addComponent(new Textbox(95, 40, 300, 20, font));
-   wndLobby->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
+   txtJoinGame = new Textbox(SCREEN_W*1/2+15+4, 40, 100, 20, font);
+   txtCreateGame = new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font);
 
-   txtJoinGame = (Textbox*)wndLobby->getComponent(2);
-   txtCreateGame = (Textbox*)wndLobby->getComponent(5);
+   vctComponents.push_back(txtJoinGame);
+   vctComponents.push_back(txtCreateGame);
+
+   wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobby->addComponent(txtJoinGame);
+   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
+   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobby->addComponent(txtCreateGame);
+   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
+   vctComponents.push_back(wndLobby->addComponent(new Textbox(95, 40, 300, 20, font)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
+
+
    txtChat = (Textbox*)wndLobby->getComponent(7);
 
    cout << "Created lobby screen" << endl;
 
-   // this is the old game screen
-   wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndGame->addComponent(new Textbox(95, 40, 300, 20, font));
-   wndGame->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage));
-   wndGame->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
-   wndGame->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+   wndLobbyDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobbyDebug->addComponent(txtJoinGame);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobbyDebug->addComponent(txtCreateGame);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
 
-   wndGameDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndGameDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging));
-   wndGameDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout));
+   cout << "Created debug lobby screen" << endl;
 
-   cout << "Created game screen" << endl;
-
-   // this is the new game screen, without a debug console
    wndNewGame = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndNewGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame));
+   vctComponents.push_back(wndNewGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame)));
 
    cout << "Created new game screen" << endl;
 
    wndGameSummary = new Window(0, 0, SCREEN_W, SCREEN_H);
-   wndGameSummary->addComponent(new Button(840, 730, 160, 20, font, "Back to Lobby", closeGameSummary));
+   vctComponents.push_back(wndGameSummary->addComponent(new Button(840, 730, 160, 20, font, "Back to Lobby", closeGameSummary)));
 
    cout << "Created game summary screen" << endl;
 
@@ -393,7 +397,7 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         if(wndCurrent == wndGame || wndCurrent == wndNewGame) {
+         if(wndCurrent == wndNewGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -454,13 +458,14 @@ int main(int argc, char **argv)
 
          msgProcessor.resendUnackedMessages();
 
-         if (debugging && wndCurrent == wndGame)
-            wndGameDebug->draw(display);
+         if (debugging && wndCurrent == wndLobby)
+            wndLobbyDebug->draw(display);
          else
             wndCurrent->draw(display);
 
          if (wndCurrent == wndLobby) {
-            chatConsole.draw(font, al_map_rgb(255,255,255));
+            if (!debugging)
+               chatConsole.draw(font, al_map_rgb(255,255,255));
 
             map<string, int>::iterator it;
             int i=0;
@@ -536,63 +541,8 @@ int main(int argc, char **argv)
                al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
             }
          }
-         else if (wndCurrent == wndGame)
+         else if (wndCurrent == wndGameSummary)
          {
-            if (!debugging)
-               chatConsole.draw(font, al_map_rgb(255,255,255));
-
-            al_draw_text(font, al_map_rgb(0, 255, 0), 4, 43, ALLEGRO_ALIGN_LEFT, "Message:");
-
-            ostringstream ossScoreBlue, ossScoreRed;
-
-            ossScoreBlue << "Blue: " << game->getBlueScore() << endl;
-            ossScoreRed << "Red: " << game->getRedScore() << endl;
-
-            al_draw_text(font, al_map_rgb(0, 255, 0), 330, 80, ALLEGRO_ALIGN_LEFT, ossScoreBlue.str().c_str());
-            al_draw_text(font, al_map_rgb(0, 255, 0), 515, 80, ALLEGRO_ALIGN_LEFT, ossScoreRed.str().c_str());
-
-            // update players
-            map<unsigned int, Player*>::iterator it;
-            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-            {
-               it->second->updateTarget(mapPlayers);
-            }
-
-            for (it = mapPlayers.begin(); it != mapPlayers.end(); it++)
-            {
-               it->second->move(gameMap);    // ignore return value
-            }
-
-            // update projectile positions
-            map<unsigned int, Projectile>::iterator it2;
-            for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
-            {
-               it2->second.move(mapPlayers);
-            }
-
-            GameRender::drawMap(gameMap);
-            GameRender::drawPlayers(mapPlayers, font, curPlayerId);
-
-            // draw projectiles
-            for (it2 = mapProjectiles.begin(); it2 != mapProjectiles.end(); it2++)
-            {
-               Projectile proj = it2->second;
-
-               FLOAT_POSITION target = mapPlayers[proj.target]->pos;
-               float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
-
-               POSITION start, end;
-               start.x = cos(angle)*15+proj.pos.x;
-               start.y = sin(angle)*15+proj.pos.y;
-               end.x = proj.pos.x;
-               end.y = proj.pos.y;
-
-               start = mapToScreen(start);
-               end = mapToScreen(end);
-
-               al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
-            }
-         }else if (wndCurrent == wndGameSummary) {
             ostringstream ossBlueScore, ossRedScore;
 
             ossBlueScore << "Blue Score: " << gameSummary->getBlueScore();
@@ -630,11 +580,16 @@ int main(int argc, char **argv)
 
    shutdownWinSock();
    
+   // delete all components
+   for (unsigned int x=0; x<vctComponents.size(); x++)
+      delete vctComponents[x];
+
    delete wndLogin;
    delete wndRegister;
    delete wndLobby;
-   delete wndGame;
-   delete wndGameDebug;
+   delete wndLobbyDebug;
+   delete wndNewGame;
+   delete wndGameSummary;
 
    delete gameMap;
 

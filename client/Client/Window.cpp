@@ -7,13 +7,12 @@ Window::Window(int x, int y, int width, int height) :
 
 Window::~Window(void)
 {
-   for(unsigned int x=0; x<this->vctGui.size(); x++)
-      delete this->vctGui[x];
 }
 
-void Window::addComponent(GuiComponent *comp)
+GuiComponent* Window::addComponent(GuiComponent* comp)
 {
    this->vctGui.push_back(comp);
+   return comp;
 }
 
 GuiComponent* Window::getComponent(int x)
