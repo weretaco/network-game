@@ -94,7 +94,7 @@ Window* wndLogin;
 Window* wndRegister;
 Window* wndLobby;
 Window* wndLobbyDebug;
-Window* wndNewGame;
+Window* wndGame;
 Window* wndGameSummary;
 Window* wndCurrent;
 
@@ -286,8 +286,8 @@ int main(int argc, char **argv)
 
    cout << "Created debug lobby screen" << endl;
 
-   wndNewGame = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndNewGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame)));
+   wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame)));
 
    cout << "Created new game screen" << endl;
 
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         if(wndCurrent == wndNewGame) {
+         if(wndCurrent == wndGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
                   {
                      cout << "Found valid target" << endl;
 
-                     msgTo.type = MSG_TYPE_START_ATTACK;
+                     msgTo.type = MSG_TYPE_ATTACK;
                      memcpy(msgTo.buffer, &curPlayerId, 4);
                      memcpy(msgTo.buffer+4, &target->id, 4);
 
@@ -478,18 +478,20 @@ int main(int argc, char **argv)
                i++;
             }
          }
-         else if (wndCurrent == wndNewGame)
+         else if (wndCurrent == wndGame)
          {
             al_draw_text(font, al_map_rgb(0, 255, 0), 4, 4, ALLEGRO_ALIGN_LEFT, "Players");
 
             map<unsigned int, Player*>& gamePlayers = game->getPlayers();
             map<unsigned int, Player*>::iterator it;
 
-            int playerCount = 0;
-            for (it = gamePlayers.begin(); it != gamePlayers.end(); it++)
-            {
-               al_draw_text(font, al_map_rgb(0, 255, 0), 4, 19+(playerCount+1)*15, ALLEGRO_ALIGN_LEFT, it->second->name.c_str());
-               playerCount++;
+            if (!debugging) {
+               int playerCount = 0;
+               for (it = gamePlayers.begin(); it != gamePlayers.end(); it++)
+               {
+                  al_draw_text(font, al_map_rgb(0, 255, 0), 4, 19+(playerCount+1)*15, ALLEGRO_ALIGN_LEFT, it->second->name.c_str());
+                  playerCount++;
+               }
             }
 
             ostringstream ossScoreBlue, ossScoreRed;
@@ -588,7 +590,7 @@ int main(int argc, char **argv)
    delete wndRegister;
    delete wndLobby;
    delete wndLobbyDebug;
-   delete wndNewGame;
+   delete wndGame;
    delete wndGameSummary;
 
    delete gameMap;
@@ -806,12 +808,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_ATTACK:
             {
-               cout << "Received ATTACK message" << endl;
-
-               break;
-            }
-            case MSG_TYPE_START_ATTACK:
-            {
                cout << "Received START_ATTACK message" << endl;
 
                unsigned int id, targetID;
@@ -888,7 +884,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
                cout << "Game name: " << gameName << endl;
 
                state = STATE_GAME;
-               wndCurrent = wndNewGame;
+               wndCurrent = wndGame;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
@@ -1085,12 +1081,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             }
             case MSG_TYPE_ATTACK:
             {
-               cout << "Received ATTACK message" << endl;
-
-               break;
-            }
-            case MSG_TYPE_START_ATTACK:
-            {
                cout << "Received START_ATTACK message" << endl;
 
                unsigned int id, targetId;
@@ -1184,7 +1174,7 @@ void drawMessageStatus(ALLEGRO_FONT* font)
    al_draw_text(font, al_map_rgb(0, 255, 255), 20+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Type");
    al_draw_text(font, al_map_rgb(0, 255, 255), 240+clientMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "Acked?");
 
-   al_draw_text(font, al_map_rgb(0, 255, 255), serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
+   //al_draw_text(font, al_map_rgb(0, 255, 255), serverMsgOffset, 43, ALLEGRO_ALIGN_LEFT, "ID");
 
    map<unsigned int, map<unsigned long, MessageContainer> >& sentMessages = msgProcessor.getSentMessages();
    int id, type;
