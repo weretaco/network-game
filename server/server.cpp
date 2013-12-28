@@ -43,7 +43,7 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId);
+void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId);
 
 bool handleGameEvents(Game* game, map<unsigned int, Player*>& mapPlayers, MessageProcessor& msgPocessor);
 bool handlePlayerEvents(Player* p, Game* game, MessageProcessor& msgProcessor);
@@ -89,26 +89,6 @@ int main(int argc, char *argv[])
 
    outputLog.open("server.log", ios::app);
    outputLog << "Started server on " << getCurrentDateTimeString() << endl;
-
-   WorldMap* gameMap = WorldMap::loadMapFromFile("../data/map.txt");
-
-   // add some items to the map. They will be sent out
-   // to players when they login
-   for (int y=0; y<gameMap->height; y++)
-   {
-      for (int x=0; x<gameMap->width; x++)
-      {
-         switch (gameMap->getStructure(x, y))
-         {
-            case WorldMap::STRUCTURE_BLUE_FLAG:
-               gameMap->addObject(WorldMap::OBJECT_BLUE_FLAG, x*25+12, y*25+12);
-               break;
-            case WorldMap::STRUCTURE_RED_FLAG:
-               gameMap->addObject(WorldMap::OBJECT_RED_FLAG, x*25+12, y*25+12);
-               break;
-         }
-      }
-   }
 
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0)
@@ -211,7 +191,6 @@ int main(int argc, char *argv[])
          // process players currently in a game
          map<string, Game*>::iterator itGames;
          Game* game = NULL;
-         WorldMap* gameMap = NULL;
 
          for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             if (handleGameEvents(itGames->second, mapPlayers, msgProcessor)) {
@@ -267,7 +246,7 @@ int main(int argc, char *argv[])
 
       if (msgProcessor.receiveMessage(&clientMsg, &from) >= 0)
       {
-         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, gameMap, unusedPlayerId);
+         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, unusedPlayerId);
 
          cout << "Finished processing the message" << endl;
       }
@@ -292,7 +271,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, WorldMap* gameMap, unsigned int& unusedPlayerId)
+void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId)
 {
    NETWORK_MSG serverMsg;
    DataAccess da;
