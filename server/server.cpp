@@ -391,18 +391,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                msgProcessor.sendMessage(&serverMsg, &from);
             }
 
-            // tell the new player about all map objects
-            // (currently just the flags)
-            serverMsg.type = MSG_TYPE_OBJECT;
-            vector<WorldMap::Object>* vctObjects = gameMap->getObjects();
-            vector<WorldMap::Object>::iterator itObjects;
-            cout << "sending items" << endl;
-            for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
-               itObjects->serialize(serverMsg.buffer);
-               cout << "sending item id " << itObjects->id  << endl;
-               msgProcessor.sendMessage(&serverMsg, &from);
-            }
-
             // send info about existing games to new player
             map<string, Game*>::iterator itGames;
             Game* g;
@@ -450,18 +438,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
          else
          {
-            if (!p->isDead) {
-               WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
-               if (p->hasBlueFlag)
-                  flagType = WorldMap::OBJECT_BLUE_FLAG;
-               else if (p->hasRedFlag)
-                  flagType = WorldMap::OBJECT_RED_FLAG;
-
-               if (flagType != WorldMap::OBJECT_NONE) {
-                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor);
-               }
-            }
-
             // broadcast to all players before deleting p from the map
             serverMsg.type = MSG_TYPE_LOGOUT;
             memcpy(serverMsg.buffer, &p->id, 4);
@@ -712,6 +688,24 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }else {
             cout << "Game name: " << g->getName() << endl;
             p->currentGame = NULL;
+
+            // check if the player that's leaving needs to receive the
+            // LEAVE_GAME message and run thie logic below to make the player
+            // drop any flag he's carrying
+
+            /*
+            if (!p->isDead) {
+               WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+               if (p->hasBlueFlag)
+                  flagType = WorldMap::OBJECT_BLUE_FLAG;
+               else if (p->hasRedFlag)
+                  flagType = WorldMap::OBJECT_RED_FLAG;
+
+               if (flagType != WorldMap::OBJECT_NONE) {
+                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor);
+               }
+            }
+            */
 
             serverMsg.type = MSG_TYPE_LEAVE_GAME;
             memcpy(serverMsg.buffer, &p->id, 4);
