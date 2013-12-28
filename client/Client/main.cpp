@@ -56,7 +56,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers,
                     map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
@@ -204,10 +204,6 @@ int main(int argc, char **argv)
       al_destroy_timer(timer);
       return -1;
    }
-
-   WorldMap* gameMap = WorldMap::loadMapFromFile("../../data/map.txt");
-
-   cout << "Loaded map" << endl;
 
    debugConsole.addLine("Debug console:");
    debugConsole.addLine("");
@@ -451,7 +447,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, gameMap, mapPlayers, mapProjectiles, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, mapPlayers, mapProjectiles, curPlayerId);
 
       if (redraw)
       {
@@ -594,8 +590,7 @@ int main(int argc, char **argv)
    delete wndGame;
    delete wndGameSummary;
 
-   delete gameMap;
-
+   // game should be deleted when the player leaves a gamw
    if (game != NULL)
       delete game;
 
@@ -643,7 +638,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *gameMap, map<unsigned int, Player*>& mapPlayers,
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers,
                     map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId)
 {
    // this is outdated since most messages now don't contain just a text string
@@ -779,31 +774,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             case MSG_TYPE_CHAT:
             {
                chatConsole.addLine(response);
-
-               break;
-            }
-            case MSG_TYPE_OBJECT:
-            {
-               cout << "Received OBJECT message" << endl;
-
-               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
-               o.deserialize(msg.buffer);
-               cout << "object id: " << o.id << endl;
-               gameMap->updateObject(o.id, o.type, o.pos.x, o.pos.y);
-
-               break;
-            }
-            case MSG_TYPE_REMOVE_OBJECT:
-            {
-               cout << "Received REMOVE_OBJECT message!" << endl;
-
-               int id;
-               memcpy(&id, msg.buffer, 4);
-
-               cout << "Removing object with id " << id << endl;
-
-               if (!gameMap->removeObject(id))
-                  cout << "Did not remove the object" << endl;
 
                break;
             }
