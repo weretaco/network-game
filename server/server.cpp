@@ -687,13 +687,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             // not sure what to do here
          }else {
             cout << "Game name: " << g->getName() << endl;
-            p->currentGame = NULL;
 
-            // check if the player that's leaving needs to receive the
-            // LEAVE_GAME message and run thie logic below to make the player
-            // drop any flag he's carrying
-
-            /*
             if (!p->isDead) {
                WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
                if (p->hasBlueFlag)
@@ -702,17 +696,17 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                   flagType = WorldMap::OBJECT_RED_FLAG;
 
                if (flagType != WorldMap::OBJECT_NONE) {
-                  addObjectToMap(flagType, p->pos.x, p->pos.y, gameMap, mapPlayers, msgProcessor);
+                  addObjectToMap(flagType, p->pos.x, p->pos.y, g->getMap(), g->getPlayers(), msgProcessor);
                }
             }
-            */
+
+            p->currentGame = NULL;
+            g->removePlayer(p->id);
 
             serverMsg.type = MSG_TYPE_LEAVE_GAME;
             memcpy(serverMsg.buffer, &p->id, 4);
             strcpy(serverMsg.buffer+4, g->getName().c_str());
             broadcastMessage(msgProcessor, serverMsg, g->getPlayers());
-
-            g->removePlayer(p->id);
 
             int numPlayers = g->getNumPlayers();
 
