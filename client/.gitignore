@@ -7,3 +7,4 @@ Client.opensdf
 gameClient
 allegro.log
 client.log
+*.o

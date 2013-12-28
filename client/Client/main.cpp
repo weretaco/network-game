@@ -22,6 +22,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <stdexcept>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -879,8 +880,14 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, WorldMap *g
             {
                cout << "Received a JOIN_GAME_SUCCESS message" << endl;
 
-               string gameName(msg.buffer);         
-               game = new Game(gameName, "../../data/map.txt");
+               string gameName(msg.buffer);
+
+               #if defined WINDOWS
+                  game = new Game(gameName, "../../data/map.txt");
+               #elif defined LINUX
+                  game = new Game(gameName, "../data/map.txt");
+               #endif
+
                cout << "Game name: " << gameName << endl;
 
                state = STATE_GAME;
