@@ -49,6 +49,7 @@ public:
 
    bool updateTarget(map<unsigned int, Player*>& mapPlayers);
    bool move(WorldMap *map);
+   void takeDamage(int damage);
 
    void takeFlag(int flag, WorldMap* map);
    void dropFlag(int flag, WorldMap* map);

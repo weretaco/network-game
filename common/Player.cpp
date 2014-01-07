@@ -205,6 +205,17 @@ bool Player::move(WorldMap *map) {
    return moving;
 }
 
+void Player::takeDamage(int damage) {
+   this->health -= damage;
+   if (this->health < 0)
+      this->health = 0;
+   if (this->health == 0) {
+      cout << "Player died" << endl;
+      this->isDead = true;
+      this->timeDied = getCurrentMillis();
+   }
+}
+
 bool Player::updateTarget(map<unsigned int, Player*>& mapPlayers) {
    if (this->isChasing) {
       this->target.x = mapPlayers[this->targetPlayer]->pos.x;

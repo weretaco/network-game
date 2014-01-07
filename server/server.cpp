@@ -52,7 +52,6 @@ void broadcastMessage(MessageProcessor &msgProcessor, NETWORK_MSG &serverMsg, ma
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers);
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
 Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr);
-void damagePlayer(Player *p, int damage);
 
 void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player*>& mapPlayers, MessageProcessor &msgProcessor);
 
@@ -221,7 +220,7 @@ int main(int argc, char *argv[])
                   broadcastMessage(msgProcessor, serverMsg, game->getPlayers());
 
                   Player* target = game->getPlayers()[itProj->second.target];
-                  damagePlayer(target, itProj->second.damage);
+                  target->takeDamage(itProj->second.damage);
 
                   if (target->isDead)
                   {
@@ -1028,7 +1027,7 @@ bool handlePlayerEvents(Player* p, Game* game, MessageProcessor& msgProcessor) {
          cout << "Melee attack" << endl;
 
          Player* target = playersInGame[p->targetPlayer];
-         damagePlayer(target, p->damage);
+         target->takeDamage(p->damage);
 
          if (target->isDead)
          {
@@ -1110,17 +1109,6 @@ Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr)
    }
 
    return NULL;
-}
-
-void damagePlayer(Player *p, int damage) {
-   p->health -= damage;
-   if (p->health < 0)
-      p->health = 0;
-   if (p->health == 0) {
-      cout << "Player died" << endl;
-      p->isDead = true;
-      p->timeDied = getCurrentMillis();
-   }
 }
 
 void addObjectToMap(WorldMap::ObjectType objectType, int x, int y, WorldMap* gameMap, map<unsigned int, Player*>& mapPlayers, MessageProcessor &msgProcessor) {
