@@ -17,6 +17,7 @@
 #include <allegro5/allegro_font.h>
 
 #include "../../common/Player.h"
+#include "../../common/Projectile.h"
 #include "../../common/WorldMap.h"
 
 class GameRender
@@ -24,6 +25,7 @@ class GameRender
 public:
    static void drawMap(WorldMap* gameMap);
    static void drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FONT* font, unsigned int curPlayerId);
+   static void drawProjectiles(map<unsigned int, Projectile>& mapProjectiles, map<unsigned int, Player*>& mapPLayers);
 };
 
 #endif

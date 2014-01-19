@@ -2,6 +2,8 @@
 
 #include <allegro5/allegro_primitives.h>
 
+#include "../../common/Common.h"
+
 void GameRender::drawMap(WorldMap* gameMap)
 {
    POSITION mapPos;
@@ -110,5 +112,28 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
          al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(0, 0, 255));
       else if (p->hasRedFlag)
          al_draw_filled_rectangle(pos.x+4, pos.y-18, pos.x+18, pos.y-4, al_map_rgb(255, 0, 0));
+   }
+}
+
+void GameRender::drawProjectiles(map<unsigned int, Projectile>& mapProjectiles, map<unsigned int, Player*>& mapPlayers)
+{
+   map<unsigned int, Projectile>::iterator it;
+   for (it = mapProjectiles.begin(); it != mapProjectiles.end(); it++)
+   {
+      Projectile proj = it->second;
+
+      FLOAT_POSITION target = mapPlayers[proj.target]->pos;
+      float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
+
+      POSITION start, end;
+      start.x = cos(angle)*15+proj.pos.x;
+      start.y = sin(angle)*15+proj.pos.y;
+      end.x = proj.pos.x;
+      end.y = proj.pos.y;
+
+      start = mapToScreen(start);
+      end = mapToScreen(end);
+
+      al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
    }
 }

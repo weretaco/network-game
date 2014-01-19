@@ -519,26 +519,7 @@ int main(int argc, char **argv)
 
             GameRender::drawMap(game->getMap());
             GameRender::drawPlayers(game->getPlayers(), font, curPlayerId);
-
-            // draw projectiles
-            for (it2 = game->getProjectiles().begin(); it2 != game->getProjectiles().end(); it2++)
-            {
-               Projectile proj = it2->second;
-
-               FLOAT_POSITION target = game->getPlayers()[proj.target]->pos;
-               float angle =  atan2(target.y-proj.pos.toFloat().y, target.x-proj.pos.toFloat().x);
-
-               POSITION start, end;
-               start.x = cos(angle)*15+proj.pos.x;
-               start.y = sin(angle)*15+proj.pos.y;
-               end.x = proj.pos.x;
-               end.y = proj.pos.y;
-
-               start = mapToScreen(start);
-               end = mapToScreen(end);
-
-               al_draw_line(start.x, start.y, end.x, end.y, al_map_rgb(0, 0, 0), 4);
-            }
+            GameRender::drawProjectiles(game->getProjectiles(), game->getPlayers());
          }
          else if (wndCurrent == wndGameSummary)
          {
