@@ -216,10 +216,10 @@ void Player::takeDamage(int damage) {
    }
 }
 
-bool Player::updateTarget(map<unsigned int, Player*>& mapPlayers) {
+bool Player::updateTarget(const Player* targetPlayer) {
    if (this->isChasing) {
-      this->target.x = mapPlayers[this->targetPlayer]->pos.x;
-      this->target.y = mapPlayers[this->targetPlayer]->pos.y;
+      this->target.x = targetPlayer->pos.x;
+      this->target.y = targetPlayer->pos.y;
 
       if (posDistance(this->pos, this->target.toFloat()) <= this->range) {
          this->target.x = this->pos.x;

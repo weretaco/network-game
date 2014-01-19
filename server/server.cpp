@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 
             if (p->currentGame != NULL) {
                map<unsigned int, Player*> playersInGame = p->currentGame->getPlayers();
-               if (p->updateTarget(playersInGame))
+               if (p->updateTarget(playersInGame[p->targetPlayer]))
                {
                   serverMsg.type = MSG_TYPE_PLAYER;
                   p->serialize(serverMsg.buffer);
