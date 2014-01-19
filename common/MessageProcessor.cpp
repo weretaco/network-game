@@ -94,6 +94,13 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, struct sockaddr_in *sourc
    return ret;
 }
 
+void MessageProcessor::broadcastMessage(NETWORK_MSG &msg, map<unsigned int, Player*>& players) {
+   map<unsigned int, Player*>::iterator it;
+   for (it = players.begin(); it != players.end(); it++) {
+      this->sendMessage(&msg, &(it->second->addr));
+   }
+}
+
 void MessageProcessor::resendUnackedMessages() {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
    map<unsigned long, MessageContainer>::iterator it2;

@@ -1,7 +1,7 @@
 CC = g++
 #LIB_FLAGS = -lssl -lmysqlclient -lcrypt -lrt
 LIB_FLAGS = -lmysqlclient -lcrypt -lrt
-FLAGS = $(LIB_FLAGS)
+FLAGS = -Wall $(LIB_FLAGS)
 COMMON_PATH = ../common
 DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o DataAccess.o Projectile.o Game.o GameSummary.o
 

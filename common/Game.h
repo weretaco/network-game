@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "WorldMap.h"
 #include "Projectile.h"
+#include "MessageProcessor.h"
 
 using namespace std;
 
@@ -26,10 +27,11 @@ private:
    unsigned int blueScore;
    unsigned int redScore;
    unsigned int unusedProjectileId;
+   MessageProcessor* msgProcessor;
 
 public:
    Game();
-   Game(string name, string filepath);
+   Game(string name, string filepath, MessageProcessor* msgProcessor);
 
    ~Game();
 
@@ -43,6 +45,8 @@ public:
    void setBlueScore(unsigned int score);
    void setRedScore(unsigned int score);
 
+   void addObjectToMap(WorldMap::ObjectType objectType, int x, int y);
+
    map<unsigned int, Player*>& getPlayers();
    bool addPlayer(Player* p);
    bool removePlayer(unsigned int id);
@@ -54,6 +58,10 @@ public:
    bool startPlayerMovement(unsigned int id, int x, int y);
    bool processPlayerMovement(Player* p, FLOAT_POSITION oldPos);
    int processFlagPickupRequest(Player* p);
+   void dealDamageToPlayer(Player* p, int damage);
+
+   bool handleGameEvents();
+   bool handlePlayerEvents(Player* p);
 
    void assignProjectileId(Projectile* p);
    void updateUnusedProjectileId();

@@ -4,6 +4,7 @@
 #include <map>
 
 #include "MessageContainer.h"
+#include "Player.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
 
    int sendMessage(NETWORK_MSG *msg, struct sockaddr_in *dest);
    int receiveMessage(NETWORK_MSG *msg, struct sockaddr_in *source);
+   void broadcastMessage(NETWORK_MSG &msg, map<unsigned int, Player*>& players);
    void resendUnackedMessages();
    void cleanAckedMessages();
 
