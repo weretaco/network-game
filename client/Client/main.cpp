@@ -834,9 +834,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                string gameName(msg.buffer);
 
                #if defined WINDOWS
-                  game = new Game(gameName, "../../data/map.txt");
+                  game = new Game(gameName, "../../data/map.txt", &msgProcessor);
                #elif defined LINUX
-                  game = new Game(gameName, "../data/map.txt");
+                  game = new Game(gameName, "../data/map.txt", &msgProcessor);
                #endif
 
                cout << "Game name: " << gameName << endl;
