@@ -31,12 +31,12 @@ public:
 
    class Object {
    public:
-      int id;
+      unsigned int id;
       ObjectType type;
       POSITION pos;
 
-      Object(int id, ObjectType type, int x, int y);
-      Object(int id, ObjectType type, POSITION pos);
+      Object(unsigned int id, ObjectType type, int x, int y);
+      Object(unsigned int id, ObjectType type, POSITION pos);
 
       ~Object();
 
@@ -64,8 +64,8 @@ public:
    vector<Object> getObjects(int x, int y);
 
    void addObject(ObjectType type, int x, int y);
-   void updateObject(int id, WorldMap::ObjectType t, int x, int y);
-   bool removeObject(int id);
+   void updateObject(unsigned int id, WorldMap::ObjectType t, int x, int y);
+   bool removeObject(unsigned int id);
 
    static WorldMap* createDefaultMap();
    static WorldMap* loadMapFromFile(string filename);

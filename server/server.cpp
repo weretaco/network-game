@@ -449,7 +449,8 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
       {
          cout << "PLAYER_MOVE" << endl;
 
-         int id, x, y;
+         unsigned int id;
+         int x, y;
 
          memcpy(&id, clientMsg.buffer, 4);
          memcpy(&x, clientMsg.buffer+4, 4);
@@ -492,13 +493,13 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // may want to check the id matches the sender, just like for PLAYER_NOVE
          cout << "PICKUP_FLAG" << endl;
 
-         int id;
+         unsigned int id;
 
          memcpy(&id, clientMsg.buffer, 4);
          cout << "id: " << id << endl;
 
          Player* p = mapPlayers[id];
-         int objectId = p->currentGame->processFlagPickupRequest(p);
+         unsigned int objectId = p->currentGame->processFlagPickupRequest(p);
 
          if (objectId >= 0) {
             map<unsigned int, Player*> players = p->currentGame->getPlayers();
@@ -519,7 +520,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // may want to check the id matches the sender, just like for PLAYER_NOVE
          cout << "DROP_FLAG" << endl;
 
-         int id;
+         unsigned int id;
 
          memcpy(&id, clientMsg.buffer, 4);
          cout << "id: " << id << endl;
@@ -549,7 +550,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
       {
          cout << "Received a START_ATTACK message" << endl;
 
-         int id, targetId;
+         unsigned int id, targetId;
 
          memcpy(&id, clientMsg.buffer, 4);
          memcpy(&targetId, clientMsg.buffer+4, 4);
@@ -725,8 +726,8 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // send the current score
          serverMsg.type = MSG_TYPE_SCORE;
 
-         int blueScore = g->getBlueScore();
-         int redScore = g->getRedScore();
+         unsigned int blueScore = g->getBlueScore();
+         unsigned int redScore = g->getRedScore();
          memcpy(serverMsg.buffer, &blueScore, 4);
          memcpy(serverMsg.buffer+4, &redScore, 4);
 

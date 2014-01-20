@@ -101,7 +101,7 @@ vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
 
 // used by the server to create new objects
 void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
-   int id;
+   unsigned int id;
    vector<WorldMap::Object>::iterator it;
 
    for (id = 0; id < vctObjects->size(); id++) {
@@ -110,7 +110,7 @@ void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
             break;
       }
 
-      if (it == vctObjects->end())  // if no objects with this id exists
+      if (it == vctObjects->end())  // if no objects with this id exist
          break;
    }
 
@@ -119,7 +119,7 @@ void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
 }
 
 // used by the client to update object positions or create objects it has not seen before
-void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
+void WorldMap::updateObject(unsigned int id, WorldMap::ObjectType t, int x, int y) {
    vector<WorldMap::Object>::iterator it;
    bool foundObject = false;
 
@@ -156,7 +156,7 @@ void WorldMap::updateObject(int id, WorldMap::ObjectType t, int x, int y) {
    }
 }
 
-bool WorldMap::removeObject(int id) {
+bool WorldMap::removeObject(unsigned int id) {
    vector<WorldMap::Object>::iterator it;
 
    for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
@@ -315,14 +315,14 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
 /*** Functions for Object ***/
 
-WorldMap::Object::Object(int id, ObjectType type, int x, int y) {
+WorldMap::Object::Object(unsigned int id, ObjectType type, int x, int y) {
    this->type = type;
    this->id = id;
    this->pos.x = x;
    this->pos.y = y;
 }
 
-WorldMap::Object::Object(int id, ObjectType type, POSITION pos) {
+WorldMap::Object::Object(unsigned int id, ObjectType type, POSITION pos) {
    this->type = type;
    this->id = id;
    this->pos = pos;

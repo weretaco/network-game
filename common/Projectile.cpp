@@ -44,7 +44,7 @@ Projectile::~Projectile()
 {
 }
 
-void Projectile::setId(int id)
+void Projectile::setId(unsigned int id)
 {
    this->id = id;
 }

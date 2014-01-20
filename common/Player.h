@@ -40,7 +40,7 @@ public:
 
    ~Player();
 
-   void setId(int id);
+   void setId(unsigned int id);
    void setAddr(sockaddr_in addr);
    void setClass(PlayerClass c);
 
@@ -51,10 +51,10 @@ public:
    bool move(WorldMap *map);
    void takeDamage(int damage);
 
-   void takeFlag(int flag, WorldMap* map);
-   void dropFlag(int flag, WorldMap* map);
+   void takeFlag(unsigned int flag, WorldMap* map);
+   void dropFlag(unsigned int flag, WorldMap* map);
 
-   int id;
+   unsigned int id;
    string name;
    string password;
    sockaddr_in addr;
@@ -65,7 +65,7 @@ public:
    unsigned long long timeDied;
    bool isChasing;
    bool isAttacking;
-   int targetPlayer;
+   unsigned int targetPlayer;
    bool isDead;
 
    int playerClass;

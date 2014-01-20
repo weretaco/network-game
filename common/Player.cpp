@@ -99,7 +99,7 @@ Player::~Player()
 {
 }
 
-void Player::setId(int id)
+void Player::setId(unsigned int id)
 {
    this->id = id;
 }

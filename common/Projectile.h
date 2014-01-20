@@ -12,6 +12,12 @@ using namespace std;
 
 class Projectile {
 public:
+   unsigned int id;
+   POSITION pos;
+   unsigned int target;
+   int speed;
+   int damage;
+   unsigned long long timeLastUpdated;
 
    Projectile();
    Projectile(const Projectile& p);
@@ -19,25 +25,13 @@ public:
 
    ~Projectile();
 
-   void setId(int id);
+   void setId(unsigned int id);
 
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
-   // returns true if it reached the target and should be deleted
+   // returns true if the projectile reached the target and should be deleted
    bool move(map<unsigned int, Player*>& mapPlayers);
-
-   /*
-    * target should become a Player*. When this object gets serialized, the player's id should be sent.
-    * Deserialization in this case might be tricky since it will require a playerMap to turn the id into a Plauyer*
-    */
-
-   int id;
-   POSITION pos;
-   int target;
-   int speed;
-   int damage;
-   unsigned long long timeLastUpdated;
 };
 
 #endif
