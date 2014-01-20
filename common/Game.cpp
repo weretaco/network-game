@@ -42,8 +42,8 @@ map<unsigned int, Player*>& Game::getPlayers() {
 }
 
 bool Game::addPlayer(Player* p) {
-   if (players.find(p->id) == players.end()) {
-      players[p->id] = p;
+   if (players.find(p->getId()) == players.end()) {
+      players[p->getId()] = p;
       return true;
    }
    else
@@ -428,25 +428,26 @@ bool Game::handlePlayerEvents(Player* p) {
       {
          cout << "Melee attack" << endl;
 
-         Player* target = players[p->targetPlayer];
+         Player* target = players[p->getTargetPlayer()];
          this->dealDamageToPlayer(target, p->damage);
       }
       else if (p->attackType == Player::ATTACK_RANGED)
       {
          cout << "Ranged attack" << endl;
 
-         Projectile proj(p->pos.x, p->pos.y, p->targetPlayer, p->damage);
+         Projectile proj(p->pos.x, p->pos.y, p->getTargetPlayer(), p->damage);
          this->assignProjectileId(&proj);
          this->addProjectile(proj);
 
          int x = p->pos.x;
          int y = p->pos.y;
+         unsigned int targetId = p->getTargetPlayer();
 
          serverMsg.type = MSG_TYPE_PROJECTILE;
          memcpy(serverMsg.buffer, &proj.id, 4);
          memcpy(serverMsg.buffer+4, &x, 4);
          memcpy(serverMsg.buffer+8, &y, 4);
-         memcpy(serverMsg.buffer+12, &p->targetPlayer, 4);
+         memcpy(serverMsg.buffer+12, &targetId, 4);
          msgProcessor->broadcastMessage(serverMsg, players);
       }
       else

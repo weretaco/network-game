@@ -73,7 +73,7 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
 
       pos = mapToScreen(p->pos.toInt());
 
-      if (p->id == curPlayerId)
+      if (p->getId() == curPlayerId)
          al_draw_filled_circle(pos.x, pos.y, 14, al_map_rgb(0, 0, 0));
       
       if (p->team == 0)

@@ -431,13 +431,15 @@ int main(int argc, char **argv)
                   // right now, this code will target all players other than the current one
                   target = it->second;
                   cout << "set target" << endl;
-                  if (target->id != curPlayerId && target->team != curPlayer->team)
+                  if (target->getId() != curPlayerId && target->team != curPlayer->team)
                   {
                      cout << "Found valid target" << endl;
 
+                     unsigned int targetId = target->getId();
+
                      msgTo.type = MSG_TYPE_ATTACK;
                      memcpy(msgTo.buffer, &curPlayerId, 4);
-                     memcpy(msgTo.buffer+4, &target->id, 4);
+                     memcpy(msgTo.buffer+4, &targetId, 4);
 
                      msgProcessor.sendMessage(&msgTo, &server);
                   }
@@ -677,10 +679,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                   Player* p = new Player("", "");
                   p->deserialize(msg.buffer);
 
-                  if (mapPlayers.find(p->id) != mapPlayers.end())
-                     delete mapPlayers[p->id];
-                  mapPlayers[p->id] = p;
-                  curPlayerId = p->id;
+                  if (mapPlayers.find(p->getId()) != mapPlayers.end())
+                     delete mapPlayers[p->getId()];
+                  mapPlayers[p->getId()] = p;
+                  curPlayerId = p->getId();
 
                   cout << "Got a valid login response with the player" << endl;
                   cout << "Player id: " << curPlayerId << endl;
@@ -731,10 +733,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                   p.isDead = false;
 
-               if (mapPlayers.find(p.id) != mapPlayers.end())
-                  *(mapPlayers[p.id]) = p;
+               if (mapPlayers.find(p.getId()) != mapPlayers.end())
+                  *(mapPlayers[p.getId()]) = p;
                else
-                  mapPlayers[p.id] = new Player(p);
+                  mapPlayers[p.getId()] = new Player(p);
 
                break;
             }
@@ -770,7 +772,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                cout << "target id: " << targetID << endl;
 
                Player* source = mapPlayers[id];
-               source->targetPlayer = targetID;
+               source->setTargetPlayer(targetID);
                source->isChasing = true;
 
                break;
@@ -952,10 +954,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                   p.isDead = false;
 
-               if (mapPlayers.find(p.id) != mapPlayers.end())
-                  *(mapPlayers[p.id]) = p;
+               if (mapPlayers.find(p.getId()) != mapPlayers.end())
+                  *(mapPlayers[p.getId()]) = p;
                else
-                  mapPlayers[p.id] = new Player(p);
+                  mapPlayers[p.getId()] = new Player(p);
 
                break;
             }
@@ -965,6 +967,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                Player p("", "");
                p.deserialize(msg.buffer);
+               cout << "Deserialized player" << endl;
                p.timeLastUpdated = getCurrentMillis();
                p.isChasing = false;
                if (p.health <= 0)
@@ -972,12 +975,12 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                   p.isDead = false;
 
-               if (mapPlayers.find(p.id) != mapPlayers.end())
-                  *(mapPlayers[p.id]) = p;
+               if (mapPlayers.find(p.getId()) != mapPlayers.end())
+                  *(mapPlayers[p.getId()]) = p;
                else
-                  mapPlayers[p.id] = new Player(p);
+                  mapPlayers[p.getId()] = new Player(p);
 
-               game->addPlayer(mapPlayers[p.id]);
+               game->addPlayer(mapPlayers[p.getId()]);
 
                break;
             }
@@ -1050,7 +1053,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                // need to check the target exists in the current game
                Player* source = game->getPlayers()[id];
-               source->targetPlayer = targetId;
+               source->setTargetPlayer(targetId);
                source->isChasing = true;
 
                break;

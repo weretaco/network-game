@@ -20,6 +20,10 @@ using namespace std;
 class Game;
 
 class Player {
+private:
+   unsigned int id;
+   unsigned int targetPlayer;
+
 public:
 
    enum PlayerClass {
@@ -40,21 +44,24 @@ public:
 
    ~Player();
 
+   unsigned int getId();
+   unsigned int getTargetPlayer();
+
    void setId(unsigned int id);
+   void setTargetPlayer(unsigned int id);
    void setAddr(sockaddr_in addr);
    void setClass(PlayerClass c);
 
    void serialize(char* buffer);
    void deserialize(char* buffer);
 
-   bool updateTarget(const Player* targetPlayer);
+   bool updateTarget(map<unsigned int, Player*>& players);
    bool move(WorldMap *map);
    void takeDamage(int damage);
 
    void takeFlag(unsigned int flag, WorldMap* map);
    void dropFlag(unsigned int flag, WorldMap* map);
 
-   unsigned int id;
    string name;
    string password;
    sockaddr_in addr;
@@ -65,7 +72,6 @@ public:
    unsigned long long timeDied;
    bool isChasing;
    bool isAttacking;
-   unsigned int targetPlayer;
    bool isDead;
 
    int playerClass;

@@ -14,6 +14,7 @@ Player::Player()
    this->password = "";
    this->pos.x = this->target.x = 0;
    this->pos.y = this->target.y = 0;
+   this->targetPlayer = 0;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
    this->timeDied = 0;
@@ -45,6 +46,7 @@ Player::Player(const Player& p)
    this->pos.y = p.pos.y;
    this->target.x = p.target.x;
    this->target.y = p.target.y;
+   this->targetPlayer = p.targetPlayer;
    this->timeLastUpdated = p.timeLastUpdated;
    this->timeAttackStarted = p.timeAttackStarted;
    this->timeDied = p.timeDied;
@@ -74,6 +76,7 @@ Player::Player(string name, string password)
    this->password = password;
    this->pos.x = this->target.x = 200;
    this->pos.y = this->target.y = 200;
+   this->targetPlayer = 0;
    this->timeLastUpdated = 0;
    this->timeAttackStarted = 0;
    this->timeDied = 0;
@@ -99,9 +102,24 @@ Player::~Player()
 {
 }
 
+unsigned int Player::getId()
+{
+   return this->id;
+}
+
+unsigned int Player::getTargetPlayer()
+{
+   return this->targetPlayer;
+}
+
 void Player::setId(unsigned int id)
 {
    this->id = id;
+}
+
+void Player::setTargetPlayer(unsigned int id)
+{
+   this->targetPlayer = id;
 }
 
 void Player::setAddr(sockaddr_in addr)
@@ -216,10 +234,14 @@ void Player::takeDamage(int damage) {
    }
 }
 
-bool Player::updateTarget(const Player* targetPlayer) {
-   if (this->isChasing) {
-      this->target.x = targetPlayer->pos.x;
-      this->target.y = targetPlayer->pos.y;
+bool Player::updateTarget(map<unsigned int, Player*>& players) {
+   Player* p = NULL;
+   if (this->targetPlayer > 0)
+      p =players[this->targetPlayer];
+
+   if (p != NULL && this->isChasing) {
+      this->target.x = p->pos.x;
+      this->target.y = p->pos.y;
 
       if (posDistance(this->pos, this->target.toFloat()) <= this->range) {
          this->target.x = this->pos.x;
