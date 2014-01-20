@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 
             if (p->currentGame != NULL) {
                map<unsigned int, Player*> playersInGame = p->currentGame->getPlayers();
-               if (p->updateTarget(playersInGame[p->targetPlayer]))
+               if (p->updateTarget(playersInGame))
                {
                   serverMsg.type = MSG_TYPE_PLAYER;
                   p->serialize(serverMsg.buffer);
@@ -332,8 +332,8 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          else
          {
             updateUnusedPlayerId(unusedPlayerId, mapPlayers);
-            p->id = unusedPlayerId;
-            cout << "new player id: " << p->id << endl;
+            p->setId(unusedPlayerId);
+            cout << "new player id: " << p->getId() << endl;
             p->setAddr(from);
             p->currentGame = NULL;
 
@@ -350,7 +350,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
                it->second->serialize(serverMsg.buffer);
 
                cout << "sending info about " << it->second->name  << endl;
-               cout << "sending id " << it->second->id  << endl;
+               cout << "sending id " << it->second->getId()  << endl;
                msgProcessor.sendMessage(&serverMsg, &from);
             }
 
@@ -402,15 +402,16 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          else
          {
             // broadcast to all players before deleting p from the map
+            unsigned int playerId = p->getId();
             serverMsg.type = MSG_TYPE_LOGOUT;
-            memcpy(serverMsg.buffer, &p->id, 4);
+            memcpy(serverMsg.buffer, &playerId, 4);
 
             msgProcessor.broadcastMessage(serverMsg, mapPlayers);
 
-            if (p->id < unusedPlayerId)
-               unusedPlayerId = p->id;
+            if (p->getId() < unusedPlayerId)
+               unusedPlayerId = p->getId();
 
-            mapPlayers.erase(p->id);
+            mapPlayers.erase(p->getId());
             delete p;
 
             strcpy(serverMsg.buffer+4, "You have successfully logged out.");
@@ -558,7 +559,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // need to make sure the target is in the sender's game
 
          Player* p = mapPlayers[id];
-         p->targetPlayer = targetId;
+         p->setTargetPlayer(targetId);
          p->isChasing = true;
 
          map<unsigned int, Player*> players = p->currentGame->getPlayers();
@@ -626,7 +627,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             map<unsigned int, Player*>& players = g->getPlayers();
             Player* p = findPlayerByAddr(mapPlayers, from);
 
-            if (players.find(p->id) != players.end()) {
+            if (players.find(p->getId()) != players.end()) {
                cout << "Player " << p->name << " trying to join a game he's already in" << endl;
                serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
             }else {
@@ -666,10 +667,11 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             }
 
             p->currentGame = NULL;
-            g->removePlayer(p->id);
+            g->removePlayer(p->getId());
 
+            unsigned int playerId = p->getId();
             serverMsg.type = MSG_TYPE_LEAVE_GAME;
-            memcpy(serverMsg.buffer, &p->id, 4);
+            memcpy(serverMsg.buffer, &playerId, 4);
             strcpy(serverMsg.buffer+4, g->getName().c_str());
             msgProcessor.broadcastMessage(serverMsg, g->getPlayers());
 
@@ -754,7 +756,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             it->second->serialize(serverMsg.buffer);
 
             cout << "sending info about " << it->second->name  << endl;
-            cout << "sending id " << it->second->id  << endl;
+            cout << "sending id " << it->second->getId()  << endl;
             msgProcessor.sendMessage(&serverMsg, &from);
          }
 
