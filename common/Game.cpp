@@ -161,7 +161,7 @@ bool Game::processPlayerMovement(Player* p, FLOAT_POSITION oldPos) {
 int Game::processFlagPickupRequest(Player* p) {
    vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
    vector<WorldMap::Object>::iterator it;
-   int playerId = -1;
+   int itemId = -1;
 
    for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
       if (posDistance(p->pos, it->pos.toFloat()) < 10) {
@@ -169,25 +169,27 @@ int Game::processFlagPickupRequest(Player* p) {
             case WorldMap::OBJECT_BLUE_FLAG:
                if (p->team == 1) {
                   p->hasBlueFlag = true;
-                  playerId = it->id;
+                  itemId = it->id;
                }
                break;
             case WorldMap::OBJECT_RED_FLAG:
                if (p->team == 0) {
                   p->hasRedFlag = true;
-                  playerId = it->id;
+                  itemId = it->id;
                }
+               break;
+            case WorldMap::OBJECT_NONE:
                break;
          }
 
-         if (playerId > -1) {
+         if (itemId > -1) {
             vctObjects->erase(it);
-            return playerId;
+            return itemId;
          }
       }
    }
 
-   return playerId;
+   return itemId;
 }
 
 void Game::dealDamageToPlayer(Player* p, int damage) {
@@ -213,7 +215,6 @@ void Game::dealDamageToPlayer(Player* p, int damage) {
 }
 
 bool Game::handleGameEvents() {
-   NETWORK_MSG serverMsg;
    map<unsigned int, Player*>::iterator it;
    bool gameFinished = false;
 
@@ -324,6 +325,10 @@ bool Game::handlePlayerEvents(Player* p) {
                }
             }
 
+            break;
+         }
+         default:
+         {
             break;
          }
       }

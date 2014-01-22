@@ -588,20 +588,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
             // add flag objects to the map
             WorldMap* m = g->getMap();
-            for (int y=0; y<m->height; y++) {
-               for (int x=0; x<m->width; x++) {
-                  switch (m->getStructure(x, y)) {
-                     case WorldMap::STRUCTURE_BLUE_FLAG:
-                        m->addObject(WorldMap::OBJECT_BLUE_FLAG, x*25+12, y*25+12);
-                        break;
-                     case WorldMap::STRUCTURE_RED_FLAG:
-                        m->addObject(WorldMap::OBJECT_RED_FLAG, x*25+12, y*25+12);
-                        break;
-                     case WorldMap::STRUCTURE_NONE:
-                        break;
-                  }
-               }
-            }
+            m->createObjectsFromStructures();
 
             serverMsg.type = MSG_TYPE_JOIN_GAME_SUCCESS;
             strcpy(serverMsg.buffer, gameName.c_str());

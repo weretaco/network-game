@@ -149,9 +149,6 @@ void Player::setClass(PlayerClass c)
       case CLASS_NONE:
          cout << "No class" << endl;
          break;
-      dafault:
-         cout << "nvalid class" << endl;
-         break;
    }
 }
 

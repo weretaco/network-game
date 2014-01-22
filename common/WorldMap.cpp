@@ -44,6 +44,23 @@ WorldMap::~WorldMap()
    delete vctObjects;
 }
 
+void WorldMap::createObjectsFromStructures() {
+   for (int y=0; y<this->height; y++) {
+      for (int x=0; x<this->width; x++) {
+         switch (this->getStructure(x, y)) {
+            case WorldMap::STRUCTURE_BLUE_FLAG:
+               this->addObject(WorldMap::OBJECT_BLUE_FLAG, x*25+12, y*25+12);
+               break;
+            case WorldMap::STRUCTURE_RED_FLAG:
+               this->addObject(WorldMap::OBJECT_RED_FLAG, x*25+12, y*25+12);
+               break;
+            case WorldMap::STRUCTURE_NONE:
+               break;
+         }
+      }
+   }
+}
+
 WorldMap::TerrainType WorldMap::getElement(int x, int y)
 {
    return (*(*vctMap)[x])[y];
@@ -70,8 +87,8 @@ POSITION WorldMap::getStructureLocation(StructureType t)
    pos.x = 0;
    pos.y = 0;
 
-   for (int x=0; x<vctStructures->size(); x++) {
-      for (int y=0; y<(*vctStructures)[x]->size(); y++) {
+   for (unsigned int x=0; x<vctStructures->size(); x++) {
+      for (unsigned int y=0; y<(*vctStructures)[x]->size(); y++) {
         if ((*(*vctStructures)[x])[y] == t) {
            pos.x = x;
            pos.y = y;
@@ -131,6 +148,9 @@ void WorldMap::updateObject(unsigned int id, WorldMap::ObjectType t, int x, int 
    case WorldMap::OBJECT_RED_FLAG:
       cout << "RED_FLAG" << endl;
       break;
+   case WorldMap::OBJECT_NONE:
+      cout << "OBJECY_NONE" << endl;
+      break;
    }
 
    for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
@@ -143,6 +163,9 @@ void WorldMap::updateObject(unsigned int id, WorldMap::ObjectType t, int x, int 
             break;
          case WorldMap::OBJECT_RED_FLAG:
             cout << "RED_FLAG" << endl;
+            break;
+         case WorldMap::OBJECT_NONE:
+            cout << "OBJECY_NONE" << endl;
             break;
          }
          it->pos.x = x;

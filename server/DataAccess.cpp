@@ -176,7 +176,6 @@ int DataAccess::update(string table, string values, string where)
 
 MYSQL_RES *DataAccess::select(string table, string filter)
 {
-   MYSQL_RES *result;
    int query_state;
    ostringstream oss;
 

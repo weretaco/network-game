@@ -41,8 +41,8 @@ int MessageProcessor::sendMessage(NETWORK_MSG *msg, struct sockaddr_in *dest) {
 
    if (ret < 0)
       error("sendMessage");
-   else
-      return ret;
+
+   return ret;
 }
 
 int MessageProcessor::receiveMessage(NETWORK_MSG *msg, struct sockaddr_in *source) {

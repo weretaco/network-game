@@ -53,6 +53,8 @@ public:
 
    ~WorldMap();
 
+   void createObjectsFromStructures();
+
    TerrainType getElement(int x, int y);
    void setElement(int x, int y, TerrainType type);
 
