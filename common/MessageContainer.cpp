@@ -42,12 +42,12 @@ void MessageContainer::setAcked(bool acked) {
    cout << "acked after: " << this->isAcked << endl;
 }
 
+
 void MessageContainer::setTimeAcked(unsigned long long time) {
    this->timeAcked = time;
 }
 
-/*
-string getMsgTypeString(int msgType) {
+string MessageContainer::getMsgTypeString(int msgType) {
    switch(msgType) {
       case MSG_TYPE_ACK: return "MSG_TYPE_ACK";
       case MSG_TYPE_REGISTER: return "MSG_TYPE_REGISTER";
@@ -59,13 +59,20 @@ string getMsgTypeString(int msgType) {
       case MSG_TYPE_OBJECT: return "MSG_TYPE_OBJECT";
       case MSG_TYPE_REMOVE_OBJECT: return "MSG_TYPE_REMOVE_OBJECT";
       case MSG_TYPE_PICKUP_FLAG: return "MSG_TYPE_PICKUP_FLAG";
-      caseMSG_TYPE_DROP_FLAG: return "MSG_TYPE_DROP_FLAG";
+      case MSG_TYPE_DROP_FLAG: return "MSG_TYPE_DROP_FLAG";
       case MSG_TYPE_SCORE: return "MSG_TYPE_SCORE";
-      case MSG_TYPE_START_ATTACK: return "MSG_TYPE_START_ATACK";
       case MSG_TYPE_ATTACK: return "MSG_TYPE_ATTACK";
       case MSG_TYPE_PROJECTILE: return "MSG_TYPE_PROJECTILE";
       case MSG_TYPE_REMOVE_PROJECTILE: return "MSG_TYPE_REMOVE_PROJECTILE";
+      case MSG_TYPE_CREATE_GAME: return "MSG_TYPE_CREATE_GAME";
+      case MSG_TYPE_JOIN_GAME: return "MSG_TYPE_JOIN_GAME";
+      case MSG_TYPE_LEAVE_GAME: return "MSG_TYPE_LEAVE_GAME";
+      case MSG_TYPE_GAME_INFO: return "MSG_TYPE_GAME_INFO";
+      case MSG_TYPE_JOIN_GAME_SUCCESS: return "MSG_TYPE_JOIN_GAME_SUCCESS";
+      case MSG_TYPE_JOIN_GAME_FAILURE: return "MSG_TYPE_JOIN_GAME_FAILURE";
+      case MSG_TYPE_JOIN_GAME_ACK: return "MSG_TYPE_JOIN_GAME_ACK";
+      case MSG_TYPE_PLAYER_JOIN_GAME: return "MSG_TYPE_PLAYER_JOIN_GAME";
+      case MSG_TYPE_FINISH_GAME: return "MSG_TYPE_FINISH_GAME";
       default: return "Unknown";
    }
 }
-*/
