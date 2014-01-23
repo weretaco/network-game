@@ -431,17 +431,26 @@ int main(int argc, char **argv)
                   // right now, this code will target all players other than the current one
                   target = it->second;
                   cout << "set target" << endl;
-                  if (target->getId() != curPlayerId && target->team != curPlayer->team)
+                  if (target->team != curPlayer->team)
                   {
                      cout << "Found valid target" << endl;
 
-                     unsigned int targetId = target->getId();
+                     POSITION cursorPos;
+                     cursorPos.x = ev.mouse.x;
+                     cursorPos.y = ev.mouse.y;
+                     cursorPos = screenToMap(cursorPos);
 
-                     msgTo.type = MSG_TYPE_ATTACK;
-                     memcpy(msgTo.buffer, &curPlayerId, 4);
-                     memcpy(msgTo.buffer+4, &targetId, 4);
+                     float distance =posDistance(cursorPos.toFloat(), target->pos);
 
-                     msgProcessor.sendMessage(&msgTo, &server);
+                     if (distance < 25) {
+                        unsigned int targetId = target->getId();
+
+                        msgTo.type = MSG_TYPE_ATTACK;
+                        memcpy(msgTo.buffer, &curPlayerId, 4);
+                        memcpy(msgTo.buffer+4, &targetId, 4);
+
+                        msgProcessor.sendMessage(&msgTo, &server);
+                     }
                   }
                }
             }
