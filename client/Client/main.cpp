@@ -376,14 +376,14 @@ int main(int argc, char **argv)
                   } catch (const out_of_range& ex) {}
 
                   if (p != NULL) {
-                     int flagType = WorldMap::OBJECT_NONE;
+                     int flagType = OBJECT_NONE;
 
                      if (p->hasBlueFlag)
-                        flagType = WorldMap::OBJECT_BLUE_FLAG;
+                        flagType = OBJECT_BLUE_FLAG;
                      else if (p->hasRedFlag)
-                        flagType = WorldMap::OBJECT_RED_FLAG;
+                        flagType = OBJECT_RED_FLAG;
 
-                     if (flagType != WorldMap::OBJECT_NONE) {
+                     if (flagType != OBJECT_NONE) {
                         msgTo.type = MSG_TYPE_DROP_FLAG;
                         memcpy(msgTo.buffer, &curPlayerId, 4);
                         msgProcessor.sendMessage(&msgTo, &server);
@@ -1028,7 +1028,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             {
                cout << "Received object message in STATE_GAME" << endl;
 
-               WorldMap::Object o(0, WorldMap::OBJECT_NONE, 0, 0);
+               WorldMap::Object o(0, OBJECT_NONE, 0, 0);
                o.deserialize(msg.buffer);
                cout << "object id: " << o.id << endl;
                game->getMap()->updateObject(o.id, o.type, o.pos.x, o.pos.y);

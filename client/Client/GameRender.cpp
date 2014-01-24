@@ -15,20 +15,20 @@ void GameRender::drawMap(WorldMap* gameMap)
    {
       for (int y=0; y<gameMap->height; y++)
       {
-         WorldMap::TerrainType el = gameMap->getElement(x, y);
-         WorldMap::StructureType structure = gameMap->getStructure(x, y);
+         TerrainType el = gameMap->getElement(x, y);
+         StructureType structure = gameMap->getStructure(x, y);
 
-         if (el == WorldMap::TERRAIN_GRASS)
+         if (el == TERRAIN_GRASS)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 255, 0));
-         else if (el == WorldMap::TERRAIN_OCEAN)
+         else if (el == TERRAIN_OCEAN)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(0, 0, 255));
-         else if (el == WorldMap::TERRAIN_ROCK)
+         else if (el == TERRAIN_ROCK)
             al_draw_filled_rectangle(x*25+mapPos.x, y*25+mapPos.y, x*25+25+mapPos.x, y*25+25+mapPos.y, al_map_rgb(100, 100, 0));
 
-         if (structure == WorldMap::STRUCTURE_BLUE_FLAG) {
+         if (structure == STRUCTURE_BLUE_FLAG) {
             al_draw_circle(x*25+12+mapPos.x, y*25+12+mapPos.y, 12, al_map_rgb(0, 0, 0), 3);
             //al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(0, 0, 255));
-         }else if (structure == WorldMap::STRUCTURE_RED_FLAG) {
+         }else if (structure == STRUCTURE_RED_FLAG) {
             al_draw_circle(x*25+12+mapPos.x, y*25+12+mapPos.y, 12, al_map_rgb(0, 0, 0), 3);
             //al_draw_filled_rectangle(x*25+5+mapPos.x, y*25+5+mapPos.y, x*25+20+mapPos.x, y*25+20+mapPos.y, al_map_rgb(255, 0, 0));
          }
@@ -44,10 +44,10 @@ void GameRender::drawMap(WorldMap* gameMap)
          vector<WorldMap::Object>::iterator it;
          for(it = vctObjects.begin(); it != vctObjects.end(); it++) {
             switch(it->type) {
-               case WorldMap::OBJECT_BLUE_FLAG:
+               case OBJECT_BLUE_FLAG:
                   al_draw_filled_rectangle(it->pos.x-8+mapPos.x, it->pos.y-8+mapPos.y, it->pos.x+8+mapPos.x, it->pos.y+8+mapPos.y, al_map_rgb(0, 0, 255));
                   break;
-               case WorldMap::OBJECT_RED_FLAG:
+               case OBJECT_RED_FLAG:
                   al_draw_filled_rectangle(it->pos.x-8+mapPos.x, it->pos.y-8+mapPos.y, it->pos.x+8+mapPos.x, it->pos.y+8+mapPos.y, al_map_rgb(255, 0, 0));
                   break;
             }
