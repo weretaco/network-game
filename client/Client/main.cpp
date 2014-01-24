@@ -761,6 +761,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                mapPlayers[id]->target.x = x;
                mapPlayers[id]->target.y = y;
 
+               mapPlayers[id]->isChasing = false;
+               mapPlayers[id]->setTargetPlayer(0);
+
                break;
             }
             case MSG_TYPE_CHAT:
@@ -1021,6 +1024,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                mapPlayers[id]->target.x = x;
                mapPlayers[id]->target.y = y;
+
+               mapPlayers[id]->isChasing = false;
+               mapPlayers[id]->setTargetPlayer(0);
 
                break;
             }
