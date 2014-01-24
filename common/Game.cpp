@@ -126,6 +126,7 @@ bool Game::startPlayerMovement(unsigned int id, int x, int y) {
 
       p->isChasing = false;
       p->isAttacking = false;
+      p->setTargetPlayer(0);
 
       return true;
    }
