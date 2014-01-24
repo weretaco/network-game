@@ -48,20 +48,20 @@ void WorldMap::createObjectsFromStructures() {
    for (int y=0; y<this->height; y++) {
       for (int x=0; x<this->width; x++) {
          switch (this->getStructure(x, y)) {
-            case WorldMap::STRUCTURE_BLUE_FLAG:
-               this->addObject(WorldMap::OBJECT_BLUE_FLAG, x*25+12, y*25+12);
+            case STRUCTURE_BLUE_FLAG:
+               this->addObject(OBJECT_BLUE_FLAG, x*25+12, y*25+12);
                break;
-            case WorldMap::STRUCTURE_RED_FLAG:
-               this->addObject(WorldMap::OBJECT_RED_FLAG, x*25+12, y*25+12);
+            case STRUCTURE_RED_FLAG:
+               this->addObject(OBJECT_RED_FLAG, x*25+12, y*25+12);
                break;
-            case WorldMap::STRUCTURE_NONE:
+            case STRUCTURE_NONE:
                break;
          }
       }
    }
 }
 
-WorldMap::TerrainType WorldMap::getElement(int x, int y)
+TerrainType WorldMap::getElement(int x, int y)
 {
    return (*(*vctMap)[x])[y];
 }
@@ -71,7 +71,7 @@ void WorldMap::setElement(int x, int y, TerrainType t)
    (*(*vctMap)[x])[y] = t;
 }
 
-WorldMap::StructureType WorldMap::getStructure(int x, int y)
+StructureType WorldMap::getStructure(int x, int y)
 {
    return (*(*vctStructures)[x])[y];
 }
@@ -117,7 +117,7 @@ vector<WorldMap::Object> WorldMap::getObjects(int x, int y) {
 }
 
 // used by the server to create new objects
-void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
+void WorldMap::addObject(ObjectType t, int x, int y) {
    unsigned int id;
    vector<WorldMap::Object>::iterator it;
 
@@ -136,19 +136,19 @@ void WorldMap::addObject(WorldMap::ObjectType t, int x, int y) {
 }
 
 // used by the client to update object positions or create objects it has not seen before
-void WorldMap::updateObject(unsigned int id, WorldMap::ObjectType t, int x, int y) {
+void WorldMap::updateObject(unsigned int id, ObjectType t, int x, int y) {
    vector<WorldMap::Object>::iterator it;
    bool foundObject = false;
 
    cout << "Searching for object to update" << endl;
    switch (t) {
-   case WorldMap::OBJECT_BLUE_FLAG:
+   case OBJECT_BLUE_FLAG:
       cout << "BLUE_FLAG" << endl;
       break;
-   case WorldMap::OBJECT_RED_FLAG:
+   case OBJECT_RED_FLAG:
       cout << "RED_FLAG" << endl;
       break;
-   case WorldMap::OBJECT_NONE:
+   case OBJECT_NONE:
       cout << "OBJECY_NONE" << endl;
       break;
    }
@@ -158,13 +158,13 @@ void WorldMap::updateObject(unsigned int id, WorldMap::ObjectType t, int x, int 
          foundObject = true;
          cout << "Found object with id " << id << endl;
          switch (it->type) {
-         case WorldMap::OBJECT_BLUE_FLAG:
+         case OBJECT_BLUE_FLAG:
             cout << "BLUE_FLAG" << endl;
             break;
-         case WorldMap::OBJECT_RED_FLAG:
+         case OBJECT_RED_FLAG:
             cout << "RED_FLAG" << endl;
             break;
-         case WorldMap::OBJECT_NONE:
+         case OBJECT_NONE:
             cout << "OBJECY_NONE" << endl;
             break;
          }

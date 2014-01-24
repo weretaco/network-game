@@ -45,7 +45,7 @@ public:
    void setBlueScore(unsigned int score);
    void setRedScore(unsigned int score);
 
-   void addObjectToMap(WorldMap::ObjectType objectType, int x, int y);
+   void addObjectToMap(ObjectType objectType, int x, int y);
 
    map<unsigned int, Player*>& getPlayers();
    bool addPlayer(Player* p);

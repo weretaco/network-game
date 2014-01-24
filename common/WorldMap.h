@@ -8,27 +8,27 @@
 
 using namespace std;
 
+enum TerrainType {
+   TERRAIN_NONE,
+   TERRAIN_GRASS,
+   TERRAIN_OCEAN,
+   TERRAIN_ROCK
+};
+
+enum StructureType {
+   STRUCTURE_NONE,
+   STRUCTURE_BLUE_FLAG,
+   STRUCTURE_RED_FLAG
+};
+
+enum ObjectType {
+   OBJECT_NONE,
+   OBJECT_BLUE_FLAG,
+   OBJECT_RED_FLAG
+};
+
 class WorldMap {
 public:
-   enum TerrainType {
-      TERRAIN_NONE,
-      TERRAIN_GRASS,
-      TERRAIN_OCEAN,
-      TERRAIN_ROCK
-   };
-
-   enum StructureType {
-      STRUCTURE_NONE,
-      STRUCTURE_BLUE_FLAG,
-      STRUCTURE_RED_FLAG
-   };
-
-   enum ObjectType {
-      OBJECT_NONE,
-      OBJECT_BLUE_FLAG,
-      OBJECT_RED_FLAG
-   };
-
    class Object {
    public:
       unsigned int id;
@@ -66,7 +66,7 @@ public:
    vector<Object> getObjects(int x, int y);
 
    void addObject(ObjectType type, int x, int y);
-   void updateObject(unsigned int id, WorldMap::ObjectType t, int x, int y);
+   void updateObject(unsigned int id, ObjectType t, int x, int y);
    bool removeObject(unsigned int id);
 
    static WorldMap* createDefaultMap();

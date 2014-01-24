@@ -101,7 +101,7 @@ void Game::setBlueScore(unsigned int score) {
    this->blueScore = score;
 }
 
-void Game::addObjectToMap(WorldMap::ObjectType objectType, int x, int y) {
+void Game::addObjectToMap(ObjectType objectType, int x, int y) {
    NETWORK_MSG serverMsg;
 
    this->getMap()->addObject(objectType, x, y);
@@ -119,7 +119,7 @@ bool Game::startPlayerMovement(unsigned int id, int x, int y) {
    // we need to make sure the player can move here
    if (0 <= x && x < this->worldMap->width*25 &&
        0 <= y && y < this->worldMap->height*25 &&
-       this->worldMap->getElement(x/25, y/25) == WorldMap::TERRAIN_GRASS)
+       this->worldMap->getElement(x/25, y/25) == TERRAIN_GRASS)
    {
       p->target.x = x;
       p->target.y = y;
@@ -139,9 +139,9 @@ bool Game::processPlayerMovement(Player* p, FLOAT_POSITION oldPos) {
    // check if the move needs to be canceled
    switch(this->worldMap->getElement(p->pos.x/25, p->pos.y/25))
    {
-      case WorldMap::TERRAIN_NONE:
-      case WorldMap::TERRAIN_OCEAN:
-      case WorldMap::TERRAIN_ROCK:
+      case TERRAIN_NONE:
+      case TERRAIN_OCEAN:
+      case TERRAIN_ROCK:
       {
          p->pos = oldPos;
          p->target.x = p->pos.x;
@@ -166,19 +166,19 @@ int Game::processFlagPickupRequest(Player* p) {
    for (it = vctObjects->begin(); it != vctObjects->end(); it++) {
       if (posDistance(p->pos, it->pos.toFloat()) < 10) {
          switch (it->type) {
-            case WorldMap::OBJECT_BLUE_FLAG:
+            case OBJECT_BLUE_FLAG:
                if (p->team == 1) {
                   p->hasBlueFlag = true;
                   itemId = it->id;
                }
                break;
-            case WorldMap::OBJECT_RED_FLAG:
+            case OBJECT_RED_FLAG:
                if (p->team == 0) {
                   p->hasRedFlag = true;
                   itemId = it->id;
                }
                break;
-            case WorldMap::OBJECT_NONE:
+            case OBJECT_NONE:
                break;
          }
 
@@ -197,13 +197,13 @@ void Game::dealDamageToPlayer(Player* p, int damage) {
 
    if (p->isDead)
    {
-      WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+      ObjectType flagType = OBJECT_NONE;
       if (p->hasBlueFlag)
-         flagType = WorldMap::OBJECT_BLUE_FLAG;
+         flagType = OBJECT_BLUE_FLAG;
       else if (p->hasRedFlag)
-         flagType = WorldMap::OBJECT_RED_FLAG;
+         flagType = OBJECT_RED_FLAG;
 
-      if (flagType != WorldMap::OBJECT_NONE)
+      if (flagType != OBJECT_NONE)
          this->addObjectToMap(flagType, p->pos.x, p->pos.y);
    }
 
@@ -251,7 +251,7 @@ bool Game::handlePlayerEvents(Player* p) {
          broadcastMove = true;
       cout << "player move processed" << endl;
 
-      WorldMap::ObjectType flagType;
+      ObjectType flagType;
       POSITION pos;
       bool flagTurnedIn = false;
       bool flagReturned = false;
@@ -259,19 +259,19 @@ bool Game::handlePlayerEvents(Player* p) {
 
       switch(this->worldMap->getStructure(p->pos.x/25, p->pos.y/25))
       {
-         case WorldMap::STRUCTURE_BLUE_FLAG:
+         case STRUCTURE_BLUE_FLAG:
          {
             if (p->team == 0 && p->hasRedFlag)
             {
                // check that your flag is at your base
-               pos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+               pos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
                            
                vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
                vector<WorldMap::Object>::iterator itObjects;
 
                for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
                {
-                  if (itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
+                  if (itObjects->type == OBJECT_BLUE_FLAG)
                   {
                      if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
                      {
@@ -284,8 +284,8 @@ bool Game::handlePlayerEvents(Player* p) {
                if (ownFlagAtBase)
                {
                   p->hasRedFlag = false;
-                  flagType = WorldMap::OBJECT_RED_FLAG;
-                  pos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                  flagType = OBJECT_RED_FLAG;
+                  pos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
                   flagTurnedIn = true;
                   this->blueScore++;
                }
@@ -293,19 +293,19 @@ bool Game::handlePlayerEvents(Player* p) {
 
             break;
          }
-         case WorldMap::STRUCTURE_RED_FLAG:
+         case STRUCTURE_RED_FLAG:
          {
             if (p->team == 1 && p->hasBlueFlag)
             {
                // check that your flag is at your base
-               pos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+               pos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
                         
                vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
                vector<WorldMap::Object>::iterator itObjects;
 
                for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
                {
-                  if (itObjects->type == WorldMap::OBJECT_RED_FLAG)
+                  if (itObjects->type == OBJECT_RED_FLAG)
                   {
                      if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
                      {
@@ -318,8 +318,8 @@ bool Game::handlePlayerEvents(Player* p) {
                if (ownFlagAtBase)
                {
                   p->hasBlueFlag = false;
-                  flagType = WorldMap::OBJECT_BLUE_FLAG;
-                  pos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                  flagType = OBJECT_BLUE_FLAG;
+                  pos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
                   flagTurnedIn = true;
                   this->redScore++;
                }
@@ -384,16 +384,16 @@ bool Game::handlePlayerEvents(Player* p) {
          if (posDistance(p->pos, pos.toFloat()) < 10)
          {
             if (p->team == 0 && 
-                itObjects->type == WorldMap::OBJECT_BLUE_FLAG)
+                itObjects->type == OBJECT_BLUE_FLAG)
             {
-               structPos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+               structPos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
                flagReturned = true;
                break;
             }
             else if (p->team == 1 &&
-                     itObjects->type == WorldMap::OBJECT_RED_FLAG)
+                     itObjects->type == OBJECT_RED_FLAG)
             {
-               structPos = this->worldMap->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+               structPos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
                flagReturned = true;
                break;
             }

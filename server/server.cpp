@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
                   switch (p->team)
                   {
                   case 0:// blue team
-                     spawnPos = p->currentGame->getMap()->getStructureLocation(WorldMap::STRUCTURE_BLUE_FLAG);
+                     spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                      break;
                   case 1:// red team
-                     spawnPos = p->currentGame->getMap()->getStructureLocation(WorldMap::STRUCTURE_RED_FLAG);
+                     spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                      break;
                   default:
                      // should never go here
@@ -528,11 +528,11 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          Player* p = mapPlayers[id];
 
-         WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+         ObjectType flagType = OBJECT_NONE;
          if (p->hasBlueFlag)
-            flagType = WorldMap::OBJECT_BLUE_FLAG;
+            flagType = OBJECT_BLUE_FLAG;
          else if (p->hasRedFlag)
-            flagType = WorldMap::OBJECT_RED_FLAG;
+            flagType = OBJECT_RED_FLAG;
 
          map<unsigned int, Player*> players = p->currentGame->getPlayers();
 
@@ -643,13 +643,13 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             cout << "Game name: " << g->getName() << endl;
 
             if (!p->isDead) {
-               WorldMap::ObjectType flagType = WorldMap::OBJECT_NONE;
+               ObjectType flagType = OBJECT_NONE;
                if (p->hasBlueFlag)
-                  flagType = WorldMap::OBJECT_BLUE_FLAG;
+                  flagType = OBJECT_BLUE_FLAG;
                else if (p->hasRedFlag)
-                  flagType = WorldMap::OBJECT_RED_FLAG;
+                  flagType = OBJECT_RED_FLAG;
 
-               if (flagType != WorldMap::OBJECT_NONE)
+               if (flagType != OBJECT_NONE)
                   g->addObjectToMap(flagType, p->pos.x, p->pos.y);
             }
 
