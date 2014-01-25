@@ -43,7 +43,7 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId);
+void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId, ofstream& outputLog);
 
 void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers);
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 
       if (msgProcessor.receiveMessage(&clientMsg, &from) >= 0)
       {
-         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, unusedPlayerId);
+         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, unusedPlayerId, outputLog);
 
          cout << "Finished processing the message" << endl;
       }
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId)
+void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId, ofstream& outputLog)
 {
    NETWORK_MSG serverMsg;
    DataAccess da;
@@ -758,11 +758,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
       }
       default:
       {
-         // probably want to log the error rather than sending a chat message,
-         // especially since chat isn't currently visible on all screens
-
-         serverMsg.type = MSG_TYPE_CHAT;
-         strcpy(serverMsg.buffer, "Server error occured. Report this please.");
+         outputLog << "Received unknown message of type " << clientMsg.type << endl;
 
          break;
       }
