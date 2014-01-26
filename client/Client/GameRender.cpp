@@ -1,5 +1,7 @@
 #include "GameRender.h"
 
+#include <cmath>
+
 #include <allegro5/allegro_primitives.h>
 
 #include "../../common/Common.h"
@@ -49,6 +51,8 @@ void GameRender::drawMap(WorldMap* gameMap)
                   break;
                case OBJECT_RED_FLAG:
                   al_draw_filled_rectangle(it->pos.x-8+mapPos.x, it->pos.y-8+mapPos.y, it->pos.x+8+mapPos.x, it->pos.y+8+mapPos.y, al_map_rgb(255, 0, 0));
+                  break;
+               case OBJECT_NONE:
                   break;
             }
          }
