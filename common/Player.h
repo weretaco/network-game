@@ -74,7 +74,7 @@ public:
    bool isAttacking;
    bool isDead;
 
-   int playerClass;
+   PlayerClass playerClass;
    int maxHealth;
    int health;
    int attackType;

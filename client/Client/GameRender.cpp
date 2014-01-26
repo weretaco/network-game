@@ -113,9 +113,6 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
       case Player::CLASS_NONE:
          strClass = "";
          break;
-      default:
-         strClass = "";
-         break;
       }
       al_draw_text(font, al_map_rgb(0, 0, 0), pos.x, pos.y-fontHeight/2, ALLEGRO_ALIGN_CENTRE, strClass.c_str());
 

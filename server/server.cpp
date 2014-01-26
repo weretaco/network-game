@@ -288,7 +288,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             case Player::CLASS_RANGER:
                validClass = true;
                break;
-            default:
+            case Player::CLASS_NONE:
                validClass = false;
                break;
          }
