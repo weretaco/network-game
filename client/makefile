@@ -1,11 +1,14 @@
 CC = g++
 LIB_FLAGS = `pkg-config --cflags --libs --static allegro-static-5.0 allegro_ttf-static-5.0 allegro_primitives-static-5.0`
-FLAGS = $(LIB_FLAGS)
+FLAGS = -Wall
 COMMON_PATH = ../common
 DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o Projectile.o Game.o GameRender.o GameSummary.o chat.o GuiComponent.o Window.o Textbox.o Button.o RadioButtonList.o TextLabel.o
 
 gameClient : Client/main.cpp $(DEPENDENCIES)
-	$(CC) -o $@ $+ $(FLAGS)
+	$(CC) -o $@ $+ $(FLAGS) $(LIB_FLAGS)
+
+%.o : Client/%.cpp
+	$(CC) -c -o $@ $? $(FLAGS)
 
 Common.o : $(COMMON_PATH)/Common.cpp
 	$(CC) -c -o $@ $? $(FLAGS)
@@ -29,9 +32,6 @@ Game.o : $(COMMON_PATH)/Game.cpp
 	$(CC) -c -o $@ $? $(FLAGS)
 
 GameSummary.o : $(COMMON_PATH)/GameSummary.cpp
-	$(CC) -c -o $@ $? $(FLAGS)
-
-%.o : Client/%.cpp
 	$(CC) -c -o $@ $? $(FLAGS)
 
 clean:

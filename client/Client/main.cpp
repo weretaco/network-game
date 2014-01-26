@@ -14,7 +14,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cmath>
+//#include <cmath>
 #include <sys/types.h>
 #include <string>
 #include <iostream>
@@ -132,7 +132,6 @@ int main(int argc, char **argv)
    ALLEGRO_DISPLAY *display = NULL;
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
-   bool key[4] = { false, false, false, false };
    map<unsigned int, Player*> mapPlayers;
    unsigned int curPlayerId = -1;
    ofstream outputLog;
@@ -696,7 +695,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             {
                cout << "Got a logout message" << endl;
 
-               int playerId;
+               unsigned int playerId;
 
                // Check if it's about you or another player
                memcpy(&playerId, msg.buffer, 4);

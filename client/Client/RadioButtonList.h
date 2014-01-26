@@ -14,7 +14,7 @@ class RadioButtonList :
 private:
    string strLabel;
    vector<string> vctRadioButtons;
-   int selectedButton;
+   unsigned int selectedButton;
 
 public:
    RadioButtonList(int x, int y, string strLabel, ALLEGRO_FONT *font);

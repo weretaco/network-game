@@ -22,7 +22,7 @@ void RadioButtonList::draw(ALLEGRO_DISPLAY *display)
    al_set_target_bitmap(bitmap);
    al_clear_to_color(al_map_rgb(0, 0, 0));
 
-   int fontHeight = al_get_font_line_height(font);
+   //int fontHeight = al_get_font_line_height(font);
 
    al_draw_text(font, al_map_rgb(0, 255, 0), 0, 0, ALLEGRO_ALIGN_LEFT, this->strLabel.c_str());
    for(unsigned int i=0; i<this->vctRadioButtons.size(); i++) {
@@ -43,7 +43,7 @@ bool RadioButtonList::handleEvent(ALLEGRO_EVENT& e)
 
    if (e.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
       if (e.mouse.button == 1) {
-         for (int i=0; i<this->vctRadioButtons.size(); i++) {
+         for (unsigned int i=0; i<this->vctRadioButtons.size(); i++) {
             centerY = y+26+i*20;
 
             if (sqrt(pow((float)(e.mouse.x-centerX), 2.0f)+pow((float)(e.mouse.y-centerY), 2.0f))< 8) {
