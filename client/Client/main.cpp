@@ -56,8 +56,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -135,7 +134,6 @@ int main(int argc, char **argv)
    ALLEGRO_TIMER *timer = NULL;
    bool key[4] = { false, false, false, false };
    map<unsigned int, Player*> mapPlayers;
-   map<unsigned int, Projectile> mapProjectiles;
    unsigned int curPlayerId = -1;
    ofstream outputLog;
 
@@ -370,12 +368,8 @@ int main(int argc, char **argv)
                break;
             case ALLEGRO_KEY_D:  // drop the current item
                if (state == STATE_GAME) {
-                  Player* p = NULL;
                   try {
-                     p = mapPlayers.at(curPlayerId);
-                  } catch (const out_of_range& ex) {}
-
-                  if (p != NULL) {
+                     Player* p = mapPlayers.at(curPlayerId);
                      int flagType = OBJECT_NONE;
 
                      if (p->hasBlueFlag)
@@ -388,7 +382,7 @@ int main(int argc, char **argv)
                         memcpy(msgTo.buffer, &curPlayerId, 4);
                         msgProcessor.sendMessage(&msgTo, &server);
                      }
-                  }
+                  } catch (const out_of_range& ex) {}
                }
                break;
          }
@@ -427,8 +421,6 @@ int main(int argc, char **argv)
 
                for(it = playersInGame.begin(); it != playersInGame.end(); it++)
                {
-                  // need to check if the right-click was actually on this player
-                  // right now, this code will target all players other than the current one
                   target = it->second;
                   cout << "set target" << endl;
                   if (target->team != curPlayer->team)
@@ -458,7 +450,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, mapPlayers, mapProjectiles, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
 
       if (redraw)
       {
@@ -630,8 +622,7 @@ void shutdownWinSock()
 #endif
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers,
-                    map<unsigned int, Projectile>& mapProjectiles, unsigned int& curPlayerId)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId)
 {
    // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
@@ -789,40 +780,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
-            case MSG_TYPE_PROJECTILE:
-            {
-               cout << "Received a PROJECTILE message" << endl;
-
-               unsigned int id, x, y, targetId;
-
-               memcpy(&id, msg.buffer, 4);
-               memcpy(&x, msg.buffer+4, 4);
-               memcpy(&y, msg.buffer+8, 4);
-               memcpy(&targetId, msg.buffer+12, 4);
-
-               cout << "id: " << id << endl;
-               cout << "x: " << x << endl;
-               cout << "y: " << y << endl;
-               cout << "Target: " << targetId << endl;
-
-               Projectile proj(x, y, targetId, 0);
-               proj.setId(id);
-
-               mapProjectiles[id] = proj;
-
-               break;
-            }
-            case MSG_TYPE_REMOVE_PROJECTILE:
-            {
-                cout << "Received a REMOVE_PROJECTILE message" << endl;
-
-               int id;
-               memcpy(&id, msg.buffer, 4);
-               
-               mapProjectiles.erase(id);
-
-               break;
-            }
             case MSG_TYPE_GAME_INFO:
             {
                cout << "Received a GAME_INFO message" << endl;
@@ -970,6 +927,23 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                   *(mapPlayers[p.getId()]) = p;
                else
                   mapPlayers[p.getId()] = new Player(p);
+
+               break;
+            }
+             case MSG_TYPE_LOGOUT:
+            {
+               cout << "Got a logout message" << endl;
+
+               int playerId;
+
+               // Check if it's about you or another player
+               memcpy(&playerId, msg.buffer, 4);
+               response = string(msg.buffer+4);
+
+               if (playerId == curPlayerId)
+                  cout << "Received MSG_TYPE_LOGOUT for self in STATE_GAME. This shouldn't happen." << endl;
+               else
+                  delete mapPlayers[playerId];
 
                break;
             }
