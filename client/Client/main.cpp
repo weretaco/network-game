@@ -56,6 +56,7 @@ using namespace std;
 
 void initWinSock();
 void shutdownWinSock();
+void createGui(ALLEGRO_FONT* font);
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId);
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
@@ -161,10 +162,11 @@ int main(int argc, char **argv)
    al_init_font_addon();
    al_init_ttf_addon();
 
+   ALLEGRO_FONT* font;
    #if defined WINDOWS
-      ALLEGRO_FONT *font = al_load_ttf_font("../pirulen.ttf", 12, 0);
+      font = al_load_ttf_font("../pirulen.ttf", 12, 0);
    #elif defined LINUX
-      ALLEGRO_FONT *font = al_load_ttf_font("pirulen.ttf", 12, 0);
+      font = al_load_ttf_font("pirulen.ttf", 12, 0);
    #endif
 
    if (!font) {
@@ -205,90 +207,7 @@ int main(int argc, char **argv)
    debugConsole.addLine("Debug console:");
    debugConsole.addLine("");
 
-   wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 40, 100, 20, font)));
-   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 70, 100, 20, font)));
-   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
-   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
-   vctComponents.push_back(wndLogin->addComponent(new TextLabel((SCREEN_W-600)/2, 100, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen)));
-   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login)));
-   vctComponents.push_back(wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
-   vctComponents.push_back(wndLogin->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
-
-   txtUsername = (Textbox*)wndLogin->getComponent(0);
-   txtPassword = (Textbox*)wndLogin->getComponent(1);
-   lblLoginStatus = (TextLabel*)wndLogin->getComponent(4);
-
-   cout << "Created login screen" << endl;
-
-   wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 40, 100, 20, font)));
-   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 70, 100, 20, font)));
-   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
-   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
-   vctComponents.push_back(wndRegister->addComponent(new RadioButtonList(432, 100, "Pick a class", font)));
-   vctComponents.push_back(wndRegister->addComponent(new TextLabel((SCREEN_W-600)/2, 190, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen)));
-   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount)));
-   vctComponents.push_back(wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
-   vctComponents.push_back(wndRegister->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
-
-   txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
-   txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
-
-   rblClasses = (RadioButtonList*)wndRegister->getComponent(4);
-   rblClasses->addRadioButton("Warrior");
-   rblClasses->addRadioButton("Ranger");
-
-   lblRegisterStatus = (TextLabel*)wndRegister->getComponent(5);
-
-   cout << "Created register screen" << endl;
-
-   txtJoinGame = new Textbox(SCREEN_W*1/2+15+4, 40, 100, 20, font);
-   txtCreateGame = new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font);
-
-   vctComponents.push_back(txtJoinGame);
-   vctComponents.push_back(txtCreateGame);
-
-   wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
-   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
-   wndLobby->addComponent(txtJoinGame);
-   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
-   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
-   wndLobby->addComponent(txtCreateGame);
-   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
-   vctComponents.push_back(wndLobby->addComponent(new Textbox(95, 40, 300, 20, font)));
-   vctComponents.push_back(wndLobby->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage)));
-   vctComponents.push_back(wndLobby->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
-
-
-   txtChat = (Textbox*)wndLobby->getComponent(7);
-
-   cout << "Created lobby screen" << endl;
-
-   wndLobbyDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
-   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
-   wndLobbyDebug->addComponent(txtJoinGame);
-   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
-   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
-   wndLobbyDebug->addComponent(txtCreateGame);
-   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
-   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
-
-   cout << "Created debug lobby screen" << endl;
-
-   wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame)));
-
-   cout << "Created new game screen" << endl;
-
-   wndGameSummary = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndGameSummary->addComponent(new Button(840, 730, 160, 20, font, "Back to Lobby", closeGameSummary)));
-
-   cout << "Created game summary screen" << endl;
+   createGui(font);
 
    goToLoginScreen();
  
@@ -619,6 +538,106 @@ void shutdownWinSock()
 #if defined WINDOWS
    WSACleanup();
 #endif
+}
+
+void createGui(ALLEGRO_FONT* font) {
+   // wndLogin
+
+   wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 40, 100, 20, font)));
+   vctComponents.push_back(wndLogin->addComponent(new Textbox(516, 70, 100, 20, font)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndLogin->addComponent(new TextLabel((SCREEN_W-600)/2, 100, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2-100, 130, 90, 20, font, "Register", goToRegisterScreen)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(SCREEN_W/2+10, 130, 90, 20, font, "Login", login)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
+   vctComponents.push_back(wndLogin->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
+
+   txtUsername = (Textbox*)wndLogin->getComponent(0);
+   txtPassword = (Textbox*)wndLogin->getComponent(1);
+   lblLoginStatus = (TextLabel*)wndLogin->getComponent(4);
+
+   cout << "Created login screen" << endl;
+
+
+   // wndRegister
+
+   wndRegister = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 40, 100, 20, font)));
+   vctComponents.push_back(wndRegister->addComponent(new Textbox(516, 70, 100, 20, font)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 40, 100, 20, font, "Username:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel(410, 70, 100, 20, font, "Password:", ALLEGRO_ALIGN_RIGHT)));
+   vctComponents.push_back(wndRegister->addComponent(new RadioButtonList(432, 100, "Pick a class", font)));
+   vctComponents.push_back(wndRegister->addComponent(new TextLabel((SCREEN_W-600)/2, 190, 600, 20, font, "", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2-100, 220, 90, 20, font, "Back", goToLoginScreen)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(SCREEN_W/2+10, 220, 90, 20, font, "Submit", registerAccount)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(920, 10, 80, 20, font, "Quit", quit)));
+   vctComponents.push_back(wndRegister->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
+
+   txtUsernameRegister = (Textbox*)wndRegister->getComponent(0);
+   txtPasswordRegister = (Textbox*)wndRegister->getComponent(1);
+
+   rblClasses = (RadioButtonList*)wndRegister->getComponent(4);
+   rblClasses->addRadioButton("Warrior");
+   rblClasses->addRadioButton("Ranger");
+
+   lblRegisterStatus = (TextLabel*)wndRegister->getComponent(5);
+
+   cout << "Created register screen" << endl;
+
+
+   // wndLobby
+
+   txtJoinGame = new Textbox(SCREEN_W*1/2+15+4, 40, 100, 20, font);
+   vctComponents.push_back(txtJoinGame);
+
+   txtCreateGame = new Textbox(SCREEN_W*3/4+4, 40, 100, 20, font);
+   vctComponents.push_back(txtCreateGame);
+
+   wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobby->addComponent(txtJoinGame);
+   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
+   vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobby->addComponent(txtCreateGame);
+   vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
+   vctComponents.push_back(wndLobby->addComponent(new Textbox(95, 40, 300, 20, font)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(95, 70, 60, 20, font, "Send", sendChatMessage)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
+
+   txtChat = (Textbox*)wndLobby->getComponent(7);
+
+   cout << "Created lobby screen" << endl;
+
+
+   // wndLobbyDebug
+
+   wndLobbyDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobbyDebug->addComponent(txtJoinGame);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*3/4-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
+   wndLobbyDebug->addComponent(txtCreateGame);
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*3/4-100, 80, 200, 20, font, "Create New Game", createGame)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
+
+   cout << "Created debug lobby screen" << endl;
+
+
+   // wndGame
+
+   wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndGame->addComponent(new Button(880, 10, 120, 20, font, "Leave Game", leaveGame)));
+
+   cout << "Created new game screen" << endl;
+
+   wndGameSummary = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndGameSummary->addComponent(new Button(840, 730, 160, 20, font, "Back to Lobby", closeGameSummary)));
+
+   cout << "Created game summary screen" << endl;
 }
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId)
