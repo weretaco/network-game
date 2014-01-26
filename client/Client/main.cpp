@@ -385,14 +385,28 @@ int main(int argc, char **argv)
             if (!debugging)
                chatConsole.draw(font, al_map_rgb(255,255,255));
 
+            al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/2-100, 120, ALLEGRO_ALIGN_LEFT, "Current Games");
+
             map<string, int>::iterator it;
             int i=0;
-            ostringstream ossGame;
+            ostringstream oss;
             for (it = mapGames.begin(); it != mapGames.end(); it++) {
-               ossGame << it->first << " (" << it->second << " players)" << endl;
-               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/2-100, 120+i*15, ALLEGRO_ALIGN_LEFT, ossGame.str().c_str());
-               ossGame.clear();
-               ossGame.str("");
+               oss << it->first << " (" << it->second << " players)" << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*1/2-100, 135+i*15, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+               i++;
+            }
+
+            al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*3/4-100, 120, ALLEGRO_ALIGN_LEFT, "Online Players");
+
+            map<unsigned int, Player*>::iterator itPlayers;
+            i=0;
+            for (itPlayers = mapPlayers.begin(); itPlayers != mapPlayers.end(); itPlayers++) {
+               oss << itPlayers->second->name << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*3/4-100, 135+i*15, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+               oss.clear();
+               oss.str("");
                i++;
             }
          }
