@@ -656,6 +656,8 @@ void createGui(ALLEGRO_FONT* font) {
 
 void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId)
 {
+   cout << "Total players in map: " << mapPlayers.size() << endl;
+
    // this is outdated since most messages now don't contain just a text string
    string response = string(msg.buffer);
 
@@ -736,6 +738,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                if (playerId == curPlayerId)
                {
+                  cout << "Got logout message for self" << endl;
+
                   if (response.compare("You have successfully logged out.") == 0)
                   {
                      cout << "Logged out" << endl;
@@ -748,6 +752,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                {
                   delete mapPlayers[playerId];
+                  mapPlayers.erase(playerId);
                }
 
                break;
@@ -962,7 +967,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
-             case MSG_TYPE_LOGOUT:
+            case MSG_TYPE_LOGOUT:
             {
                cout << "Got a logout message" << endl;
 
@@ -974,8 +979,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                if (playerId == curPlayerId)
                   cout << "Received MSG_TYPE_LOGOUT for self in STATE_GAME. This shouldn't happen." << endl;
-               else
+               else {
                   delete mapPlayers[playerId];
+                  mapPlayers.erase(playerId);
+               }
 
                break;
             }
