@@ -57,7 +57,11 @@ using namespace std;
 void initWinSock();
 void shutdownWinSock();
 void createGui(ALLEGRO_FONT* font);
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId);
+
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId);
+void handleMsgPlayer(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames);
+void handleMsgGameInfo(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames);
+
 int getRefreshRate(int width, int height);
 void drawMessageStatus(ALLEGRO_FONT* font);
 
@@ -122,7 +126,6 @@ NETWORK_MSG msgTo, msgFrom;
 string username;
 chat chatConsole, debugConsole;
 bool debugging;
-map<string, int> mapGames;
 Game* game;
 GameSummary* gameSummary;
 
@@ -134,6 +137,7 @@ int main(int argc, char **argv)
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
    ALLEGRO_TIMER *timer = NULL;
    map<unsigned int, Player*> mapPlayers;
+   map<string, int> mapGames;
    unsigned int curPlayerId = -1;
    ofstream outputLog;
 
@@ -368,7 +372,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, mapPlayers, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, mapPlayers, mapGames, curPlayerId);
 
       if (redraw)
       {
@@ -654,7 +658,7 @@ void createGui(ALLEGRO_FONT* font) {
    cout << "Created game summary screen" << endl;
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, unsigned int& curPlayerId)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId)
 {
    cout << "Total players in map: " << mapPlayers.size() << endl;
 
@@ -757,81 +761,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
-            case MSG_TYPE_PLAYER:
-            {
-               cout << "Received MSG_TYPE_PLAYER" << endl;
-
-               Player p("", "");
-               p.deserialize(msg.buffer);
-               p.timeLastUpdated = getCurrentMillis();
-               p.isChasing = false;
-               if (p.health <= 0)
-                  p.isDead = true;
-               else
-                  p.isDead = false;
-
-               if (mapPlayers.find(p.getId()) != mapPlayers.end())
-                  *(mapPlayers[p.getId()]) = p;
-               else
-                  mapPlayers[p.getId()] = new Player(p);
-
-               break;
-            }
-            case MSG_TYPE_PLAYER_MOVE:
-            {
-               unsigned int id;
-               int x, y;
-
-               memcpy(&id, msg.buffer, 4);
-               memcpy(&x, msg.buffer+4, 4);
-               memcpy(&y, msg.buffer+8, 4);
-
-               mapPlayers[id]->target.x = x;
-               mapPlayers[id]->target.y = y;
-
-               mapPlayers[id]->isChasing = false;
-               mapPlayers[id]->setTargetPlayer(0);
-
-               break;
-            }
             case MSG_TYPE_CHAT:
             {
                chatConsole.addLine(response);
-
-               break;
-            }
-            case MSG_TYPE_ATTACK:
-            {
-               cout << "Received START_ATTACK message" << endl;
-
-               unsigned int id, targetID;
-               memcpy(&id, msg.buffer, 4);
-               memcpy(&targetID, msg.buffer+4, 4);
-
-               cout << "source id: " << id << endl;
-               cout << "target id: " << targetID << endl;
-
-               Player* source = mapPlayers[id];
-               source->setTargetPlayer(targetID);
-               source->isChasing = true;
-
-               break;
-            }
-            case MSG_TYPE_GAME_INFO:
-            {
-               cout << "Received a GAME_INFO message" << endl;
-
-               string gameName(msg.buffer+4);
-               int numPlayers;
-
-               memcpy(&numPlayers, msg.buffer, 4);
-               
-               cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
-               
-               if (numPlayers > 0)
-                  mapGames[gameName] = numPlayers;
-               else
-                  mapGames.erase(gameName);
 
                break;
             }
@@ -865,6 +797,18 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
+            case MSG_TYPE_PLAYER:
+            {
+               handleMsgPlayer(msg, mapPlayers, mapGames);
+
+               break;
+            }
+            case MSG_TYPE_GAME_INFO:
+            {
+               handleMsgGameInfo(msg, mapPlayers, mapGames);
+
+               break;
+            }
             default:
             {
                cout << "(STATE_LOBBY) Received invlaid message of type " << msg.type << endl;
@@ -880,42 +824,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
          cout << "(STATE_GAME) ";
          switch(msg.type)
          {
-            case MSG_TYPE_GAME_INFO:
-            {
-               cout << "Received a GAME_INFO message" << endl;
-
-               string gameName(msg.buffer+4);
-               int numPlayers;
-
-               memcpy(&numPlayers, msg.buffer, 4);
-               
-               cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
-               
-               if (numPlayers > 0)
-                  mapGames[gameName] = numPlayers;
-               else
-                  mapGames.erase(gameName);
-
-               break;
-            }
-            case MSG_TYPE_SCORE:
-            {
-               cout << "Received SCORE message!" << endl;
-
-               int blueScore;
-               memcpy(&blueScore, msg.buffer, 4);
-               cout << "blue score: " << blueScore << endl;
-               game->setBlueScore(blueScore);
-
-               int redScore;
-               memcpy(&redScore, msg.buffer+4, 4);
-               cout << "red score: " << redScore << endl;
-               game->setRedScore(redScore);
-
-               cout << "Processed SCORE message!" << endl;
- 
-               break;
-            }
             case MSG_TYPE_FINISH_GAME:
             {
                cout << "Got a finish game message" << endl;
@@ -928,42 +836,12 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                string gameName(msg.buffer+12);
 
-               cout << "winner: " << winner << endl;
-               cout << "blueScore: " << blueScore << endl;
-               cout << "redScore: " << redScore << endl;
-               cout << "gameName: " << gameName << endl;
-
                gameSummary = new GameSummary(gameName, winner, blueScore, redScore);
 
                delete game;
                game = NULL;
                state = STATE_LOBBY;
                wndCurrent = wndGameSummary;
-
-
-               cout << "winner from obj: " << gameSummary->getWinner() << endl;
-               cout << "blueScore from obj: " << gameSummary->getBlueScore() << endl;
-               cout << "redScore from obj: " << gameSummary->getRedScore() << endl;
-               cout << "gameName from obj: " << gameSummary->getName() << endl;
-               break;
-            }
-            case MSG_TYPE_PLAYER:
-            {
-               cout << "Received MSG_TYPE_PLAYER" << endl;
-
-               Player p("", "");
-               p.deserialize(msg.buffer);
-               p.timeLastUpdated = getCurrentMillis();
-               p.isChasing = false;
-               if (p.health <= 0)
-                  p.isDead = true;
-               else
-                  p.isDead = false;
-
-               if (mapPlayers.find(p.getId()) != mapPlayers.end())
-                  *(mapPlayers[p.getId()]) = p;
-               else
-                  mapPlayers[p.getId()] = new Player(p);
 
                break;
             }
@@ -1120,6 +998,18 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
+            case MSG_TYPE_PLAYER:
+            {
+               handleMsgPlayer(msg, mapPlayers, mapGames);
+
+               break;
+            }
+            case MSG_TYPE_GAME_INFO:
+            {
+               handleMsgGameInfo(msg, mapPlayers, mapGames);
+
+               break;
+            }
             default:
             {
                cout << "Received invalid message of type " << msg.type << endl;
@@ -1211,6 +1101,42 @@ void drawMessageStatus(ALLEGRO_FONT* font)
          msgCount++;
       }
    }
+}
+
+// message handling functions
+
+void handleMsgPlayer(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames) {
+   cout << "Received MSG_TYPE_PLAYER" << endl;
+
+   Player p("", "");
+   p.deserialize(msg.buffer);
+   p.timeLastUpdated = getCurrentMillis();
+   p.isChasing = false;
+   if (p.health <= 0)
+      p.isDead = true;
+   else
+      p.isDead = false;
+
+   if (mapPlayers.find(p.getId()) != mapPlayers.end())
+      *(mapPlayers[p.getId()]) = p;
+   else
+      mapPlayers[p.getId()] = new Player(p);
+}
+
+void handleMsgGameInfo(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames) {
+   cout << "Received a GAME_INFO message" << endl;
+
+   string gameName(msg.buffer+4);
+   int numPlayers;
+
+   memcpy(&numPlayers, msg.buffer, 4);
+               
+   cout << "Received game info for " << gameName << " (num players: " << numPlayers << ")" << endl;
+               
+   if (numPlayers > 0)
+      mapGames[gameName] = numPlayers;
+   else
+      mapGames.erase(gameName);
 }
 
 // Callback definitions
