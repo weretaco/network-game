@@ -824,6 +824,24 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
          cout << "(STATE_GAME) ";
          switch(msg.type)
          {
+            case MSG_TYPE_SCORE:
+            {
+               cout << "Received SCORE message!" << endl;
+
+               int blueScore;
+               memcpy(&blueScore, msg.buffer, 4);
+               cout << "blue score: " << blueScore << endl;
+               game->setBlueScore(blueScore);
+
+               int redScore;
+               memcpy(&redScore, msg.buffer+4, 4);
+               cout << "red score: " << redScore << endl;
+               game->setRedScore(redScore);
+
+               cout << "Processed SCORE message!" << endl;
+ 
+               break;
+            }
             case MSG_TYPE_FINISH_GAME:
             {
                cout << "Got a finish game message" << endl;
