@@ -6,7 +6,6 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
-#include <cmath>
 
 #include <vector>
 #include <map>
@@ -335,10 +334,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             p->setId(unusedPlayerId);
             cout << "new player id: " << p->getId() << endl;
             p->setAddr(from);
-            p->currentGame = NULL;
-
-            // choose a random team (either 0 or 1)
-            p->team = rand() % 2;
 
             serverMsg.type = MSG_TYPE_PLAYER;
             // tell the new player about all the existing players
@@ -695,8 +690,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          Game* g = mapGames[gameName];
 
          Player* p = findPlayerByAddr(mapPlayers, from);
-         p->team = rand() % 2; // choose a random team (either 0 or 1)
-         p->currentGame = g;
 
          // tell the new player about all map objects
          // (currently just the flags)
@@ -722,19 +715,20 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          msgProcessor.sendMessage(&serverMsg, &from);
 
+
+         map<unsigned int, Player*>& oldPlayers = g->getPlayers();
+         g->addPlayer(p);
+
          // send info to other players
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
          p->serialize(serverMsg.buffer);
          cout << "Should be broadcasting the message" << endl;
-         msgProcessor.broadcastMessage(serverMsg, g->getPlayers());
-
-         g->addPlayer(p);
+         msgProcessor.broadcastMessage(serverMsg, oldPlayers);
 
 
          // tell the new player about all the players in the game (including himself)
          cout << "Sending other players to new player" << endl;
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
-
          
          map<unsigned int, Player*>& allPlayers = g->getPlayers();
          map<unsigned int, Player*>::iterator it;
@@ -746,6 +740,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             cout << "sending id " << it->second->getId()  << endl;
             msgProcessor.sendMessage(&serverMsg, &from);
          }
+
 
          int numPlayers = g->getNumPlayers();
 

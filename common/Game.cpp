@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 
 #include "Common.h"
 
@@ -44,6 +45,23 @@ map<unsigned int, Player*>& Game::getPlayers() {
 bool Game::addPlayer(Player* p) {
    if (players.find(p->getId()) == players.end()) {
       players[p->getId()] = p;
+
+      // reset player stats, location, etc.
+      p->pos.x = p->target.x = 200;
+      p->pos.y = p->target.y = 200;
+      p->setTargetPlayer(0);
+      p->isChasing = false;
+      p->isAttacking = false;
+      p->isDead = false;
+      p->health = p->maxHealth;
+      p->hasBlueFlag = false;
+      p->hasRedFlag = false;
+
+      // choose a random team (either 0 or 1)
+      p->team = rand() % 2;
+
+      p->currentGame = this;
+
       return true;
    }
    else
