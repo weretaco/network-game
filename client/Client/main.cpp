@@ -1304,6 +1304,7 @@ void leaveGame()
 {
    cout << "Leaving game" << endl;
 
+   delete game;
    game = NULL;
    
    state = STATE_LOBBY;
