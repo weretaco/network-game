@@ -867,7 +867,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             {
                cout << "Got a logout message" << endl;
 
-               int playerId;
+               unsigned int playerId;
 
                // Check if it's about you or another player
                memcpy(&playerId, msg.buffer, 4);

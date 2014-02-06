@@ -1,6 +1,6 @@
 CC = g++
 LIB_FLAGS = `pkg-config --cflags --libs --static allegro-static-5.0 allegro_ttf-static-5.0 allegro_primitives-static-5.0`
-FLAGS = -Wall
+FLAGS = -Wall -g
 COMMON_PATH = ../common
 DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o Projectile.o Game.o GameRender.o GameSummary.o chat.o GuiComponent.o Window.o Textbox.o Button.o RadioButtonList.o TextLabel.o
 
