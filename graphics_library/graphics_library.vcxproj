@@ -66,6 +66,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common\controls.cpp" />
+    <ClCompile Include="common\shader.cpp" />
+    <ClCompile Include="common\texture.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +76,13 @@
     <None Include="SimpleTransform.vertexshader" />
     <None Include="SimpleVertexShader.vertexshader" />
     <None Include="SingleColor.fragmentshader" />
+    <None Include="TextureFragmentShader.fragmentshader" />
+    <None Include="TransformVertexShader.vertexshader" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common\controls.hpp" />
+    <ClInclude Include="common\shader.hpp" />
+    <ClInclude Include="common\texture.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
