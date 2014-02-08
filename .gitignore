@@ -4,7 +4,8 @@ ipch/
 *.suo
 *.sdf
 *.opensdf
-gameClient
-allegro.log
-client.log
 *.o
+*.log
+gameClient
+server
+graphics_engine
