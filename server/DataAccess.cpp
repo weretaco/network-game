@@ -143,6 +143,11 @@ int DataAccess::insert(string table, string columns, string values)
    int query_state;
    ostringstream oss;
 
+   if (connection == NULL) {
+       cout << "Error: non database connection exists" << endl;
+       return -1;
+   }
+
    oss << "INSERT into " << table << " (" << columns << ") VALUES (" << values << ")";
    cout << "query: " << oss.str() << endl;
 
@@ -161,6 +166,11 @@ int DataAccess::update(string table, string values, string where)
    int query_state;
    ostringstream oss;
 
+   if (connection == NULL) {
+       cout << "Error: non database connection exists" << endl;
+       return -1;
+   }
+
    oss << "UPDATE " << table << " SET " << values << " WHERE " << where;
    cout << "query: " << oss.str() << endl;
 
@@ -178,6 +188,11 @@ MYSQL_RES *DataAccess::select(string table, string filter)
 {
    int query_state;
    ostringstream oss;
+
+   if (connection == NULL) {
+       cout << "Error: non database connection exists" << endl;
+       return NULL;
+   }
 
    oss << "SELECT * FROM " << table;
    if (!filter.empty())
