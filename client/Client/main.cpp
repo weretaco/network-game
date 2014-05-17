@@ -262,10 +262,11 @@ int main(int argc, char **argv)
    while(!doexit)
    {
       ALLEGRO_EVENT ev;
-      
+
       al_wait_for_event(event_queue, &ev);
 
       if(wndCurrent->handleEvent(ev)) {
+         cout << "Processed gui event: " << getCurrentMillis() << endl;
          // do nothing
       }
       else if(ev.type == ALLEGRO_EVENT_TIMER) {

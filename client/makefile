@@ -35,5 +35,5 @@ GameSummary.o : $(COMMON_PATH)/GameSummary.cpp
 	$(CC) -c -o $@ $? $(FLAGS)
 
 clean:
-	rm *.o
-	rm gameClient
+	rm -f *.o
+	rm -f gameClient
