@@ -259,18 +259,22 @@ int main(int argc, char **argv)
 
    al_start_timer(timer);
 
-   while(!doexit)
+   while (!doexit)
    {
       ALLEGRO_EVENT ev;
 
       al_wait_for_event(event_queue, &ev);
 
       if(wndCurrent->handleEvent(ev)) {
-         cout << "Processed gui event: " << getCurrentMillis() << endl;
          // do nothing
       }
       else if(ev.type == ALLEGRO_EVENT_TIMER) {
-         redraw = true; // seems like we should just call a draw function here instead
+         redraw = true;
+
+         // remove any other timer events in the queue
+         while (al_peek_next_event(event_queue, &ev) && ev.type == ALLEGRO_EVENT_TIMER) {
+            al_get_next_event(event_queue, &ev);
+         }
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
          doexit = true;
@@ -484,7 +488,6 @@ int main(int argc, char **argv)
          }
 
          if (debugging) {
-            //debugConsole.draw(font, al_map_rgb(255,255,255));
             drawMessageStatus(font);
          }
 
