@@ -9,6 +9,8 @@
    #include <winsock2.h>
 #elif defined LINUX
    #include <netinet/in.h>
+#elif defined MAC
+   #include <netinet/in.h>
 #endif
 
 using namespace std;

@@ -8,4 +8,6 @@
    #define LINUX
 #elif defined __posix
    #define LINUX
+#elif defined __APPLE__
+   #define MAC
 #endif

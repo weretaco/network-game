@@ -7,6 +7,11 @@
 #elif defined LINUX
    #include <fcntl.h>
    #include <assert.h>
+#elif defined MAC
+   #include <fcntl.h>
+   #include <assert.h>
+   #include <mach/clock.h>
+   #include <mach/mach.h>
 #endif
 
 #include <sstream>
@@ -49,6 +54,10 @@ void set_nonblock(int sock)
       int flags = fcntl(sock, F_GETFL,0);
       assert(flags != -1);
       fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+   #elif defined MAC
+      int flags = fcntl(sock, F_GETFL,0);
+      assert(flags != -1);
+      fcntl(sock, F_SETFL, flags | O_NONBLOCK);
    #endif
 }
 
@@ -61,6 +70,18 @@ unsigned long long getCurrentMillis()
    #elif defined LINUX
       timespec curTime;
       clock_gettime(CLOCK_REALTIME, &curTime);
+
+      numMilliseconds = curTime.tv_sec*(unsigned long long)1000+curTime.tv_nsec/(unsigned long long)1000000;
+   # elif defined MAC
+      timespec curTime;
+
+      clock_serv_t cclock;
+      mach_timespec_t mts;
+      host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+      clock_get_time(cclock, &mts);
+      mach_port_deallocate(mach_task_self(), cclock);
+      curTime.tv_sec = mts.tv_sec;
+      curTime.tv_nsec = mts.tv_nsec;
 
       numMilliseconds = curTime.tv_sec*(unsigned long long)1000+curTime.tv_nsec/(unsigned long long)1000000;
    #endif

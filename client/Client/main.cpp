@@ -10,6 +10,8 @@
    #include <netinet/in.h>
    #include <netdb.h>
    #include <cstring>
+#elif defined MAC
+   #include <netdb.h>
 #endif
 
 #include <cstdio>
@@ -170,6 +172,8 @@ int main(int argc, char **argv)
    #if defined WINDOWS
       font = al_load_ttf_font("../pirulen.ttf", 12, 0);
    #elif defined LINUX
+      font = al_load_ttf_font("pirulen.ttf", 12, 0);
+   #elif defined MAC
       font = al_load_ttf_font("pirulen.ttf", 12, 0);
    #endif
 
@@ -781,6 +785,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                   game = new Game(gameName, "../../data/map.txt", &msgProcessor);
                #elif defined LINUX
                   game = new Game(gameName, "../data/map.txt", &msgProcessor);
+               #elif defined MAC
+                  game = new Game(gameName, "../data/map.txt", &msgProcessor);
                #endif
 
                cout << "Game name: " << gameName << endl;
@@ -1302,6 +1308,7 @@ void createGame()
    strcpy(msgTo.buffer, msg.c_str());
 
    msgProcessor.sendMessage(&msgTo, &server);
+   cout << "Sent CREATE_GAME message" << endl;
 }
 
 void leaveGame()

@@ -49,7 +49,9 @@ int MessageProcessor::receiveMessage(NETWORK_MSG *msg, struct sockaddr_in *sourc
    socklen_t socklen = sizeof(struct sockaddr_in);
 
    // assume we don't care about the value of socklen
+   cout << "Waiting for message from server" << endl;
    int ret =  recvfrom(sock, (char*)msg, sizeof(NETWORK_MSG), 0, (struct sockaddr *)source, &socklen);
+   cout << "Returned from wait" << endl;
 
    if (ret == -1)
       return ret;
