@@ -33,6 +33,7 @@ void TextLabel::draw(ALLEGRO_DISPLAY *display)
          break;
       default:
          cout << "Invalid alignment: " << this->alignment << endl;
+         targetX = 0;
          break;
    }
 

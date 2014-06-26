@@ -231,15 +231,13 @@ WorldMap* WorldMap::loadMapFromFile(string filename)
 
       // read the map dimensions
       getline(file, line);
-      if (line.size() > 0)
-      {
-         istringstream iss(line);
-         string token;
-         getline(iss, token, 'x');
-         width = atoi(token.c_str());
-         getline(iss, token, 'x');
-         height = atoi(token.c_str());
-      }
+
+      istringstream iss(line);
+      string token;
+      getline(iss, token, 'x');
+      width = atoi(token.c_str());
+      getline(iss, token, 'x');
+      height = atoi(token.c_str());
 
       cout << "width: " << width << endl;
       cout << "height: " << height << endl;
