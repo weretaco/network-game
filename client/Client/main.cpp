@@ -76,8 +76,12 @@ void logout();
 void quit();
 void sendChatMessage();
 void toggleDebugging();
-void joinGame();
-void createGame();
+void joinGame(); // for joining the game lobby
+void createGame(); // for joining the game lobby
+void joinWaitingArea();
+void joinRedTeam();
+void joinBlueTeam();
+void startGame(); // for leaving game lobby and starting the actual game
 void leaveGame();
 void closeGameSummary();
 
@@ -88,6 +92,7 @@ const int SCREEN_H = 768;
 enum STATE {
    STATE_START,
    STATE_LOBBY,
+   STATE_GAME_LOBBY,
    STATE_GAME
 };
 
@@ -101,6 +106,7 @@ Window* wndLogin;
 Window* wndRegister;
 Window* wndLobby;
 Window* wndLobbyDebug;
+Window* wndGameLobby;
 Window* wndGame;
 Window* wndGameSummary;
 Window* wndCurrent;
@@ -130,6 +136,7 @@ chat chatConsole, debugConsole;
 bool debugging;
 Game* game;
 GameSummary* gameSummary;
+Player* currentPlayer;
 
 MessageProcessor msgProcessor;
 
@@ -319,7 +326,7 @@ int main(int argc, char **argv)
          }
       }
       else if(ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-         if(wndCurrent == wndGame) {
+         if (wndCurrent == wndGame) {
             if (ev.mouse.button == 1) {   // left click
                msgTo.type = MSG_TYPE_PLAYER_MOVE;
 
@@ -350,7 +357,7 @@ int main(int argc, char **argv)
                map<unsigned int, Player*> playersInGame = game->getPlayers();
                Player* target;
 
-               for(it = playersInGame.begin(); it != playersInGame.end(); it++)
+               for (it = playersInGame.begin(); it != playersInGame.end(); it++)
                {
                   target = it->second;
                   cout << "set target" << endl;
@@ -418,6 +425,38 @@ int main(int argc, char **argv)
             for (itPlayers = mapPlayers.begin(); itPlayers != mapPlayers.end(); itPlayers++) {
                oss << itPlayers->second->name << endl;
                al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W*3/4-100, 135+i*15, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+               i++;
+            }
+         }
+         else if (wndCurrent == wndGameLobby)
+         {
+            al_draw_text(font, al_map_rgb(0, 255, 0), 200, 100, ALLEGRO_ALIGN_LEFT, "Waiting Area");
+            al_draw_text(font, al_map_rgb(0, 255, 0), 400, 100, ALLEGRO_ALIGN_LEFT, "Blue Team");
+            al_draw_text(font, al_map_rgb(0, 255, 0), 600, 100, ALLEGRO_ALIGN_LEFT, "Red Team");
+
+            int drawPosition = 0;
+
+            switch (currentPlayer->team) {
+            case -1:
+               drawPosition = 200;
+               break;
+            case 0:
+               drawPosition = 400;
+               break;
+            case 1:
+               drawPosition = 600;
+               break;
+            }
+
+            map<unsigned int, Player*> gamePlayers = game->getPlayers();
+            map<unsigned int, Player*>::iterator itPlayers;
+            ostringstream oss;
+            int i=0;
+            for (itPlayers = gamePlayers.begin(); itPlayers != gamePlayers.end(); itPlayers++) {
+               oss << itPlayers->second->name << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), drawPosition, 135+i*15, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
                oss.clear();
                oss.str("");
                i++;
@@ -515,6 +554,7 @@ int main(int argc, char **argv)
    delete wndRegister;
    delete wndLobby;
    delete wndLobbyDebug;
+   delete wndGameLobby;
    delete wndGame;
    delete wndGameSummary;
 
@@ -653,6 +693,16 @@ void createGui(ALLEGRO_FONT* font) {
    cout << "Created debug lobby screen" << endl;
 
 
+   // wndGameLobby
+
+   wndGameLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndGameLobby->addComponent(new Button(180, 120, 160, 300, font, "", joinWaitingArea)));
+   vctComponents.push_back(wndGameLobby->addComponent(new Button(380, 120, 160, 300, font, "", joinBlueTeam)));
+   vctComponents.push_back(wndGameLobby->addComponent(new Button(580, 120, 160, 300, font, "", joinRedTeam)));
+   vctComponents.push_back(wndGameLobby->addComponent(new Button(40, 600, 120, 20, font, "Leave Game", leaveGame)));
+   vctComponents.push_back(wndGameLobby->addComponent(new Button(800, 600, 120, 20, font, "Start Game", startGame)));
+
+
    // wndGame
 
    wndGame = new Window(0, 0, SCREEN_W, SCREEN_H);
@@ -729,6 +779,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                      delete mapPlayers[p->getId()];
                   mapPlayers[p->getId()] = p;
                   curPlayerId = p->getId();
+                  currentPlayer = mapPlayers[curPlayerId];
 
                   cout << "Got a valid login response with the player" << endl;
                   cout << "Player id: " << curPlayerId << endl;
@@ -791,8 +842,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                cout << "Game name: " << gameName << endl;
 
-               state = STATE_GAME;
-               wndCurrent = wndGame;
+               state = STATE_GAME_LOBBY;
+               wndCurrent = wndGameLobby;
+               mapPlayers[curPlayerId]->team = -1;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
@@ -829,6 +881,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
          break;
       }
+      case STATE_GAME_LOBBY:
+         cout << "(STATE_GAME_LOBBY) ";
       case STATE_GAME:
       {
          cout << "(STATE_GAME) ";
@@ -1309,6 +1363,26 @@ void createGame()
 
    msgProcessor.sendMessage(&msgTo, &server);
    cout << "Sent CREATE_GAME message" << endl;
+}
+
+void joinWaitingArea() {
+   cout << "joining waiting area" << endl;
+   currentPlayer->team = -1;
+}
+
+void joinBlueTeam() {
+   cout << "joining blue team" << endl;
+   currentPlayer->team = 0;
+}
+
+void joinRedTeam() {
+   cout << "joining red team" << endl;
+   currentPlayer->team = 1;
+}
+
+void startGame() {
+   state = STATE_GAME;
+   wndCurrent = wndGame;
 }
 
 void leaveGame()
