@@ -438,23 +438,23 @@ int main(int argc, char **argv)
 
             int drawPosition = 0;
 
-            switch (currentPlayer->team) {
-            case -1:
-               drawPosition = 200;
-               break;
-            case 0:
-               drawPosition = 400;
-               break;
-            case 1:
-               drawPosition = 600;
-               break;
-            }
-
             map<unsigned int, Player*> gamePlayers = game->getPlayers();
             map<unsigned int, Player*>::iterator itPlayers;
             ostringstream oss;
             int i=0;
             for (itPlayers = gamePlayers.begin(); itPlayers != gamePlayers.end(); itPlayers++) {
+               switch (itPlayers->second->team) {
+               case -1:
+                  drawPosition = 200;
+                  break;
+               case 0:
+                  drawPosition = 400;
+                  break;
+               case 1:
+                  drawPosition = 600;
+                  break;
+               }
+
                oss << itPlayers->second->name << endl;
                al_draw_text(font, al_map_rgb(0, 255, 0), drawPosition, 135+i*15, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
                oss.clear();
@@ -844,7 +844,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                state = STATE_GAME_LOBBY;
                wndCurrent = wndGameLobby;
-               mapPlayers[curPlayerId]->team = -1;
 
                msgTo.type = MSG_TYPE_JOIN_GAME_ACK;
                strcpy(msgTo.buffer, gameName.c_str());
@@ -953,6 +952,8 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                Player p("", "");
                p.deserialize(msg.buffer);
                cout << "Deserialized player" << endl;
+               cout << "player team: " << p.team << endl;
+               cout << "current player team: " << currentPlayer->team << endl;
                p.timeLastUpdated = getCurrentMillis();
                p.isChasing = false;
                if (p.health <= 0)
@@ -965,7 +966,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                   mapPlayers[p.getId()] = new Player(p);
 
-               game->addPlayer(mapPlayers[p.getId()]);
+               game->addPlayer(mapPlayers[p.getId()], false);
 
                break;
             }
@@ -1368,16 +1369,31 @@ void createGame()
 void joinWaitingArea() {
    cout << "joining waiting area" << endl;
    currentPlayer->team = -1;
+
+   msgTo.type = MSG_TYPE_JOIN_TEAM;
+   memcpy(msgTo.buffer, &(currentPlayer->team), 4);
+
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void joinBlueTeam() {
    cout << "joining blue team" << endl;
    currentPlayer->team = 0;
+
+   msgTo.type = MSG_TYPE_JOIN_TEAM;
+   memcpy(msgTo.buffer, &(currentPlayer->team), 4);
+
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void joinRedTeam() {
    cout << "joining red team" << endl;
    currentPlayer->team = 1;
+
+   msgTo.type = MSG_TYPE_JOIN_TEAM;
+   memcpy(msgTo.buffer, &(currentPlayer->team), 4);
+
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void startGame() {
