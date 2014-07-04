@@ -48,7 +48,7 @@ public:
    void addObjectToMap(ObjectType objectType, int x, int y);
 
    map<unsigned int, Player*>& getPlayers();
-   bool addPlayer(Player* p);
+   bool addPlayer(Player* p, bool serverSide);
    bool removePlayer(unsigned int id);
 
    map<unsigned int, Projectile>& getProjectiles();
