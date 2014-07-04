@@ -1093,6 +1093,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
+            case MSG_TYPE_START_GAME:
+            {
+               state = STATE_GAME;
+               wndCurrent = wndGame;
+
+               break;
+            }
             default:
             {
                cout << "Received invalid message of type " << msg.type << endl;
@@ -1397,8 +1404,9 @@ void joinRedTeam() {
 }
 
 void startGame() {
-   state = STATE_GAME;
-   wndCurrent = wndGame;
+   msgTo.type = MSG_TYPE_LEAVE_GAME;
+
+   msgProcessor.sendMessage(&msgTo, &server);
 }
 
 void leaveGame()
