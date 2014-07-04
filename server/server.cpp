@@ -717,7 +717,8 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
 
          map<unsigned int, Player*>& oldPlayers = g->getPlayers();
-         g->addPlayer(p);
+         g->addPlayer(p, true);
+         p->team = -1;
 
          // send info to other players
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
@@ -750,6 +751,19 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          msgProcessor.broadcastMessage(serverMsg, mapPlayers);
 
          break;
+      }
+      case MSG_TYPE_JOIN_TEAM:
+      {
+         cout << "Received a JOIN_TEAM message" << endl;
+
+         Player* p = findPlayerByAddr(mapPlayers, from);
+         map<unsigned int, Player*> players = p->currentGame->getPlayers();
+
+         memcpy(&(p->team), clientMsg.buffer, 4);
+
+         serverMsg.type = MSG_TYPE_PLAYER;
+         p->serialize(serverMsg.buffer);
+         msgProcessor.broadcastMessage(serverMsg, players);
       }
       default:
       {
