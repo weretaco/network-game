@@ -764,6 +764,20 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          serverMsg.type = MSG_TYPE_PLAYER;
          p->serialize(serverMsg.buffer);
          msgProcessor.broadcastMessage(serverMsg, players);
+
+         break;
+      }
+      case MSG_TYPE_START_GAME:
+      {
+         cout << "Received a START_GAME message" << endl;
+
+         Player* p = findPlayerByAddr(mapPlayers, from);
+         map<unsigned int, Player*> players = p->currentGame->getPlayers();
+
+         serverMsg.type = MSG_TYPE_START_GAME;
+         msgProcessor.broadcastMessage(serverMsg, players);
+
+         break;
       }
       default:
       {
