@@ -1,10 +1,13 @@
 #include "GameRender.h"
 
 #include <cmath>
+#include <iostream>
 
 #include <allegro5/allegro_primitives.h>
 
 #include "../../common/Common.h"
+
+using namespace std;
 
 void GameRender::drawMap(WorldMap* gameMap)
 {
@@ -96,6 +99,10 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
          color = al_map_rgb(0, 0, 255);
       else if (p->team == 1)
          color = al_map_rgb(255, 0, 0);
+      else {
+         color = al_map_rgb(0, 0, 0);
+         cout << "Failed to determine player team when drawing player" << endl;
+      }
       
       al_draw_filled_circle(pos.x, pos.y, 12, color);
 
