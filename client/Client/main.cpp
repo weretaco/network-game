@@ -881,7 +881,26 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
          break;
       }
       case STATE_GAME_LOBBY:
+      {
          cout << "(STATE_GAME_LOBBY) ";
+         switch(msg.type)
+         {
+            case MSG_TYPE_START_GAME:
+            {
+               state = STATE_GAME;
+               wndCurrent = wndGame;
+
+               break;
+            }
+            default:
+            {
+               // keep these lines commented until until the correct messages are moved into the STATE_GAME_LOBBY section
+               //cout << "Received invalid message of type " << msg.type << endl;
+
+               //break;
+            }
+         }
+      }
       case STATE_GAME:
       {
          cout << "(STATE_GAME) ";
@@ -1090,13 +1109,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             case MSG_TYPE_GAME_INFO:
             {
                handleMsgGameInfo(msg, mapPlayers, mapGames);
-
-               break;
-            }
-            case MSG_TYPE_START_GAME:
-            {
-               state = STATE_GAME;
-               wndCurrent = wndGame;
 
                break;
             }
@@ -1404,7 +1416,7 @@ void joinRedTeam() {
 }
 
 void startGame() {
-   msgTo.type = MSG_TYPE_LEAVE_GAME;
+   msgTo.type = MSG_TYPE_START_GAME;
 
    msgProcessor.sendMessage(&msgTo, &server);
 }
