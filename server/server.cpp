@@ -566,6 +566,42 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          break;
       }
+      case MSG_TYPE_PROFILE:
+      {
+         serverMsg.type = MSG_TYPE_PROFILE;
+
+         // each array is the score for one game
+         // the columns are result, team, blue score, and red score
+         // for result 0 is defeat and 1 is victory
+         // for team, 0 is blue and 1 is red
+         int scores[][4] = {
+            {1, 1, 2, 3},
+            {1, 0, 3, 2},
+            {0, 1, 3, 1},
+            {1, 1, 0, 3},
+            {0, 0, 2, 3},
+            {1, 0, 3, 2},
+            {1, 0, 3, 0},
+            {0, 1, 3, 1},
+            {1, 1, 1, 3},
+            {1, 0, 3, 2}
+         };
+
+         int honorPoints = 1000;
+         int numGames = 10;
+         memcpy(serverMsg.buffer, &honorPoints, 4);
+         memcpy(serverMsg.buffer+4, &numGames, 4);
+         for (unsigned int i=0; i<sizeof(scores)/sizeof(scores[0]); i++) {
+            memcpy(serverMsg.buffer+8+i*16, &scores[i][0], 4);
+            memcpy(serverMsg.buffer+12+i*16, &scores[i][1], 4);
+            memcpy(serverMsg.buffer+16+i*16, &scores[i][2], 4);
+            memcpy(serverMsg.buffer+20+i*16, &scores[i][3], 4);
+         }
+
+         msgProcessor.sendMessage(&serverMsg, &from);
+
+         break;
+      }
       case MSG_TYPE_CREATE_GAME:
       {
          cout << "Received a CREATE_GAME message" << endl;
