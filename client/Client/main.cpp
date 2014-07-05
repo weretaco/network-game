@@ -141,6 +141,10 @@ Game* game;
 GameSummary* gameSummary;
 Player* currentPlayer;
 
+int honorPoints;
+int numGames;
+int** gameHistory;
+
 MessageProcessor msgProcessor;
 
 int main(int argc, char **argv)
@@ -159,6 +163,10 @@ int main(int argc, char **argv)
    bool fullscreen = false;
    game = NULL;
    gameSummary = NULL;
+
+   honorPoints = 0;
+   numGames = 0;
+   gameHistory = NULL;
 
    state = STATE_START;
 
@@ -435,14 +443,39 @@ int main(int argc, char **argv)
          }
          else if (wndCurrent == wndProfile)
          {
-            al_draw_text(font, al_map_rgb(0, 255, 0), 65, 90, ALLEGRO_ALIGN_LEFT, "Honor Points: 500");
+            ostringstream oss;
+            oss << "Honor Points: " << honorPoints << endl;
+            al_draw_text(font, al_map_rgb(0, 255, 0), 65, 90, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+            oss.clear();
+            oss.str("");
 
             // display records of the last 10 games
-            for (int i=0; i<10; i++) {
-               al_draw_text(font, al_map_rgb(0, 255, 0), 142, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "VICTORY");
-               al_draw_text(font, al_map_rgb(0, 255, 0), 302, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "3");
-               al_draw_text(font, al_map_rgb(0, 255, 0), 462, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "2");
-               al_draw_text(font, al_map_rgb(0, 255, 0), 622, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "6/11/2014, 5:12 PM");
+            for (int i=0; i<numGames; i++) {
+
+               if (gameHistory[i][0] == 0)
+                  oss << "DEFEAT" << endl;
+               else if (gameHistory[i][0] == 1)
+                  oss << "VICTORY" << endl;
+
+               al_draw_text(font, al_map_rgb(0, 255, 0), 142, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+
+               oss << gameHistory[i][2] << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), 302, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+
+               oss << gameHistory[i][3] << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), 462, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+
+               oss << "6/11/2014, 5:12 PM" << endl;
+               al_draw_text(font, al_map_rgb(0, 255, 0), 622, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               oss.clear();
+               oss.str("");
+
             }
             
          }
@@ -585,6 +618,14 @@ int main(int argc, char **argv)
 
    for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
       delete it->second;
+   }
+
+   if (gameHistory != NULL) {
+      for (int i=0; i<numGames; i++) {
+         free(gameHistory[i]);
+      }
+
+      free(gameHistory);
    }
 
    al_destroy_event_queue(event_queue);
@@ -860,6 +901,26 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             }
             case MSG_TYPE_PROFILE:
             {
+               memcpy(&honorPoints, msg.buffer, 4);
+               memcpy(&numGames, msg.buffer+4, 4);
+
+               cout << "Got records for " << numGames << " games." << endl;
+               gameHistory = (int**)malloc(numGames*sizeof(int*));
+               for (int i=0; i<numGames; i++) {
+                  gameHistory[i] = (int*)malloc(4*sizeof(int));
+                  cout << endl << "game record " << (i+1) << endl;
+
+                  memcpy(&gameHistory[i][0], msg.buffer+8+i*16, 4);
+                  memcpy(&gameHistory[i][1], msg.buffer+12+i*16, 4);
+                  memcpy(&gameHistory[i][2], msg.buffer+16+i*16, 4);
+                  memcpy(&gameHistory[i][3], msg.buffer+20+i*16, 4);
+
+                  cout << "result: " << gameHistory[i][0] << endl;
+                  cout << "team: " << gameHistory[i][1] << endl;
+                  cout << "blue score: " << gameHistory[i][2] << endl;
+                  cout << "red score: " << gameHistory[i][3] << endl;
+               }
+
                wndCurrent = wndProfile;
 
                break;
