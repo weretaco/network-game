@@ -76,6 +76,8 @@ void logout();
 void quit();
 void sendChatMessage();
 void toggleDebugging();
+void goToProfileScreen();
+void goToLobbyScreen();
 void joinGame(); // for joining the game lobby
 void createGame(); // for joining the game lobby
 void joinWaitingArea();
@@ -106,6 +108,7 @@ Window* wndLogin;
 Window* wndRegister;
 Window* wndLobby;
 Window* wndLobbyDebug;
+Window* wndProfile;
 Window* wndGameLobby;
 Window* wndGame;
 Window* wndGameSummary;
@@ -430,6 +433,19 @@ int main(int argc, char **argv)
                i++;
             }
          }
+         else if (wndCurrent == wndProfile)
+         {
+            al_draw_text(font, al_map_rgb(0, 255, 0), 65, 90, ALLEGRO_ALIGN_LEFT, "Honor Points: 500");
+
+            // display records of the last 10 games
+            for (int i=0; i<10; i++) {
+               al_draw_text(font, al_map_rgb(0, 255, 0), 142, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "VICTORY");
+               al_draw_text(font, al_map_rgb(0, 255, 0), 302, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "3");
+               al_draw_text(font, al_map_rgb(0, 255, 0), 462, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "2");
+               al_draw_text(font, al_map_rgb(0, 255, 0), 622, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, "6/11/2014, 5:12 PM");
+            }
+            
+         }
          else if (wndCurrent == wndGameLobby)
          {
             al_draw_text(font, al_map_rgb(0, 255, 0), 200, 100, ALLEGRO_ALIGN_LEFT, "Waiting Area");
@@ -607,6 +623,7 @@ void shutdownWinSock()
 }
 
 void createGui(ALLEGRO_FONT* font) {
+
    // wndLogin
 
    wndLogin = new Window(0, 0, SCREEN_W, SCREEN_H);
@@ -662,7 +679,8 @@ void createGui(ALLEGRO_FONT* font) {
    vctComponents.push_back(txtCreateGame);
 
    wndLobby = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(920, 10, 80, 20, font, "Profile", goToProfileScreen)));
+   vctComponents.push_back(wndLobby->addComponent(new Button(920, 738, 80, 20, font, "Logout", logout)));
    vctComponents.push_back(wndLobby->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
    wndLobby->addComponent(txtJoinGame);
    vctComponents.push_back(wndLobby->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
@@ -681,7 +699,8 @@ void createGui(ALLEGRO_FONT* font) {
    // wndLobbyDebug
 
    wndLobbyDebug = new Window(0, 0, SCREEN_W, SCREEN_H);
-   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 10, 80, 20, font, "Logout", logout)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 10, 80, 20, font, "Profile", goToProfileScreen)));
+   vctComponents.push_back(wndLobbyDebug->addComponent(new Button(920, 738, 80, 20, font, "Logout", logout)));
    vctComponents.push_back(wndLobbyDebug->addComponent(new TextLabel(SCREEN_W*1/2+15-112, 40, 110, 20, font, "Game Name:", ALLEGRO_ALIGN_RIGHT)));
    wndLobbyDebug->addComponent(txtJoinGame);
    vctComponents.push_back(wndLobbyDebug->addComponent(new Button(SCREEN_W*1/2+15-100, 80, 200, 20, font, "Join Existing Game", joinGame)));
@@ -691,6 +710,19 @@ void createGui(ALLEGRO_FONT* font) {
    vctComponents.push_back(wndLobbyDebug->addComponent(new Button(20, 10, 160, 20, font, "Toggle Debugging", toggleDebugging)));
 
    cout << "Created debug lobby screen" << endl;
+
+
+   // wndProfile
+
+   wndProfile = new Window(0, 0, SCREEN_W, SCREEN_H);
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(450, 40, 124, 20, font, "Profile", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(160, 120, 124, 20, font, "Game History", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(600, 160, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(80, 160, 124, 20, font, "Result", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(240, 160, 124, 20, font, "Blue Score", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(400, 160, 124, 20, font, "Red Score", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(560, 160, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new Button(920, 738, 80, 20, font, "Back", goToLobbyScreen)));
 
 
    // wndGameLobby
@@ -823,6 +855,12 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             case MSG_TYPE_CHAT:
             {
                chatConsole.addLine(response);
+
+               break;
+            }
+            case MSG_TYPE_PROFILE:
+            {
+               wndCurrent = wndProfile;
 
                break;
             }
@@ -1354,6 +1392,18 @@ void sendChatMessage()
 void toggleDebugging()
 {
    debugging = !debugging;
+}
+
+void goToProfileScreen()
+{
+   msgTo.type = MSG_TYPE_PROFILE;
+
+   msgProcessor.sendMessage(&msgTo, &server);
+}
+
+void goToLobbyScreen()
+{
+   wndCurrent = wndLobby;
 }
 
 void joinGame()
