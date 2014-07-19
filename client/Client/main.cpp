@@ -141,8 +141,7 @@ Game* game;
 GameSummary* gameSummary;
 Player* currentPlayer;
 
-int honorPoints;
-int numGames;
+int honorPoints, wins, losses, numGames;
 int** gameHistory;
 
 MessageProcessor msgProcessor;
@@ -165,6 +164,8 @@ int main(int argc, char **argv)
    gameSummary = NULL;
 
    honorPoints = 0;
+   wins = 0;
+   losses = 0;
    numGames = 0;
    gameHistory = NULL;
 
@@ -449,6 +450,16 @@ int main(int argc, char **argv)
             oss.clear();
             oss.str("");
 
+            oss << "Wins: " << wins << endl;
+            al_draw_text(font, al_map_rgb(0, 255, 0), 65, 105, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+            oss.clear();
+            oss.str("");
+
+            oss << "Loses: " << losses << endl;
+            al_draw_text(font, al_map_rgb(0, 255, 0), 65, 120, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
+            oss.clear();
+            oss.str("");
+
             // display records of the last 10 games
             for (int i=0; i<numGames; i++) {
 
@@ -457,22 +468,22 @@ int main(int argc, char **argv)
                else if (gameHistory[i][0] == 1)
                   oss << "VICTORY" << endl;
 
-               al_draw_text(font, al_map_rgb(0, 255, 0), 142, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               al_draw_text(font, al_map_rgb(0, 255, 0), 142, 190+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
                oss.clear();
                oss.str("");
 
                oss << gameHistory[i][2] << endl;
-               al_draw_text(font, al_map_rgb(0, 255, 0), 302, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               al_draw_text(font, al_map_rgb(0, 255, 0), 302, 190+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
                oss.clear();
                oss.str("");
 
                oss << gameHistory[i][3] << endl;
-               al_draw_text(font, al_map_rgb(0, 255, 0), 462, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               al_draw_text(font, al_map_rgb(0, 255, 0), 462, 190+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
                oss.clear();
                oss.str("");
 
                oss << "6/11/2014, 5:12 PM" << endl;
-               al_draw_text(font, al_map_rgb(0, 255, 0), 622, 160+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
+               al_draw_text(font, al_map_rgb(0, 255, 0), 622, 190+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
                oss.clear();
                oss.str("");
 
@@ -757,12 +768,12 @@ void createGui(ALLEGRO_FONT* font) {
 
    wndProfile = new Window(0, 0, SCREEN_W, SCREEN_H);
    vctComponents.push_back(wndProfile->addComponent(new TextLabel(450, 40, 124, 20, font, "Profile", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(160, 120, 124, 20, font, "Game History", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(600, 160, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(80, 160, 124, 20, font, "Result", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(240, 160, 124, 20, font, "Blue Score", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(400, 160, 124, 20, font, "Red Score", ALLEGRO_ALIGN_CENTRE)));
-   vctComponents.push_back(wndProfile->addComponent(new TextLabel(560, 160, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(160, 150, 124, 20, font, "Game History", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(600, 190, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(80, 190, 124, 20, font, "Result", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(240, 190, 124, 20, font, "Blue Score", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(400, 190, 124, 20, font, "Red Score", ALLEGRO_ALIGN_CENTRE)));
+   vctComponents.push_back(wndProfile->addComponent(new TextLabel(560, 190, 124, 20, font, "Time", ALLEGRO_ALIGN_CENTRE)));
    vctComponents.push_back(wndProfile->addComponent(new Button(920, 738, 80, 20, font, "Back", goToLobbyScreen)));
 
 
@@ -902,7 +913,9 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             case MSG_TYPE_PROFILE:
             {
                memcpy(&honorPoints, msg.buffer, 4);
-               memcpy(&numGames, msg.buffer+4, 4);
+               memcpy(&wins, msg.buffer+4, 4);
+               memcpy(&losses, msg.buffer+8, 4);
+               memcpy(&numGames, msg.buffer+12, 4);
 
                cout << "Got records for " << numGames << " games." << endl;
                gameHistory = (int**)malloc(numGames*sizeof(int*));
@@ -910,10 +923,10 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                   gameHistory[i] = (int*)malloc(4*sizeof(int));
                   cout << endl << "game record " << (i+1) << endl;
 
-                  memcpy(&gameHistory[i][0], msg.buffer+8+i*16, 4);
-                  memcpy(&gameHistory[i][1], msg.buffer+12+i*16, 4);
-                  memcpy(&gameHistory[i][2], msg.buffer+16+i*16, 4);
-                  memcpy(&gameHistory[i][3], msg.buffer+20+i*16, 4);
+                  memcpy(&gameHistory[i][0], msg.buffer+16+i*16, 4);
+                  memcpy(&gameHistory[i][1], msg.buffer+20+i*16, 4);
+                  memcpy(&gameHistory[i][2], msg.buffer+24+i*16, 4);
+                  memcpy(&gameHistory[i][3], msg.buffer+28+i*16, 4);
 
                   cout << "result: " << gameHistory[i][0] << endl;
                   cout << "team: " << gameHistory[i][1] << endl;
@@ -1459,6 +1472,8 @@ void goToProfileScreen()
 {
    msgTo.type = MSG_TYPE_PROFILE;
 
+   unsigned int playerId = currentPlayer->getId();
+   memcpy(msgTo.buffer, &playerId, 4);
    msgProcessor.sendMessage(&msgTo, &server);
 }
 
