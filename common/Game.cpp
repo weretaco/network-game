@@ -216,8 +216,7 @@ int Game::processFlagPickupRequest(Player* p) {
 void Game::dealDamageToPlayer(Player* p, int damage) {
    p->takeDamage(damage);
 
-   if (p->isDead)
-   {
+   if (p->isDead) {
       ObjectType flagType = OBJECT_NONE;
       if (p->hasBlueFlag)
          flagType = OBJECT_BLUE_FLAG;
@@ -239,15 +238,12 @@ bool Game::handleGameEvents() {
    map<unsigned int, Player*>::iterator it;
    bool gameFinished = false;
 
-   for (it = this->getPlayers().begin(); it != this->getPlayers().end(); it++)
-   {
-      gameFinished = gameFinished ||
-         this->handlePlayerEvents(it->second);
+   for (it = this->getPlayers().begin(); it != this->getPlayers().end(); it++) {
+      gameFinished = gameFinished || this->handlePlayerEvents(it->second);
    }
 
    if (gameFinished) {
-      for (it = this->players.begin(); it != this->players.end(); it++)
-      {
+      for (it = this->players.begin(); it != this->players.end(); it++) {
          it->second->currentGame = NULL;
       }
    }
@@ -278,32 +274,26 @@ bool Game::handlePlayerEvents(Player* p) {
       bool flagReturned = false;
       bool ownFlagAtBase = false;
 
-      switch(this->worldMap->getStructure(p->pos.x/25, p->pos.y/25))
-      {
+      switch(this->worldMap->getStructure(p->pos.x/25, p->pos.y/25)) {
          case STRUCTURE_BLUE_FLAG:
          {
-            if (p->team == 0 && p->hasRedFlag)
-            {
+            if (p->team == 0 && p->hasRedFlag) {
                // check that your flag is at your base
                pos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
                            
                vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
                vector<WorldMap::Object>::iterator itObjects;
 
-               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-               {
-                  if (itObjects->type == OBJECT_BLUE_FLAG)
-                  {
-                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
-                     {
+               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+                  if (itObjects->type == OBJECT_BLUE_FLAG) {
+                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12) {
                         ownFlagAtBase = true;
                         break;
                      }
                   }
                }
 
-               if (ownFlagAtBase)
-               {
+               if (ownFlagAtBase) {
                   p->hasRedFlag = false;
                   flagType = OBJECT_RED_FLAG;
                   pos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
@@ -316,28 +306,23 @@ bool Game::handlePlayerEvents(Player* p) {
          }
          case STRUCTURE_RED_FLAG:
          {
-            if (p->team == 1 && p->hasBlueFlag)
-            {
+            if (p->team == 1 && p->hasBlueFlag) {
                // check that your flag is at your base
                pos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
                         
                vector<WorldMap::Object>* vctObjects = this->worldMap->getObjects();
                vector<WorldMap::Object>::iterator itObjects;
 
-               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-               {
-                  if (itObjects->type == OBJECT_RED_FLAG)
-                  {
-                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12)
-                     {
+               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+                  if (itObjects->type == OBJECT_RED_FLAG) {
+                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12) {
                         ownFlagAtBase = true;
                         break;
                      }
                   }
                }
 
-               if (ownFlagAtBase)
-               {
+               if (ownFlagAtBase) {
                   p->hasBlueFlag = false;
                   flagType = OBJECT_BLUE_FLAG;
                   pos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
@@ -354,8 +339,7 @@ bool Game::handlePlayerEvents(Player* p) {
          }
       }
 
-      if (flagTurnedIn)
-      {
+      if (flagTurnedIn) {
          unsigned int blueScore = this->blueScore;
          unsigned int redScore = this->redScore;
 
@@ -398,22 +382,15 @@ bool Game::handlePlayerEvents(Player* p) {
       vector<WorldMap::Object>::iterator itObjects;
       POSITION structPos;
 
-      for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++)
-      {
+      for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
          POSITION pos = itObjects->pos;
 
-         if (posDistance(p->pos, pos.toFloat()) < 10)
-         {
-            if (p->team == 0 && 
-                itObjects->type == OBJECT_BLUE_FLAG)
-            {
+         if (posDistance(p->pos, pos.toFloat()) < 10) {
+            if (p->team == 0 && itObjects->type == OBJECT_BLUE_FLAG) {
                structPos = this->worldMap->getStructureLocation(STRUCTURE_BLUE_FLAG);
                flagReturned = true;
                break;
-            }
-            else if (p->team == 1 &&
-                     itObjects->type == OBJECT_RED_FLAG)
-            {
+            } else if (p->team == 1 && itObjects->type == OBJECT_RED_FLAG) {
                structPos = this->worldMap->getStructureLocation(STRUCTURE_RED_FLAG);
                flagReturned = true;
                break;
@@ -421,8 +398,7 @@ bool Game::handlePlayerEvents(Player* p) {
          }
       }
 
-      if (flagReturned)
-      {
+      if (flagReturned) {
          itObjects->pos.x = structPos.x*25+12;
          itObjects->pos.y = structPos.y*25+12;
 
@@ -431,8 +407,7 @@ bool Game::handlePlayerEvents(Player* p) {
          msgProcessor->broadcastMessage(serverMsg, this->players);
       }
 
-      if (broadcastMove)
-      {
+      if (broadcastMove) {
          serverMsg.type = MSG_TYPE_PLAYER;
          p->serialize(serverMsg.buffer);
          msgProcessor->broadcastMessage(serverMsg, this->players);
@@ -442,23 +417,19 @@ bool Game::handlePlayerEvents(Player* p) {
    cout << "processing player attack" << endl;
 
    // check if the player's attack animation is complete
-   if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis())
-   {
+   if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis()) {
       p->isAttacking = false;
       cout << "Attack animation is complete" << endl;
 
       //send everyone an ATTACK message
       cout << "about to broadcast attack" << endl;
 
-      if (p->attackType == Player::ATTACK_MELEE)
-      {
+      if (p->attackType == Player::ATTACK_MELEE) {
          cout << "Melee attack" << endl;
 
          Player* target = players[p->getTargetPlayer()];
          this->dealDamageToPlayer(target, p->damage);
-      }
-      else if (p->attackType == Player::ATTACK_RANGED)
-      {
+      } else if (p->attackType == Player::ATTACK_RANGED) {
          cout << "Ranged attack" << endl;
 
          Projectile proj(p->pos.x, p->pos.y, p->getTargetPlayer(), p->damage);
@@ -475,8 +446,7 @@ bool Game::handlePlayerEvents(Player* p) {
          memcpy(serverMsg.buffer+8, &y, 4);
          memcpy(serverMsg.buffer+12, &targetId, 4);
          msgProcessor->broadcastMessage(serverMsg, players);
-      }
-      else
+      } else
          cout << "Invalid attack type: " << p->attackType << endl;
    }
 

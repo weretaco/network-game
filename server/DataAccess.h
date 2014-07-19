@@ -1,4 +1,4 @@
-#ifndef _DATA_ACCES_H
+#ifndef _DATA_ACCESS_H
 #define _DATA_ACCESS_H
 
 #include <string>
@@ -15,12 +15,18 @@ public:
    DataAccess();
    ~DataAccess();
 
-   int insertPlayer(string username, string password, Player::PlayerClass playerClass);
-   int updatePlayer(string username, string password);
-
    Player* getPlayer(string username);
    list<Player*>* getPlayers();
    bool verifyPassword(string encrypted, string password);
+   int insertPlayer(string username, string password, Player::PlayerClass playerClass);
+   // this method needs to be more rebust. maybe pass in a player object amd
+   // the method could use the player id to find the player and update any
+   // attributes that changed
+   int updatePlayer(string username, string password);
+
+   int* getPlayerRecord(int playerId);
+   int** getPlayerGameHistory(int playerId, unsigned int& numGames);
+   int saveGameHistory(int playerId, int team, int blueScore, int redScore);
 
    int insert(string table, string rows, string values);
    int update(string table, string values, string where);

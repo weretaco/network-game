@@ -42,9 +42,8 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId, ofstream& outputLog);
+void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, ofstream& outputLog);
 
-void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers);
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
 Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr);
 
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
    map<unsigned int, Player*> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    map<string, Game*> mapGames;
-   unsigned int unusedPlayerId = 1;
    ofstream outputLog;
 
    done = false;
@@ -116,8 +114,6 @@ int main(int argc, char *argv[])
          msgProcessor.resendUnackedMessages();
 
          map<unsigned int, Player*>::iterator it;
-
-         cout << "Updating player targets and respawning dead players" << endl;
 
          // set targets for all chasing players (or make them attack if they're close enough)
          // this should be moved into the games loop
@@ -178,8 +174,6 @@ int main(int argc, char *argv[])
             }
          }
 
-         cout << "Processing players in a game" << endl;
-
          // process players currently in a game
          map<string, Game*>::iterator itGames;
          Game* game = NULL;
@@ -187,6 +181,24 @@ int main(int argc, char *argv[])
          for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             game = itGames->second;
             if (game->handleGameEvents()) {
+               // save game record
+               int winningTeam = -1;
+               if (game->getBlueScore() == 3)
+                  winningTeam = 0;
+               else if (game->getRedScore() == 3)
+                  winningTeam = 1;
+
+               if (winningTeam == -1)
+                  cout << "Error: Game ended, but neither team has a score of 3" << endl;
+               else {
+                  map<unsigned int, Player*>::iterator it;
+                  DataAccess da;
+
+                  for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++) {
+                      da.saveGameHistory(it->second->getId(), winningTeam, game->getBlueScore(), game->getRedScore());
+                  }
+               }
+
                // send a GAME_INFO message with 0 players to force clients to delete the game
                int numPlayers = 0;
                serverMsg.type = MSG_TYPE_GAME_INFO;
@@ -199,8 +211,6 @@ int main(int argc, char *argv[])
             }else
                itGames++;
          }
-
-         cout << "Processing projectiles"  << endl;
 
          // move all projectiles
          // see if this can be moved inside the game class
@@ -229,7 +239,7 @@ int main(int argc, char *argv[])
 
       if (msgProcessor.receiveMessage(&clientMsg, &from) >= 0)
       {
-         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, unusedPlayerId, outputLog);
+         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, outputLog);
 
          cout << "Finished processing the message" << endl;
       }
@@ -254,7 +264,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, unsigned int& unusedPlayerId, ofstream& outputLog)
+void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, ofstream& outputLog)
 {
    NETWORK_MSG serverMsg;
    DataAccess da;
@@ -330,8 +340,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          }
          else
          {
-            updateUnusedPlayerId(unusedPlayerId, mapPlayers);
-            p->setId(unusedPlayerId);
             cout << "new player id: " << p->getId() << endl;
             p->setAddr(from);
 
@@ -368,7 +376,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             p->serialize(serverMsg.buffer);
             msgProcessor.broadcastMessage(serverMsg, mapPlayers);
 
-            mapPlayers[unusedPlayerId] = p;
+            mapPlayers[p->getId()] = p;
          }
 
          serverMsg.type = MSG_TYPE_LOGIN;
@@ -402,9 +410,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
             memcpy(serverMsg.buffer, &playerId, 4);
 
             msgProcessor.broadcastMessage(serverMsg, mapPlayers);
-
-            if (p->getId() < unusedPlayerId)
-               unusedPlayerId = p->getId();
 
             mapPlayers.erase(p->getId());
             delete p;
@@ -568,35 +573,38 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
       }
       case MSG_TYPE_PROFILE:
       {
+         cout << "Received a PROFILE message" << endl;
+
+         unsigned int id;
+
+         memcpy(&id, clientMsg.buffer, 4);
+
+         cout << "Player id: " << id << endl;
+         unsigned int numGames = 0;
+         int** gameHistory = da.getPlayerGameHistory(id, numGames);
+         int* playerRecord = da.getPlayerRecord(id);
+
+         int honorPoints = playerRecord[0];
+         int wins = playerRecord[1];
+         int losses = playerRecord[2];
+
          serverMsg.type = MSG_TYPE_PROFILE;
 
-         // each array is the score for one game
-         // the columns are result, team, blue score, and red score
-         // for result 0 is defeat and 1 is victory
-         // for team, 0 is blue and 1 is red
-         int scores[][4] = {
-            {1, 1, 2, 3},
-            {1, 0, 3, 2},
-            {0, 1, 3, 1},
-            {1, 1, 0, 3},
-            {0, 0, 2, 3},
-            {1, 0, 3, 2},
-            {1, 0, 3, 0},
-            {0, 1, 3, 1},
-            {1, 1, 1, 3},
-            {1, 0, 3, 2}
-         };
-
-         int honorPoints = 1000;
-         int numGames = 10;
          memcpy(serverMsg.buffer, &honorPoints, 4);
-         memcpy(serverMsg.buffer+4, &numGames, 4);
-         for (unsigned int i=0; i<sizeof(scores)/sizeof(scores[0]); i++) {
-            memcpy(serverMsg.buffer+8+i*16, &scores[i][0], 4);
-            memcpy(serverMsg.buffer+12+i*16, &scores[i][1], 4);
-            memcpy(serverMsg.buffer+16+i*16, &scores[i][2], 4);
-            memcpy(serverMsg.buffer+20+i*16, &scores[i][3], 4);
+         memcpy(serverMsg.buffer+4, &wins, 4);
+         memcpy(serverMsg.buffer+8, &losses, 4);
+         memcpy(serverMsg.buffer+12, &numGames, 4);
+         for (unsigned int i=0; i<numGames; i++) {
+            memcpy(serverMsg.buffer+16+i*16, &gameHistory[i][0], 4);
+            memcpy(serverMsg.buffer+20+i*16, &gameHistory[i][1], 4);
+            memcpy(serverMsg.buffer+24+i*16, &gameHistory[i][2], 4);
+            memcpy(serverMsg.buffer+28+i*16, &gameHistory[i][3], 4);
+            delete[] gameHistory[i];
          }
+
+         //delete[] gameHistory;
+         free(gameHistory);
+         delete[] playerRecord;
 
          msgProcessor.sendMessage(&serverMsg, &from);
 
@@ -822,12 +830,6 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          break;
       }
    }
-}
-
-void updateUnusedPlayerId(unsigned int& id, map<unsigned int, Player*>& mapPlayers)
-{
-   while (mapPlayers.find(id) != mapPlayers.end())
-      id++;
 }
 
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name)

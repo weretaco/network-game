@@ -5,10 +5,30 @@
 #include <cstdlib>
 #include <crypt.h>
 
+#include "LuaLoader.h"
+
 using namespace std;
 
 DataAccess::DataAccess()
 {
+   LuaLoader luaLoader;
+
+   string database, username, password;
+
+   if (luaLoader.runScript("db_settings.lua")) {
+       cout << "Loading settings" << endl;
+
+       database = luaLoader.getValue("database");
+       username = luaLoader.getValue("username");
+       password = luaLoader.getValue("password");
+
+       cout << database << endl;
+       cout << username << endl;
+       cout << password << endl;
+   } else {
+       cout << "Failed to load settings from lua script" << endl;
+   }
+
    mysql_init(&mysql);
    connection = mysql_real_connect(&mysql, "localhost", "pythonAdmin", "pyMaster09*", "pythondb", 0, 0, 0);
 
@@ -51,6 +71,7 @@ int DataAccess::insertPlayer(string username, string password, Player::PlayerCla
    return insert("users", "name, password, class", oss.str());
 }
 
+// this is no longer used anywhere
 int DataAccess::updatePlayer(string username, string password)
 {
    ostringstream values, where;
@@ -84,6 +105,7 @@ Player *DataAccess::getPlayer(string username)
    if ( ( row = mysql_fetch_row(result)) != NULL ) {
       cout << "Creating a new player" << endl;
       p = new Player(string(row[1]), string(row[2]));
+      p->setId(atoi(row[0]));
       if (row[3] == NULL) {
          p->setClass(Player::CLASS_NONE);
          cout << "Class from db was NULL" << endl;
@@ -92,7 +114,15 @@ Player *DataAccess::getPlayer(string username)
          cout << "Class from db: " << atoi(row[3]) << endl;
       }
       cout << "Player class: " << p->playerClass << endl;
-      cout << "Created new player" << endl;
+      if (row[7] == NULL)
+          cout << "wins: NULL" << endl;
+      else
+          cout << "wins: " << atoi(row[7]) << endl;
+      if (row[8] == NULL)
+          cout << "losses: NULL" << endl;
+      else
+          cout << "losses: " << atoi(row[8]) << endl;
+      cout << "Loaded player from db" << endl;
    }else {
       cout << "Returned no results for some reason" << endl;
       p = NULL;
@@ -111,7 +141,6 @@ list<Player*>* DataAccess::getPlayers()
 {
    MYSQL_RES *result;
    MYSQL_ROW row;
-   ostringstream oss;
 
    result = select("users", "");
 
@@ -138,6 +167,110 @@ bool DataAccess::verifyPassword(string password, string encrypted)
    return encrypted.compare(test) == 0;
 }
 
+int* DataAccess::getPlayerRecord(int playerId) {
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   ostringstream oss;
+   int* record = new int[5];
+
+   oss << "id=" << playerId;
+   result = select("users", oss.str());
+
+   if ( ( row = mysql_fetch_row(result)) != NULL ) {
+      cout << "Retrieved player record successfully" << endl;
+      record[0] = atoi(row[4]);   // level
+      record[1] = atoi(row[5]);   // experience
+      record[2] = atoi(row[6]);   // honor
+      record[3] = atoi(row[7]);   // wins
+      record[4] = atoi(row[8]);   // losses
+      cout << "record[0]:" << record[0] << endl;
+      cout << "record[1]:" << record[1] << endl;
+      cout << "record[2]:" << record[2] << endl;
+      cout << "record[3]:" << record[3] << endl;
+      cout << "record[4]:" << record[4] << endl;
+   }
+
+   if (result == NULL) {
+      cout << mysql_error(connection) << endl;
+      return NULL;
+   }
+
+   mysql_free_result(result);
+
+   return record;
+}
+
+int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
+{
+   // each array is the score for one game
+   // the columns are result, team, blue score, and red score
+   // for result 0 is defeat and 1 is victory
+   // for team, 0 is blue and 1 is red
+
+   MYSQL_RES *result;
+   MYSQL_ROW row;
+   ostringstream oss;
+
+   int** gameHistory;
+
+   oss << "user_id=" << playerId;
+   result = select("gameHistory", oss.str());
+
+   numGames = mysql_num_rows(result);
+   gameHistory = (int**)malloc(sizeof(int*)*numGames);
+   cout << "Result has " << numGames << " rows" << endl;
+
+   int i=0;
+   while ( ( row = mysql_fetch_row(result)) != NULL ) {
+      gameHistory[i] = new int[4];
+
+      int userTeam = atoi(row[2]);
+      int blueScore = atoi(row[4]);
+      int redScore = atoi(row[3]);
+      int gameResult = -1;
+
+      if (blueScore == 3) {
+         if (userTeam == 0)
+            gameResult = 1;
+         else
+            gameResult = 0;
+      }else if (redScore == 3) {
+         if (userTeam == 1)
+            gameResult = 1;
+         else
+            gameResult = 0;
+      }else {
+         cout << "Recorded game has no team with 3 points" << endl;
+      }
+
+      gameHistory[i][0] = gameResult;
+      gameHistory[i][1] = userTeam;
+      gameHistory[i][2] = blueScore;
+      gameHistory[i][3] = redScore;
+
+      i++;
+   }
+
+   if (result == NULL) {
+      cout << mysql_error(connection) << endl;
+      return NULL;
+   }
+
+   mysql_free_result(result);
+
+   return gameHistory;
+}
+
+int DataAccess::saveGameHistory(int playerId, int team, int blueScore, int redScore)
+{
+   ostringstream oss;
+
+   cout << "Saving game to db" << endl;
+   oss << playerId << ", " << team << ", " << blueScore << ", " << redScore;
+
+   return insert("gameHistory", "user_id, user_team, blue_score, red_score", oss.str());
+}
+
 int DataAccess::insert(string table, string columns, string values)
 {
    int query_state;
@@ -155,7 +288,7 @@ int DataAccess::insert(string table, string columns, string values)
 
    if (query_state != 0) {
       cout << mysql_error(connection) << endl;
-      return 1;
+      return -1;
    }
 
    return 0;
@@ -167,7 +300,7 @@ int DataAccess::update(string table, string values, string where)
    ostringstream oss;
 
    if (connection == NULL) {
-       cout << "Error: non database connection exists" << endl;
+       cout << "Error: no database connection exists" << endl;
        return -1;
    }
 
@@ -178,7 +311,7 @@ int DataAccess::update(string table, string values, string where)
 
    if (query_state != 0) {
       cout << mysql_error(connection) << endl;
-      return 1;
+      return -1;
    }
 
    return 0;
@@ -197,6 +330,7 @@ MYSQL_RES *DataAccess::select(string table, string filter)
    oss << "SELECT * FROM " << table;
    if (!filter.empty())
       oss << " WHERE " << filter;
+   cout << "executing select query: " << oss.str() << endl;
 
    query_state = mysql_query(connection, oss.str().c_str());
 

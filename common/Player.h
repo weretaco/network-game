@@ -87,6 +87,13 @@ public:
    bool hasBlueFlag;
    bool hasRedFlag;
 
+   // permanent attributes
+   unsigned int level;
+   unsigned int experience;
+   unsigned int honor;
+   unsigned int wins;
+   unsigned int losses;
+
    Game* currentGame;
 };
 

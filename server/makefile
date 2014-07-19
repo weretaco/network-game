@@ -1,11 +1,11 @@
 CC = g++
 #LIB_FLAGS = -lssl -lmysqlclient -lcrypt -lrt
-LIB_FLAGS = -lmysqlclient -lcrypt -lrt
+LIB_FLAGS = -lmysqlclient -lcrypt -lrt -llua5.2
 FLAGS = -Wall -g
 COMMON_PATH = ../common
-DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o DataAccess.o Projectile.o Game.o GameSummary.o
+DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o DataAccess.o Projectile.o Game.o GameSummary.o LuaLoader.o
 
-server : server.cpp $(DEPENDENCIES)
+gameServer : server.cpp $(DEPENDENCIES)
 	$(CC) -o $@ $+ $(FLAGS) $(LIB_FLAGS)
 
 Common.o : $(COMMON_PATH)/Common.cpp
@@ -37,4 +37,4 @@ GameSummary.o : $(COMMON_PATH)/GameSummary.cpp
 
 clean:
 	rm *.o
-	rm server
+	rm gameServer

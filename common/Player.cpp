@@ -33,6 +33,12 @@ Player::Player()
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
 
+   this->level = 0;
+   this->experience = 0;
+   this->honor = 0;
+   this->wins = 0;
+   this->losses = 0;
+
    this->currentGame = NULL;
 }
 
@@ -65,6 +71,12 @@ Player::Player(const Player& p)
    this->hasBlueFlag = p.hasBlueFlag;
    this->hasRedFlag = p.hasRedFlag;
 
+   this->level = p.level;
+   this->experience = p.experience;
+   this->honor = p.honor;
+   this->wins = p.wins;
+   this->losses = p.losses;
+
    this->currentGame = p.currentGame;
 }
 
@@ -94,6 +106,12 @@ Player::Player(string name, string password)
    this->team = 0;   // blue team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
+
+   this->level = 0;
+   this->experience = 0;
+   this->honor = 0;
+   this->wins = 0;
+   this->losses = 0;
 
    this->currentGame = NULL;
 }

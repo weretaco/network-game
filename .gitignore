@@ -7,5 +7,5 @@ ipch/
 *.o
 *.log
 gameClient
-server
+gameServer
 graphics_engine
