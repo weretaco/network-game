@@ -455,7 +455,7 @@ int main(int argc, char **argv)
             oss.clear();
             oss.str("");
 
-            oss << "Loses: " << losses << endl;
+            oss << "Losses: " << losses << endl;
             al_draw_text(font, al_map_rgb(0, 255, 0), 65, 120, ALLEGRO_ALIGN_LEFT, oss.str().c_str());
             oss.clear();
             oss.str("");
