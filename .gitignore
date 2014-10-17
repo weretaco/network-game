@@ -7,5 +7,6 @@ ipch/
 *.o
 *.log
 gameClient
-gameServer
+server
+!server/   # ignore the server exe, but not new files in the server directory
 graphics_engine

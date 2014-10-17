@@ -5,7 +5,7 @@ FLAGS = -Wall -g
 COMMON_PATH = ../common
 DEPENDENCIES = Common.o MessageContainer.o MessageProcessor.o Player.o WorldMap.o DataAccess.o Projectile.o Game.o GameSummary.o LuaLoader.o
 
-gameServer : server.cpp $(DEPENDENCIES)
+server : server.cpp $(DEPENDENCIES)
 	$(CC) -o $@ $+ $(FLAGS) $(LIB_FLAGS)
 
 Common.o : $(COMMON_PATH)/Common.cpp
@@ -37,4 +37,4 @@ GameSummary.o : $(COMMON_PATH)/GameSummary.cpp
 
 clean:
 	rm *.o
-	rm gameServer
+	rm server
