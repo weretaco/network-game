@@ -19,10 +19,7 @@ public:
    list<Player*>* getPlayers();
    bool verifyPassword(string encrypted, string password);
    int insertPlayer(string username, string password, Player::PlayerClass playerClass);
-   // this method needs to be more rebust. maybe pass in a player object amd
-   // the method could use the player id to find the player and update any
-   // attributes that changed
-   int updatePlayer(string username, string password);
+   int updatePlayer(Player* player);
 
    int* getPlayerRecord(int playerId);
    int** getPlayerGameHistory(int playerId, unsigned int& numGames);

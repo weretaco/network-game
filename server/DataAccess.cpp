@@ -71,14 +71,13 @@ int DataAccess::insertPlayer(string username, string password, Player::PlayerCla
    return insert("users", "name, password, class", oss.str());
 }
 
-// this is no longer used anywhere
-int DataAccess::updatePlayer(string username, string password)
+int DataAccess::updatePlayer(Player* p)
 {
    ostringstream values, where;
 
-   values << "password='" << password << "'";
+   values << "level=" << p->level << ", experience=" << p->experience << ", honor=" << p->honor << ", wins=" << p->wins << ", losses=" << p->losses << "";
    
-   where << "name='" << username << "'";
+   where << "id=" << p->getId() << "";
 
    return update("users", values.str(), where.str());
 }
@@ -113,15 +112,17 @@ Player *DataAccess::getPlayer(string username)
          p->setClass((Player::PlayerClass)atoi(row[3]));
          cout << "Class from db: " << atoi(row[3]) << endl;
       }
+      p->level = atoi(row[4]);
+      p->experience = atoi(row[5]);
+      p->honor = atoi(row[6]);
+      p->wins = atoi(row[7]);
+      p->losses = atoi(row[8]);
       cout << "Player class: " << p->playerClass << endl;
-      if (row[7] == NULL)
-          cout << "wins: NULL" << endl;
-      else
-          cout << "wins: " << atoi(row[7]) << endl;
-      if (row[8] == NULL)
-          cout << "losses: NULL" << endl;
-      else
-          cout << "losses: " << atoi(row[8]) << endl;
+      cout << "level: " << p->level << endl;
+      cout << "experience: " << p->experience << endl;
+      cout << "honor: " << p->honor << endl;
+      cout << "wins: " << p->wins << endl;
+      cout << "losses: " << p->losses << endl;
       cout << "Loaded player from db" << endl;
    }else {
       cout << "Returned no results for some reason" << endl;
@@ -139,6 +140,7 @@ Player *DataAccess::getPlayer(string username)
 // we could free this list in the destructor
 list<Player*>* DataAccess::getPlayers()
 {
+   // This method doesn't seem to ever get used. Decide whether it's actually needed
    MYSQL_RES *result;
    MYSQL_ROW row;
 
@@ -153,6 +155,8 @@ list<Player*>* DataAccess::getPlayers()
    while ( ( row = mysql_fetch_row(result)) != NULL ) {
       cout << row[0] << ", " << row[1] << ", " << row[2] << endl;
       lstPlayers->push_back(new Player(row[1], row[2]));
+
+      // need to assign all the other db values to the player
    }
 
    mysql_free_result(result);
@@ -308,6 +312,7 @@ int DataAccess::update(string table, string values, string where)
    cout << "query: " << oss.str() << endl;
 
    query_state = mysql_query(connection, oss.str().c_str());
+
 
    if (query_state != 0) {
       cout << mysql_error(connection) << endl;
