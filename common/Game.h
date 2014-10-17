@@ -60,9 +60,6 @@ public:
    int processFlagPickupRequest(Player* p);
    void dealDamageToPlayer(Player* p, int damage);
 
-   bool handleGameEvents();
-   bool handlePlayerEvents(Player* p);
-
    void assignProjectileId(Projectile* p);
    void updateUnusedProjectileId();
 };

@@ -47,6 +47,9 @@ void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, Mess
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
 Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr);
 
+bool handleGameEvents(Game* game, MessageProcessor* msgProcessor, DataAccess* da);
+bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, DataAccess* da);
+
 void quit(int sig);
 
 bool done;
@@ -177,10 +180,13 @@ int main(int argc, char *argv[])
          // process players currently in a game
          map<string, Game*>::iterator itGames;
          Game* game = NULL;
+         DataAccess da;
 
          for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             game = itGames->second;
-            if (game->handleGameEvents()) {
+            bool gameFinished = handleGameEvents(game, &msgProcessor, &da);
+
+            if (gameFinished) {
                // save game record
                int winningTeam = -1;
                if (game->getBlueScore() == 3)
@@ -192,10 +198,19 @@ int main(int argc, char *argv[])
                   cout << "Error: Game ended, but neither team has a score of 3" << endl;
                else {
                   map<unsigned int, Player*>::iterator it;
-                  DataAccess da;
 
                   for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++) {
-                      da.saveGameHistory(it->second->getId(), winningTeam, game->getBlueScore(), game->getRedScore());
+                      Player* p = it->second;
+                      cout << "winning team: " << winningTeam << endl;
+                      cout << "player team: " << p->team << endl;
+                      cout << "player id: " << p->getId() << endl;
+                      
+                      if (winningTeam == p->team)
+                          p->wins++;
+                      else
+                          p->losses++;
+                      da.updatePlayer(p);
+                      da.saveGameHistory(p->getId(), winningTeam, game->getBlueScore(), game->getRedScore());
                   }
                }
 
@@ -584,9 +599,11 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          int** gameHistory = da.getPlayerGameHistory(id, numGames);
          int* playerRecord = da.getPlayerRecord(id);
 
-         int honorPoints = playerRecord[0];
-         int wins = playerRecord[1];
-         int losses = playerRecord[2];
+         // playerRecord[0] is level
+         // playerRecord[1] is experience
+         int honorPoints = playerRecord[2];
+         int wins = playerRecord[3];
+         int losses = playerRecord[4];
 
          serverMsg.type = MSG_TYPE_PROFILE;
 
@@ -857,6 +874,243 @@ Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr)
    }
 
    return NULL;
+}
+
+bool handleGameEvents(Game* game, MessageProcessor* msgProcessor, DataAccess* da) {
+   map<unsigned int, Player*> players = game->getPlayers();
+   map<unsigned int, Player*>::iterator it;
+   bool gameFinished = false;
+
+   for (it = players.begin(); it != players.end(); it++) {
+      gameFinished = gameFinished || handlePlayerEvents(game, it->second, msgProcessor, da);
+   }
+
+   if (gameFinished) {
+      for (it = players.begin(); it != players.end(); it++) {
+         it->second->currentGame = NULL;
+      }
+   }
+
+   return gameFinished;
+}
+
+bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, DataAccess* da) {
+   NETWORK_MSG serverMsg;
+   FLOAT_POSITION oldPos;
+   bool gameFinished = false;
+   bool broadcastMove = false;
+
+   cout << "moving player" << endl;
+
+   // move player and perform associated tasks
+   oldPos = p->pos;
+   if (p->move(game->getMap())) {
+
+      cout << "player moved" << endl;
+      if (game->processPlayerMovement(p, oldPos))
+         broadcastMove = true;
+      cout << "player move processed" << endl;
+
+      ObjectType flagType;
+      POSITION pos;
+      bool flagTurnedIn = false;
+      bool flagReturned = false;
+      bool ownFlagAtBase = false;
+
+      switch(game->getMap()->getStructure(p->pos.x/25, p->pos.y/25)) {
+         case STRUCTURE_BLUE_FLAG:
+         {
+            if (p->team == 0 && p->hasRedFlag) {
+               // check that your flag is at your base
+               pos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
+                           
+               vector<WorldMap::Object>* vctObjects = game->getMap()->getObjects();
+               vector<WorldMap::Object>::iterator itObjects;
+
+               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+                  if (itObjects->type == OBJECT_BLUE_FLAG) {
+                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12) {
+                        ownFlagAtBase = true;
+                        break;
+                     }
+                  }
+               }
+
+               if (ownFlagAtBase) {
+                  p->hasRedFlag = false;
+                  flagType = OBJECT_RED_FLAG;
+                  pos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
+                  flagTurnedIn = true;
+                  game->setBlueScore(game->getBlueScore()+1);
+               }
+            }
+
+            break;
+         }
+         case STRUCTURE_RED_FLAG:
+         {
+            if (p->team == 1 && p->hasBlueFlag) {
+               // check that your flag is at your base
+               pos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
+                        
+               vector<WorldMap::Object>* vctObjects = game->getMap()->getObjects();
+               vector<WorldMap::Object>::iterator itObjects;
+
+               for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+                  if (itObjects->type == OBJECT_RED_FLAG) {
+                     if (itObjects->pos.x == pos.x*25+12 && itObjects->pos.y == pos.y*25+12) {
+                        ownFlagAtBase = true;
+                        break;
+                     }
+                  }
+               }
+
+               if (ownFlagAtBase) {
+                  p->hasBlueFlag = false;
+                  flagType = OBJECT_BLUE_FLAG;
+                  pos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
+                  flagTurnedIn = true;
+                  game->setRedScore(game->getRedScore()+1);
+               }
+            }
+
+            break;
+         }
+         default:
+         {
+            break;
+         }
+      }
+
+      if (flagTurnedIn) {
+         unsigned int blueScore = game->getBlueScore();
+         unsigned int redScore = game->getRedScore();
+
+         pos.x = pos.x*25+12;
+         pos.y = pos.y*25+12;
+         game->addObjectToMap(flagType, pos.x, pos.y);
+
+         serverMsg.type = MSG_TYPE_SCORE;
+         memcpy(serverMsg.buffer, &blueScore, 4);
+         memcpy(serverMsg.buffer+4, &redScore, 4);
+         msgProcessor->broadcastMessage(serverMsg, game->getPlayers());
+
+         // give honor to everyone on the winning team
+         map<unsigned int, Player*>::iterator itPlayers;
+         for (itPlayers = game->getPlayers().begin(); itPlayers != game->getPlayers().end(); itPlayers++) {
+            if (itPlayers->second->team == p->team) {
+               itPlayers->second->honor += 50;
+               da->updatePlayer(itPlayers->second);
+            }
+         }
+
+         // check to see if the game should end
+         // move to its own method
+         if (game->getBlueScore() == 3 || game->getRedScore() == 3) {
+            gameFinished = true;
+
+            unsigned int winningTeam;
+            if (game->getBlueScore() == 3)
+               winningTeam = 0;
+            else if (game->getRedScore() == 3)
+               winningTeam = 1;
+
+            serverMsg.type = MSG_TYPE_FINISH_GAME;
+
+            // I should create an instance of the GameSummary object here and just serialize it into this message
+            memcpy(serverMsg.buffer, &winningTeam, 4);
+            memcpy(serverMsg.buffer+4, &blueScore, 4);
+            memcpy(serverMsg.buffer+8, &redScore, 4);
+            strcpy(serverMsg.buffer+12, game->getName().c_str());
+            msgProcessor->broadcastMessage(serverMsg, game->getPlayers());
+
+            // give honor to everyone on the winning team
+            for (itPlayers = game->getPlayers().begin(); itPlayers != game->getPlayers().end(); itPlayers++) {
+               if (itPlayers->second->team == p->team) {
+                  itPlayers->second->honor += 150;
+                  da->updatePlayer(itPlayers->second);
+               }
+            }
+         }
+
+         // this means a PLAYER message will be sent
+         broadcastMove = true;
+      }
+
+      // go through all objects and check if the player is close to one and if its their flag
+      vector<WorldMap::Object>* vctObjects = game->getMap()->getObjects();
+      vector<WorldMap::Object>::iterator itObjects;
+      POSITION structPos;
+
+      for (itObjects = vctObjects->begin(); itObjects != vctObjects->end(); itObjects++) {
+         POSITION pos = itObjects->pos;
+
+         if (posDistance(p->pos, pos.toFloat()) < 10) {
+            if (p->team == 0 && itObjects->type == OBJECT_BLUE_FLAG) {
+               structPos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
+               flagReturned = true;
+               break;
+            } else if (p->team == 1 && itObjects->type == OBJECT_RED_FLAG) {
+               structPos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
+               flagReturned = true;
+               break;
+            }
+         }
+      }
+
+      if (flagReturned) {
+         itObjects->pos.x = structPos.x*25+12;
+         itObjects->pos.y = structPos.y*25+12;
+
+         serverMsg.type = MSG_TYPE_OBJECT;
+         itObjects->serialize(serverMsg.buffer);
+         msgProcessor->broadcastMessage(serverMsg, game->getPlayers());
+      }
+
+      if (broadcastMove) {
+         serverMsg.type = MSG_TYPE_PLAYER;
+         p->serialize(serverMsg.buffer);
+         msgProcessor->broadcastMessage(serverMsg, game->getPlayers());
+      }
+   }
+
+   cout << "processing player attack" << endl;
+
+   // check if the player's attack animation is complete
+   if (p->isAttacking && p->timeAttackStarted+p->attackCooldown <= getCurrentMillis()) {
+      p->isAttacking = false;
+      cout << "Attack animation is complete" << endl;
+
+      //send everyone an ATTACK message
+      cout << "about to broadcast attack" << endl;
+
+      if (p->attackType == Player::ATTACK_MELEE) {
+         cout << "Melee attack" << endl;
+
+         Player* target = game->getPlayers()[p->getTargetPlayer()];
+         game->dealDamageToPlayer(target, p->damage);
+      } else if (p->attackType == Player::ATTACK_RANGED) {
+         cout << "Ranged attack" << endl;
+
+         Projectile proj(p->pos.x, p->pos.y, p->getTargetPlayer(), p->damage);
+         game->assignProjectileId(&proj);
+         game->addProjectile(proj);
+
+         int x = p->pos.x;
+         int y = p->pos.y;
+         unsigned int targetId = p->getTargetPlayer();
+
+         serverMsg.type = MSG_TYPE_PROJECTILE;
+         memcpy(serverMsg.buffer, &proj.id, 4);
+         memcpy(serverMsg.buffer+4, &x, 4);
+         memcpy(serverMsg.buffer+8, &y, 4);
+         memcpy(serverMsg.buffer+12, &targetId, 4);
+         msgProcessor->broadcastMessage(serverMsg, game->getPlayers());
+      } else
+         cout << "Invalid attack type: " << p->attackType << endl;
+   }
+
+   return gameFinished;
 }
 
 void quit(int sig) {
