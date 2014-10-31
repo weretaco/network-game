@@ -134,36 +134,6 @@ Player *DataAccess::getPlayer(string username)
    return p;
 }
 
-// need to make sure this list is freed
-// since we need to create a DataAccess class
-// when calling these functions,
-// we could free this list in the destructor
-list<Player*>* DataAccess::getPlayers()
-{
-   // This method doesn't seem to ever get used. Decide whether it's actually needed
-   MYSQL_RES *result;
-   MYSQL_ROW row;
-
-   result = select("users", "");
-
-   if (result == NULL) {
-      cout << mysql_error(connection) << endl;
-      return NULL;
-   }
-
-   list<Player*>* lstPlayers = new list<Player*>();
-   while ( ( row = mysql_fetch_row(result)) != NULL ) {
-      cout << row[0] << ", " << row[1] << ", " << row[2] << endl;
-      lstPlayers->push_back(new Player(row[1], row[2]));
-
-      // need to assign all the other db values to the player
-   }
-
-   mysql_free_result(result);
-
-   return lstPlayers;
-}
-
 bool DataAccess::verifyPassword(string password, string encrypted)
 {
    string test(crypt(password.c_str(), encrypted.c_str()));

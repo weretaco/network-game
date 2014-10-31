@@ -16,7 +16,6 @@ public:
    ~DataAccess();
 
    Player* getPlayer(string username);
-   list<Player*>* getPlayers();
    bool verifyPassword(string encrypted, string password);
    int insertPlayer(string username, string password, Player::PlayerClass playerClass);
    int updatePlayer(Player* player);
