@@ -7,9 +7,9 @@ CREATE TABLE users (
    class INT unsigned DEFAULT NULL,
    level INT unsigned NOT NULL DEFAULT 0,
    experience INT unsigned NOT NULL DEFAULT 0,
-   honor INT NOT NULL DEFAULT 0,
-   wins INT NOT NULL DEFAULT 0,
-   losses INT NOT NULL DEFAULT 0,
+   honor INT unsigned NOT NULL DEFAULT 0,
+   wins INT unsigned NOT NULL DEFAULT 0,
+   losses INT unsigned NOT NULL DEFAULT 0,
    PRIMARY KEY (id),
    UNIQUE KEY name (name)
 );
