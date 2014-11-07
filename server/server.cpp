@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
    map<unsigned int, Player*> mapPlayers;
    map<unsigned int, Projectile> mapProjectiles;
    map<string, Game*> mapGames;
+   DataAccess da;
    ofstream outputLog;
 
    done = false;
@@ -180,7 +181,6 @@ int main(int argc, char *argv[])
          // process players currently in a game
          map<string, Game*>::iterator itGames;
          Game* game = NULL;
-         DataAccess da;
 
          for (itGames = mapGames.begin(); itGames != mapGames.end();) { 
             game = itGames->second;
