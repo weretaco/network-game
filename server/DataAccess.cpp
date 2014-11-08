@@ -179,7 +179,7 @@ int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
    // each array is the score for one game
    // the columns are result, team, blue score, and red score
    // for result 0 is defeat and 1 is victory
-   // for team, 0 is blue and 1 is red
+   // for team, 1 is blue and 2 is red
 
    MYSQL_RES *result;
    MYSQL_ROW row;
@@ -204,12 +204,12 @@ int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
       int gameResult = -1;
 
       if (blueScore == 3) {
-         if (userTeam == 0)
+         if (userTeam == 1)
             gameResult = 1;
          else
             gameResult = 0;
       }else if (redScore == 3) {
-         if (userTeam == 1)
+         if (userTeam == 2)
             gameResult = 1;
          else
             gameResult = 0;

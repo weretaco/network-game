@@ -29,7 +29,7 @@ Player::Player()
    this->damage = 0;
    this->range = 0;
    this->attackCooldown = 0;
-   this->team = 0;   // blue team by default
+   this->team = 0;   // no team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
 
@@ -103,7 +103,7 @@ Player::Player(string name, string password)
    this->damage = 0;
    this->range = 0;
    this->attackCooldown = 0;
-   this->team = 0;   // blue team by default
+   this->team = 0;   // no team by default
    this->hasBlueFlag = false;
    this->hasRedFlag = false;
 

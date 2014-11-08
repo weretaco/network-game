@@ -95,9 +95,9 @@ void GameRender::drawPlayers(map<unsigned int, Player*>& mapPlayers, ALLEGRO_FON
       if (p->getId() == curPlayerId)
          al_draw_filled_circle(pos.x, pos.y, 14, al_map_rgb(0, 0, 0));
       
-      if (p->team == 0)
+      if (p->team == 1)
          color = al_map_rgb(0, 0, 255);
-      else if (p->team == 1)
+      else if (p->team == 2)
          color = al_map_rgb(255, 0, 0);
       else {
          color = al_map_rgb(0, 0, 0);

@@ -138,10 +138,10 @@ int main(int argc, char *argv[])
  
                   switch (p->team)
                   {
-                  case 0:// blue team
+                  case 1:// blue team
                      spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                      break;
-                  case 1:// red team
+                  case 2:// red team
                      spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                      break;
                   default:
@@ -190,9 +190,9 @@ int main(int argc, char *argv[])
                // save game record
                int winningTeam = -1;
                if (game->getBlueScore() == 3)
-                  winningTeam = 0;
-               else if (game->getRedScore() == 3)
                   winningTeam = 1;
+               else if (game->getRedScore() == 3)
+                  winningTeam = 2;
 
                if (winningTeam == -1)
                   cout << "Error: Game ended, but neither team has a score of 3" << endl;
@@ -779,7 +779,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          map<unsigned int, Player*>& oldPlayers = g->getPlayers();
          g->addPlayer(p);
-         p->team = -1;
+         p->team = 0;
 
          // send info to other players
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
@@ -920,7 +920,7 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
       switch(game->getMap()->getStructure(p->pos.x/25, p->pos.y/25)) {
          case STRUCTURE_BLUE_FLAG:
          {
-            if (p->team == 0 && p->hasRedFlag) {
+            if (p->team == 1 && p->hasRedFlag) {
                // check that your flag is at your base
                pos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                            
@@ -949,7 +949,7 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
          }
          case STRUCTURE_RED_FLAG:
          {
-            if (p->team == 1 && p->hasBlueFlag) {
+            if (p->team == 2 && p->hasBlueFlag) {
                // check that your flag is at your base
                pos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                         
@@ -1046,11 +1046,11 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
          POSITION pos = itObjects->pos;
 
          if (posDistance(p->pos, pos.toFloat()) < 10) {
-            if (p->team == 0 && itObjects->type == OBJECT_BLUE_FLAG) {
+            if (p->team == 1 && itObjects->type == OBJECT_BLUE_FLAG) {
                structPos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                flagReturned = true;
                break;
-            } else if (p->team == 1 && itObjects->type == OBJECT_RED_FLAG) {
+            } else if (p->team == 2 && itObjects->type == OBJECT_RED_FLAG) {
                structPos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                flagReturned = true;
                break;

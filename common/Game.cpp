@@ -183,13 +183,13 @@ int Game::processFlagPickupRequest(Player* p) {
       if (posDistance(p->pos, it->pos.toFloat()) < 10) {
          switch (it->type) {
             case OBJECT_BLUE_FLAG:
-               if (p->team == 1) {
+               if (p->team == 2) {
                   p->hasBlueFlag = true;
                   itemId = it->id;
                }
                break;
             case OBJECT_RED_FLAG:
-               if (p->team == 0) {
+               if (p->team == 1) {
                   p->hasRedFlag = true;
                   itemId = it->id;
                }

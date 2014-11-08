@@ -504,13 +504,13 @@ int main(int argc, char **argv)
             int i=0;
             for (itPlayers = gamePlayers.begin(); itPlayers != gamePlayers.end(); itPlayers++) {
                switch (itPlayers->second->team) {
-               case -1:
+               case 0:
                   drawPosition = 200;
                   break;
-               case 0:
+               case 1:
                   drawPosition = 400;
                   break;
-               case 1:
+               case 2:
                   drawPosition = 600;
                   break;
                }
@@ -1513,7 +1513,7 @@ void createGame()
 
 void joinWaitingArea() {
    cout << "joining waiting area" << endl;
-   currentPlayer->team = -1;
+   currentPlayer->team = 0;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
@@ -1523,7 +1523,7 @@ void joinWaitingArea() {
 
 void joinBlueTeam() {
    cout << "joining blue team" << endl;
-   currentPlayer->team = 0;
+   currentPlayer->team = 1;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
@@ -1533,7 +1533,7 @@ void joinBlueTeam() {
 
 void joinRedTeam() {
    cout << "joining red team" << endl;
-   currentPlayer->team = 1;
+   currentPlayer->team = 2;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
