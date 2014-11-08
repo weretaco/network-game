@@ -1097,7 +1097,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                else
                   mapPlayers[p.getId()] = new Player(p);
 
-               game->addPlayer(mapPlayers[p.getId()], false);
+               game->addPlayer(mapPlayers[p.getId()]);
 
                break;
             }

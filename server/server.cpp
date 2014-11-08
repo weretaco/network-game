@@ -778,7 +778,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
 
          map<unsigned int, Player*>& oldPlayers = g->getPlayers();
-         g->addPlayer(p, true);
+         g->addPlayer(p);
          p->team = -1;
 
          // send info to other players

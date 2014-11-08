@@ -42,7 +42,7 @@ map<unsigned int, Player*>& Game::getPlayers() {
    return this->players;
 }
 
-bool Game::addPlayer(Player* p, bool serverSide) {
+bool Game::addPlayer(Player* p) {
    if (players.find(p->getId()) == players.end()) {
       players[p->getId()] = p;
 
@@ -56,11 +56,6 @@ bool Game::addPlayer(Player* p, bool serverSide) {
       p->health = p->maxHealth;
       p->hasBlueFlag = false;
       p->hasRedFlag = false;
-
-      if (serverSide) {
-         // choose a random team (either 0 or 1)
-         p->team = rand() % 2;
-      }
 
       p->currentGame = this;
 
