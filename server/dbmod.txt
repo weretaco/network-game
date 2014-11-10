@@ -19,11 +19,12 @@ CREATE TABLE gameHistory (
    id INT NOT NULL AUTO_INCREMENT,
    user_id INT NOT NULL,
    user_team INT NOT NULL,
-   red_score INT NOT NULL,
    blue_score INT NOT NULL,
+   red_score INT NOT NULL,
+   time_finished INT unsigned NOT NULL,
    PRIMARY KEY (id),
    CONSTRAINT fk_users FOREIGN KEY
-   fki_users (user_id)
+   fk_users (user_id)
    REFERENCES users (id)
    ON DELETE CASCADE
    ON UPDATE CASCADE
