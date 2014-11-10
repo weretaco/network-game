@@ -199,6 +199,7 @@ int main(int argc, char *argv[])
                else {
                   map<unsigned int, Player*>::iterator it;
 
+                  time_t timeFinished = time(NULL);
                   for (it = game->getPlayers().begin(); it != game->getPlayers().end(); it++) {
                       Player* p = it->second;
                       cout << "winning team: " << winningTeam << endl;
@@ -210,7 +211,7 @@ int main(int argc, char *argv[])
                       else
                           p->losses++;
                       da.updatePlayer(p);
-                      da.saveGameHistory(p->getId(), winningTeam, game->getBlueScore(), game->getRedScore());
+                      da.saveGameHistory(p->getId(), winningTeam, game->getBlueScore(), game->getRedScore(), timeFinished);
                   }
                }
 
@@ -612,10 +613,11 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          memcpy(serverMsg.buffer+8, &losses, 4);
          memcpy(serverMsg.buffer+12, &numGames, 4);
          for (unsigned int i=0; i<numGames; i++) {
-            memcpy(serverMsg.buffer+16+i*16, &gameHistory[i][0], 4);
-            memcpy(serverMsg.buffer+20+i*16, &gameHistory[i][1], 4);
-            memcpy(serverMsg.buffer+24+i*16, &gameHistory[i][2], 4);
-            memcpy(serverMsg.buffer+28+i*16, &gameHistory[i][3], 4);
+            memcpy(serverMsg.buffer+16+i*20, &gameHistory[i][0], 4);
+            memcpy(serverMsg.buffer+20+i*20, &gameHistory[i][1], 4);
+            memcpy(serverMsg.buffer+24+i*20, &gameHistory[i][2], 4);
+            memcpy(serverMsg.buffer+28+i*20, &gameHistory[i][3], 4);
+            memcpy(serverMsg.buffer+32+i*20, &gameHistory[i][4], 4);
             delete[] gameHistory[i];
          }
 

@@ -177,7 +177,7 @@ int* DataAccess::getPlayerRecord(int playerId) {
 int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
 {
    // each array is the score for one game
-   // the columns are result, team, blue score, and red score
+   // the columns are result, team, blue score, red score, and time the game ended
    // for result 0 is defeat and 1 is victory
    // for team, 1 is blue and 2 is red
 
@@ -196,11 +196,12 @@ int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
 
    int i=0;
    while ( ( row = mysql_fetch_row(result)) != NULL ) {
-      gameHistory[i] = new int[4];
+      gameHistory[i] = new int[5];
 
       int userTeam = atoi(row[2]);
-      int blueScore = atoi(row[4]);
-      int redScore = atoi(row[3]);
+      int blueScore = atoi(row[3]);
+      int redScore = atoi(row[4]);
+      time_t timeFinished = atoi(row[5]);
       int gameResult = -1;
 
       if (blueScore == 3) {
@@ -221,6 +222,7 @@ int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
       gameHistory[i][1] = userTeam;
       gameHistory[i][2] = blueScore;
       gameHistory[i][3] = redScore;
+      gameHistory[i][4] = timeFinished;
 
       i++;
    }
@@ -235,14 +237,14 @@ int** DataAccess::getPlayerGameHistory(int playerId, unsigned int& numGames)
    return gameHistory;
 }
 
-int DataAccess::saveGameHistory(int playerId, int team, int blueScore, int redScore)
+int DataAccess::saveGameHistory(int playerId, int team, int blueScore, int redScore, time_t timeFinished)
 {
    ostringstream oss;
 
    cout << "Saving game to db" << endl;
-   oss << playerId << ", " << team << ", " << blueScore << ", " << redScore;
+   oss << playerId << ", " << team << ", " << blueScore << ", " << redScore << ", " << timeFinished;
 
-   return insert("gameHistory", "user_id, user_team, blue_score, red_score", oss.str());
+   return insert("gameHistory", "user_id, user_team, blue_score, red_score, time_finished", oss.str());
 }
 
 int DataAccess::insert(string table, string columns, string values)
