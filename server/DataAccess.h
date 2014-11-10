@@ -22,7 +22,7 @@ public:
 
    int* getPlayerRecord(int playerId);
    int** getPlayerGameHistory(int playerId, unsigned int& numGames);
-   int saveGameHistory(int playerId, int team, int blueScore, int redScore);
+   int saveGameHistory(int playerId, int team, int blueScore, int redScore, time_t timeFinished);
 
    int insert(string table, string rows, string values);
    int update(string table, string values, string where);
