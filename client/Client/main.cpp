@@ -16,10 +16,10 @@
 
 #include <cstdio>
 #include <cstdlib>
-//#include <cmath>
 #include <sys/types.h>
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -482,7 +482,27 @@ int main(int argc, char **argv)
                oss.clear();
                oss.str("");
 
-               oss << "6/11/2014, 5:12 PM" << endl;
+               time_t time_finished = gameHistory[i][4];
+               struct tm* now = localtime(&time_finished);
+
+               oss << (now->tm_mon + 1) << "/" << now->tm_mday << "/" << (now->tm_year + 1900) << " ";;
+               
+               if (now->tm_hour == 0)
+                  oss << "12";
+               else if (now->tm_hour <= 12)
+                  oss << now->tm_hour;
+               else
+                  oss << now->tm_hour-12;
+
+               oss << ":" << setfill('0') << setw(2) << now->tm_min << setfill(' ') << " ";
+
+               if (now->tm_hour < 12)
+                  oss << "AM";
+               else
+                  oss << "PM";
+
+               oss << endl;
+
                al_draw_text(font, al_map_rgb(0, 255, 0), 622, 190+30*(i+1), ALLEGRO_ALIGN_CENTRE, oss.str().c_str());
                oss.clear();
                oss.str("");
@@ -920,18 +940,30 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                cout << "Got records for " << numGames << " games." << endl;
                gameHistory = (int**)malloc(numGames*sizeof(int*));
                for (int i=0; i<numGames; i++) {
-                  gameHistory[i] = (int*)malloc(4*sizeof(int));
+                  gameHistory[i] = (int*)malloc(5*sizeof(int));
                   cout << endl << "game record " << (i+1) << endl;
 
-                  memcpy(&gameHistory[i][0], msg.buffer+16+i*16, 4);
-                  memcpy(&gameHistory[i][1], msg.buffer+20+i*16, 4);
-                  memcpy(&gameHistory[i][2], msg.buffer+24+i*16, 4);
-                  memcpy(&gameHistory[i][3], msg.buffer+28+i*16, 4);
+                  memcpy(&gameHistory[i][0], msg.buffer+16+i*20, 4);
+                  memcpy(&gameHistory[i][1], msg.buffer+20+i*20, 4);
+                  memcpy(&gameHistory[i][2], msg.buffer+24+i*20, 4);
+                  memcpy(&gameHistory[i][3], msg.buffer+28+i*20, 4);
+                  memcpy(&gameHistory[i][4], msg.buffer+32+i*20, 4);
 
                   cout << "result: " << gameHistory[i][0] << endl;
                   cout << "team: " << gameHistory[i][1] << endl;
                   cout << "blue score: " << gameHistory[i][2] << endl;
                   cout << "red score: " << gameHistory[i][3] << endl;
+
+                  time_t time_finished = gameHistory[i][4];
+                  struct tm* now = localtime(&time_finished);
+
+                  cout << "time game finished: ";
+                  cout << (now->tm_year + 1900) << '-'
+                       << (now->tm_mon + 1) << '-'
+                       << now->tm_mday << " "
+                       << now->tm_hour << ":"
+                       << now->tm_min
+                       << endl;
                }
 
                wndCurrent = wndProfile;
