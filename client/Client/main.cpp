@@ -1545,7 +1545,7 @@ void createGame()
 
 void joinWaitingArea() {
    cout << "joining waiting area" << endl;
-   currentPlayer->team = 0;
+   currentPlayer->team = Player::TEAM_NONE;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
@@ -1555,7 +1555,7 @@ void joinWaitingArea() {
 
 void joinBlueTeam() {
    cout << "joining blue team" << endl;
-   currentPlayer->team = 1;
+   currentPlayer->team = Player::TEAM_BLUE;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
@@ -1565,7 +1565,7 @@ void joinBlueTeam() {
 
 void joinRedTeam() {
    cout << "joining red team" << endl;
-   currentPlayer->team = 2;
+   currentPlayer->team = Player::TEAM_RED;
 
    msgTo.type = MSG_TYPE_JOIN_TEAM;
    memcpy(msgTo.buffer, &(currentPlayer->team), 4);
