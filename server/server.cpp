@@ -42,7 +42,7 @@ using namespace std;
 
 // from used to be const. Removed that so I could take a reference
 // and use it to send messages
-void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, ofstream& outputLog);
+void processMessage(const NETWORK_MSG& clientMsg, struct sockaddr_in& from, MessageProcessor& msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, DataAccess& da, ofstream& outputLog);
 
 Player *findPlayerByName(map<unsigned int, Player*> &m, string name);
 Player *findPlayerByAddr(map<unsigned int, Player*> &m, const sockaddr_in &addr);
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 
       if (msgProcessor.receiveMessage(&clientMsg, &from) >= 0)
       {
-         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, outputLog);
+         processMessage(clientMsg, from, msgProcessor, mapPlayers, mapGames, da, outputLog);
 
          cout << "Finished processing the message" << endl;
       }
@@ -280,10 +280,9 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, ofstream& outputLog)
+void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, MessageProcessor &msgProcessor, map<unsigned int, Player*>& mapPlayers, map<string, Game*>& mapGames, DataAccess& da, ofstream& outputLog)
 {
    NETWORK_MSG serverMsg;
-   DataAccess da;
 
    cout << "Inside processMessage" << endl;
 

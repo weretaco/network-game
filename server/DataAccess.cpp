@@ -30,7 +30,7 @@ DataAccess::DataAccess()
    }
 
    mysql_init(&mysql);
-   connection = mysql_real_connect(&mysql, "localhost", "pythonAdmin", "pyMaster09*", "pythondb", 0, 0, 0);
+   connection = mysql_real_connect(&mysql, "localhost", username.c_str(), password.c_str(), database.c_str(), 0, 0, 0);
 
    if (connection == NULL) {
       cout << mysql_error(&mysql) << endl;
