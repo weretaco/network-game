@@ -138,10 +138,10 @@ int main(int argc, char *argv[])
  
                   switch (p->team)
                   {
-                  case 1:// blue team
+                  case Player::TEAM_BLUE:
                      spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                      break;
-                  case 2:// red team
+                  case Player::TEAM_RED:
                      spawnPos = p->currentGame->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                      break;
                   default:
@@ -780,7 +780,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          map<unsigned int, Player*>& oldPlayers = g->getPlayers();
          g->addPlayer(p);
-         p->team = 0;
+         p->team = Player::TEAM_NONE;
 
          // send info to other players
          serverMsg.type = MSG_TYPE_PLAYER_JOIN_GAME;
@@ -921,7 +921,7 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
       switch(game->getMap()->getStructure(p->pos.x/25, p->pos.y/25)) {
          case STRUCTURE_BLUE_FLAG:
          {
-            if (p->team == 1 && p->hasRedFlag) {
+            if (p->team == Player::TEAM_BLUE && p->hasRedFlag) {
                // check that your flag is at your base
                pos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                            
@@ -950,7 +950,7 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
          }
          case STRUCTURE_RED_FLAG:
          {
-            if (p->team == 2 && p->hasBlueFlag) {
+            if (p->team == Player::TEAM_RED && p->hasBlueFlag) {
                // check that your flag is at your base
                pos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                         
@@ -1047,11 +1047,11 @@ bool handlePlayerEvents(Game* game, Player* p, MessageProcessor* msgProcessor, D
          POSITION pos = itObjects->pos;
 
          if (posDistance(p->pos, pos.toFloat()) < 10) {
-            if (p->team == 1 && itObjects->type == OBJECT_BLUE_FLAG) {
+            if (p->team == Player::TEAM_BLUE && itObjects->type == OBJECT_BLUE_FLAG) {
                structPos = game->getMap()->getStructureLocation(STRUCTURE_BLUE_FLAG);
                flagReturned = true;
                break;
-            } else if (p->team == 2 && itObjects->type == OBJECT_RED_FLAG) {
+            } else if (p->team == Player::TEAM_RED && itObjects->type == OBJECT_RED_FLAG) {
                structPos = game->getMap()->getStructureLocation(STRUCTURE_RED_FLAG);
                flagReturned = true;
                break;

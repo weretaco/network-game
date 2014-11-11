@@ -40,6 +40,12 @@ public:
       ATTACK_RANGED
    };
 
+   enum PlayerTeam {
+      TEAM_NONE,
+      TEAM_BLUE,
+      TEAM_RED
+   };
+
    Player();
    Player(const Player& p);
    Player(string name, string password);
@@ -83,7 +89,7 @@ public:
    int damage;
    int range;
    unsigned long long attackCooldown;
-   int team; // 0 is none, 1 is blue, 2 is red
+   PlayerTeam team;
    bool hasBlueFlag;
    bool hasRedFlag;
 
