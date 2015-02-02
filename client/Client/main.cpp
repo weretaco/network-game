@@ -60,7 +60,7 @@ void initWinSock();
 void shutdownWinSock();
 void createGui(ALLEGRO_FONT* font);
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId);
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId, string& alertMessage);
 void handleMsgPlayer(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames);
 void handleMsgGameInfo(NETWORK_MSG &msg, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames);
 
@@ -146,6 +146,8 @@ int** gameHistory;
 
 MessageProcessor msgProcessor;
 
+string alertMessage;
+
 int main(int argc, char **argv)
 {
    ALLEGRO_DISPLAY *display = NULL;
@@ -168,6 +170,8 @@ int main(int argc, char **argv)
    losses = 0;
    numGames = 0;
    gameHistory = NULL;
+
+   alertMessage = "";
 
    state = STATE_START;
 
@@ -400,7 +404,7 @@ int main(int argc, char **argv)
       }
 
       if (msgProcessor.receiveMessage(&msgFrom, &from) >= 0)
-         processMessage(msgFrom, state, chatConsole, mapPlayers, mapGames, curPlayerId);
+         processMessage(msgFrom, state, chatConsole, mapPlayers, mapGames, curPlayerId, alertMessage);
 
       if (redraw)
       {
@@ -441,6 +445,8 @@ int main(int argc, char **argv)
                oss.str("");
                i++;
             }
+
+            al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W/2, 15, ALLEGRO_ALIGN_CENTER, alertMessage.c_str());
          }
          else if (wndCurrent == wndProfile)
          {
@@ -820,7 +826,7 @@ void createGui(ALLEGRO_FONT* font) {
    cout << "Created game summary screen" << endl;
 }
 
-void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId)
+void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigned int, Player*>& mapPlayers, map<string, int>& mapGames, unsigned int& curPlayerId, string& alertMessage)
 {
    cout << "Total players in map: " << mapPlayers.size() << endl;
 
@@ -1002,6 +1008,13 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                break;
             }
+            case MSG_TYPE_CREATE_GAME_FAILURE:
+            {
+               cout << "Received a CREATE_GAME_FAILURE message" << endl;
+               alertMessage = "Game could not be created because one exists with that name";
+
+               break;
+            }
             case MSG_TYPE_PLAYER:
             {
                handleMsgPlayer(msg, mapPlayers, mapGames);
@@ -1086,6 +1099,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
                game = NULL;
                state = STATE_LOBBY;
                wndCurrent = wndGameSummary;
+               alertMessage = "";
 
                break;
             }
@@ -1458,6 +1472,7 @@ void login()
    msgProcessor.sendMessage(&msgTo, &server);
 
    state = STATE_LOBBY;
+   alertMessage = "";
 }
 
 void logout()
@@ -1588,6 +1603,7 @@ void leaveGame()
    
    state = STATE_LOBBY;
    wndCurrent = wndLobby;
+   alertMessage = "";
 
    msgTo.type = MSG_TYPE_LEAVE_GAME;
 
