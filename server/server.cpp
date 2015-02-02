@@ -640,7 +640,7 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
          // check if this game already exists
          if (mapGames.find(gameName) != mapGames.end()) {
             cout << "Error: Game already exists" << endl;
-            serverMsg.type = MSG_TYPE_JOIN_GAME_FAILURE;
+            serverMsg.type = MSG_TYPE_CREATE_GAME_FAILURE;
          }else {
             Game* g = new Game(gameName, "../data/map.txt", &msgProcessor);
             mapGames[gameName] = g;
