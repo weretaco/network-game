@@ -220,7 +220,9 @@ int main(int argc, char *argv[])
                serverMsg.type = MSG_TYPE_GAME_INFO;
                memcpy(serverMsg.buffer, &numPlayers, 4);
                strcpy(serverMsg.buffer+4, game->getName().c_str());
-               msgProcessor.broadcastMessage(serverMsg, mapPlayers);
+
+               // only send this to players in the game
+               msgProcessor.broadcastMessage(serverMsg, game->getPlayers());
 
                delete itGames->second;
                mapGames.erase(itGames++);
@@ -838,6 +840,24 @@ void processMessage(const NETWORK_MSG &clientMsg, struct sockaddr_in &from, Mess
 
          serverMsg.type = MSG_TYPE_START_GAME;
          msgProcessor.broadcastMessage(serverMsg, players);
+
+         // send a GAME_INFO message to all players not in the game so they delete it from their lobby
+         map<unsigned int, Player*> playersNotInGame;
+         map<unsigned int, Player*>::iterator it;
+         
+         for (it = mapPlayers.begin(); it != mapPlayers.end(); it++) {
+             if (players.count(it->first) == 0)
+                 playersNotInGame[it->first] = it->second;
+         }
+
+         cout << "Sending game info to " << playersNotInGame.size() << " players not in the currently started game" << endl;
+
+         int numPlayers = 0;
+         serverMsg.type = MSG_TYPE_GAME_INFO;
+         memcpy(serverMsg.buffer, &numPlayers, 4);
+         strcpy(serverMsg.buffer+4, p->currentGame->getName().c_str());
+
+         msgProcessor.broadcastMessage(serverMsg, playersNotInGame);
 
          break;
       }
