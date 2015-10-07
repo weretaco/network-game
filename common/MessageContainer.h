@@ -58,6 +58,7 @@ private:
    NETWORK_MSG msg;
    struct sockaddr_in clientAddr;
    bool isAcked;
+   unsigned long long timeSent;
    unsigned long long timeAcked;
 
 public:
@@ -66,11 +67,13 @@ public:
    MessageContainer(NETWORK_MSG msg, struct sockaddr_in clientAddr);
    ~MessageContainer();
 
-   bool getAcked();
-   unsigned long long getTimeAcked();
    NETWORK_MSG* getMessage();
+   bool getAcked();
+   unsigned long long getTimeSent();
+   unsigned long long getTimeAcked();
 
    void setAcked(bool acked);
+   void setTimeSent(unsigned long long time);
    void setTimeAcked(unsigned long long time);
 
    static string getMsgTypeString(int msgType);
