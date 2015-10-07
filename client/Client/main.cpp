@@ -830,9 +830,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 {
    cout << "Total players in map: " << mapPlayers.size() << endl;
 
-   // this is outdated since most messages now don't contain just a text string
-   string response = string(msg.buffer);
-
    switch(state)
    {
       case STATE_START:
@@ -843,7 +840,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
          {
             case MSG_TYPE_REGISTER:
             {
-               lblRegisterStatus->setText(response);
+               lblRegisterStatus->setText(msg.buffer);
                break;
             }
             default:
@@ -862,19 +859,19 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
          {
             case MSG_TYPE_LOGIN:
             {
-               if (response.compare("Player has already logged in.") == 0)
+               if (string(msg.buffer).compare("Player has already logged in.") == 0)
                {
                   goToLoginScreen();
                   state = STATE_START;
 
-                  lblLoginStatus->setText(response);
+                  lblLoginStatus->setText(msg.buffer);
                }
-               else if (response.compare("Incorrect username or password") == 0)
+               else if (string(msg.buffer).compare("Incorrect username or password") == 0)
                {
                   goToLoginScreen();
                   state = STATE_START;
 
-                  lblLoginStatus->setText(response);
+                  lblLoginStatus->setText(msg.buffer);
                }
                else
                {
@@ -907,7 +904,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                // Check if it's about you or another player
                memcpy(&playerId, msg.buffer, 4);
-               response = string(msg.buffer+4);
+               string response = string(msg.buffer+4);
 
                if (playerId == curPlayerId)
                {
@@ -932,7 +929,7 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
             }
             case MSG_TYPE_CHAT:
             {
-               chatConsole.addLine(response);
+               chatConsole.addLine(msg.buffer);
 
                break;
             }
@@ -1111,7 +1108,6 @@ void processMessage(NETWORK_MSG &msg, int &state, chat &chatConsole, map<unsigne
 
                // Check if it's about you or another player
                memcpy(&playerId, msg.buffer, 4);
-               response = string(msg.buffer+4);
 
                if (playerId == curPlayerId)
                   cout << "Received MSG_TYPE_LOGOUT for self in STATE_GAME. This shouldn't happen." << endl;
