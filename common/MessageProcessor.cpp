@@ -31,6 +31,7 @@ int MessageProcessor::sendMessage(NETWORK_MSG *msg, struct sockaddr_in *dest) {
 
    msg->id = ++lastUsedId;
    MessageContainer message(*msg, *dest);
+   message.setTimeSent(getCurrentMillis());
 
    if (outputLog)
       (*outputLog) << "Sending message (id " << msg->id << ") of type " << MessageContainer::getMsgTypeString(msg->type) << endl;
@@ -106,14 +107,38 @@ void MessageProcessor::broadcastMessage(NETWORK_MSG &msg, map<unsigned int, Play
 void MessageProcessor::resendUnackedMessages() {
    map<unsigned int, map<unsigned long, MessageContainer> >::iterator it;
    map<unsigned long, MessageContainer>::iterator it2;
-   map<unsigned long, MessageContainer> sentMsg;
+   map<unsigned long, MessageContainer>* sentMsg;
 
    for (it = sentMessages.begin(); it != sentMessages.end(); it++) {
-      sentMsg = it->second;
-      for (it2 = sentMsg.begin(); it2 != sentMsg.end(); it2++) {
+
+      unsigned long long maxAge = 0;
+      sentMsg = &(it->second);
+
+      for (it2 = sentMsg->begin(); it2 != sentMsg->end(); it2++) {
          if (!(it2->second.getAcked())) {
+            cout << "Maybe resending message" << endl;
+            cout << "time sent: " << it2->second.getTimeSent() << endl;
+            unsigned long long age = getCurrentMillis() - it2->second.getTimeSent();
+
+            cout << "age: " << age << endl;
+            if (maxAge < age) {
+                maxAge = age;
+                cout << "new max age: " << maxAge << endl;
+            }
+
+            if (maxAge > 10000) {
+               cout << "id " << it2->second.getMessage()->id << " is not getting acked" << endl;
+               // this will prevent the message from getting resent anymore
+               it2->second.setAcked(true);
+               cout << "acked after being set: " << it2->second.getAcked() << endl;
+            }
+
             sendto(sock, (const char*)it2->second.getMessage(), sizeof(NETWORK_MSG), 0, (struct sockaddr *)&it2->first, sizeof(struct sockaddr_in));
          }
+      }
+
+      if (maxAge > 10000) {
+         cout << "Connection lost" << endl;
       }
    }
 }
